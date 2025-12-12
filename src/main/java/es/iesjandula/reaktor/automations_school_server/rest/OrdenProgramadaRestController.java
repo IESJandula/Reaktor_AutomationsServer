@@ -13,7 +13,7 @@ import es.iesjandula.reaktor.automations_school_server.dtos.OrdenProgramadaReque
 import es.iesjandula.reaktor.automations_school_server.models.OrdenProgramada;
 import es.iesjandula.reaktor.automations_school_server.repository.IOrdenProgramadaRepository;
 import es.iesjandula.reaktor.automations_school_server.utils.Constants;
-import es.iesjandula.reaktor.automations_school_server.utils.SistemaVozException;
+import es.iesjandula.reaktor.automations_school_server.utils.AutomationSchoolServerException;
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequestMapping("/api/ordenprogramada")
@@ -35,13 +35,13 @@ public class OrdenProgramadaRestController
             if (ordenProgramada.getFecha() == null)
             {
                 log.error(Constants.ERR_PROGRAMADA_FECHA_NULA);
-                throw new SistemaVozException(Constants.ERR_PROGRAMADA_FECHA_NULA, Constants.ERR_PROGRAMADA_CODE);
+                throw new AutomationSchoolServerException(Constants.ERR_PROGRAMADA_FECHA_NULA, Constants.ERR_PROGRAMADA_CODE);
             }
             OrdenProgramada nuevaOrden = this.ordenProgramadaRepository.saveAndFlush(ordenProgramada);
             log.info(Constants.ELEMENTO_AGREGADO);
             return ResponseEntity.ok().body(nuevaOrden);
         } 
-        catch (SistemaVozException exception)
+        catch (AutomationSchoolServerException exception)
         {
             log.error(exception.getMessage());
             return ResponseEntity.badRequest().body(exception);
@@ -60,13 +60,13 @@ public class OrdenProgramadaRestController
             if (!this.ordenProgramadaRepository.existsById(id)) 
             {
                 log.error(Constants.ERR_PROGRAMADA_NO_EXISTE);
-                throw new SistemaVozException(Constants.ERR_PROGRAMADA_CODE, Constants.ERR_PROGRAMADA_NO_EXISTE); 
+                throw new AutomationSchoolServerException(Constants.ERR_PROGRAMADA_CODE, Constants.ERR_PROGRAMADA_NO_EXISTE); 
             }
             this.ordenProgramadaRepository.deleteById(id);
             log.info(Constants.ELEMENTO_ELIMINADO);
             return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
         } 
-        catch (SistemaVozException exception) 
+        catch (AutomationSchoolServerException exception) 
         {
             log.error(exception.getMessage());
             return ResponseEntity.badRequest().body(exception);

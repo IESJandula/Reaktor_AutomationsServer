@@ -16,7 +16,7 @@ import es.iesjandula.reaktor.automations_school_server.models.Validacion;
 import es.iesjandula.reaktor.automations_school_server.repository.IOrdenRepository;
 import es.iesjandula.reaktor.automations_school_server.repository.IValidacionRepository;
 import es.iesjandula.reaktor.automations_school_server.utils.Constants;
-import es.iesjandula.reaktor.automations_school_server.utils.SistemaVozException;
+import es.iesjandula.reaktor.automations_school_server.utils.AutomationSchoolServerException;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Optional;
 
@@ -37,14 +37,14 @@ public class ValidacionRestController
 			if (validacionRequestDto.getResultado() == null || validacionRequestDto.getResultado().isEmpty())
 			{
 				log.error(Constants.ERR_VALIDACION_NULO_VACIO);
-				throw new SistemaVozException(Constants.ERR_VALIDACION_NULO_VACIO, Constants.ERR_VALIDACION_CODE);
+				throw new AutomationSchoolServerException(Constants.ERR_VALIDACION_NULO_VACIO, Constants.ERR_VALIDACION_CODE);
 			}
 			Long ordenId = validacionRequestDto.getOrdenId();
 			Optional<Orden> ordenOpt = ordenRepository.findById(ordenId);
 			if (ordenOpt.isEmpty())
 			{
 				log.error(Constants.ERR_ORDEN_NO_EXISTE);
-				throw new SistemaVozException(Constants.ERR_ORDEN_NO_EXISTE, Constants.ERR_ORDEN_CODE);
+				throw new AutomationSchoolServerException(Constants.ERR_ORDEN_NO_EXISTE, Constants.ERR_ORDEN_CODE);
 			}
 			Validacion validacion = new Validacion();
 			validacion.setScore(validacionRequestDto.getScore());
@@ -55,7 +55,7 @@ public class ValidacionRestController
 			log.info(Constants.ELEMENTO_AGREGADO);
 			return ResponseEntity.ok().body(nuevaValidacion);
 		} 
-		catch (SistemaVozException exception)
+		catch (AutomationSchoolServerException exception)
 		{
 			log.error(exception.getMessage());
 			return ResponseEntity.badRequest().body(exception);
@@ -74,13 +74,13 @@ public class ValidacionRestController
 			if (!this.validacionRepository.existsById(id))
 			{
 				log.error(Constants.ERR_VALIDACON_NO_EXISTE);
-				throw new SistemaVozException(Constants.ERR_VALIDACION_CODE, Constants.ERR_VALIDACON_NO_EXISTE);
+				throw new AutomationSchoolServerException(Constants.ERR_VALIDACION_CODE, Constants.ERR_VALIDACON_NO_EXISTE);
 			}
 			this.validacionRepository.deleteById(id);
 			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
 		} 
-		catch (SistemaVozException exception)
+		catch (AutomationSchoolServerException exception)
 		{
 			log.error(exception.getMessage());
 

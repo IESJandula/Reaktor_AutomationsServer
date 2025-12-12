@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sun.org.apache.bcel.internal.classfile.Constant;
+
 import es.iesjandula.reaktor.automations_school_server.dtos.ActuadorRequestDto;
 import es.iesjandula.reaktor.automations_school_server.dtos.SensorBooleanoRequestDto;
 import es.iesjandula.reaktor.automations_school_server.dtos.SensorBooleanoResponseDto;
@@ -28,7 +30,7 @@ import es.iesjandula.reaktor.automations_school_server.repository.ISensorBoolean
 import es.iesjandula.reaktor.automations_school_server.repository.ISensorNumericoRpository;
 import es.iesjandula.reaktor.automations_school_server.repository.IUbicacionRepository;
 import es.iesjandula.reaktor.automations_school_server.utils.Constants;
-import es.iesjandula.reaktor.automations_school_server.utils.SistemaVozException;
+import es.iesjandula.reaktor.automations_school_server.utils.AutomationSchoolServerException;
 import es.iesjandula.reaktor.base.utils.BaseConstants;
 import lombok.extern.slf4j.Slf4j;
 
@@ -62,29 +64,28 @@ public class AdminRestController
 			if (sensorBooleanoDto.getMac() == null || sensorBooleanoDto.getMac().isEmpty())
 			{
 				log.error(Constants.ERR_SENSOR_NULO_VACIO);
-				throw new SistemaVozException(Constants.ERR_SENSOR_NULO_VACIO, Constants.ERR_SENSOR_CODE);
+				throw new AutomationSchoolServerException(Constants.ERR_SENSOR_NULO_VACIO, Constants.ERR_SENSOR_CODE);
 			}
 
 			if (sensorBooleanoRepo.existsById(sensorBooleanoDto.getMac()))
 			{
 				log.error(Constants.ERR_SENSOR_EXISTE);
-				throw new SistemaVozException(Constants.ERR_SENSOR_EXISTE, Constants.ERR_SENSOR_CODE);
+				throw new AutomationSchoolServerException(Constants.ERR_SENSOR_EXISTE, Constants.ERR_SENSOR_CODE);
 			}
 
 			if (sensorBooleanoDto.getNombreUbicacion() == null || sensorBooleanoDto.getNombreUbicacion().isEmpty())
 			{
 				log.error(Constants.ERR_UBICACION_NULO_VACIO);
-				throw new SistemaVozException(Constants.ERR_UBICACION_NULO_VACIO, Constants.ERR_UBICACION_CODE);
+				throw new AutomationSchoolServerException(Constants.ERR_UBICACION_NULO_VACIO, Constants.ERR_UBICACION_CODE);
 			}
 
 			Ubicacion ubicacion = ubicacionRepo.findById(sensorBooleanoDto.getNombreUbicacion())
-					.orElseThrow(() -> new SistemaVozException(Constants.ERR_UBICACION_NO_EXISTE, Constants.ERR_UBICACION_CODE));
+					.orElseThrow(() -> new AutomationSchoolServerException(Constants.ERR_UBICACION_NO_EXISTE, Constants.ERR_UBICACION_CODE));
 
 			SensorBooleano sensor = new SensorBooleano();
 			sensor.setMac(sensorBooleanoDto.getMac());
 			sensor.setEstado(sensorBooleanoDto.getEstado());
 			sensor.setValorActual(sensorBooleanoDto.getValorActual());
-			sensor.setUltimaAcualizacion(new Date());
 			sensor.setUbicacion(ubicacion);
 
 			sensorBooleanoRepo.saveAndFlush(sensor);
@@ -94,11 +95,16 @@ public class AdminRestController
 			return ResponseEntity.ok().build();
 
 		} 
-		catch (SistemaVozException exception)
+		catch (AutomationSchoolServerException automationSchoolServerException)
 		{
-			log.error(exception.getMessage());
-			return ResponseEntity.badRequest().body(exception);
+			return ResponseEntity.badRequest().body(automationSchoolServerException);
 		}
+		catch (Exception exception) 
+		{
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_SENSOR_CODE);
+			return ResponseEntity.status(500).body(automationSchoolServerException); 
+		}
+		
 	}
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
 	@GetMapping("/sensor/booleano")
@@ -108,7 +114,7 @@ public class AdminRestController
 				.findAll().stream().map(s -> new SensorBooleanoResponseDto(s.getMac(), 
 						s.getEstado(),
 						s.getValorActual(), 
-						s.getUltimaAcualizacion().getTime(), 
+						s.getUltimaActualizacion().getTime(), 
 						s.getUbicacion().getNombreUbicacion())).toList();
 		
 		return ResponseEntity.ok(lista);
@@ -122,7 +128,7 @@ public class AdminRestController
 			if (!sensorBooleanoRepo.existsById(mac))
 			{
 				log.error(Constants.ERR_SENSOR_NO_EXISTE);
-				throw new SistemaVozException(Constants.ERR_SENSOR_CODE, Constants.ERR_SENSOR_NO_EXISTE);
+				throw new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_SENSOR_NO_EXISTE);
 			}
 
 			sensorBooleanoRepo.deleteById(mac);
@@ -130,7 +136,7 @@ public class AdminRestController
 			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
 
 		} 
-		catch (SistemaVozException exception)
+		catch (AutomationSchoolServerException exception)
 		{
 			log.error(exception.getMessage());
 			
@@ -146,23 +152,23 @@ public class AdminRestController
 			if (sensorNumericoDto.getMac() == null || sensorNumericoDto.getMac().isEmpty())
 			{
 				log.error(Constants.ERR_SENSOR_NULO_VACIO);
-				throw new SistemaVozException(Constants.ERR_SENSOR_NULO_VACIO, Constants.ERR_SENSOR_CODE);
+				throw new AutomationSchoolServerException(Constants.ERR_SENSOR_NULO_VACIO, Constants.ERR_SENSOR_CODE);
 			}
 
 			if (sensorNumericoRepo.existsById(sensorNumericoDto.getMac()))
 			{
 				log.error(Constants.ERR_SENSOR_EXISTE);
-				throw new SistemaVozException(Constants.ERR_SENSOR_EXISTE, Constants.ERR_SENSOR_CODE);
+				throw new AutomationSchoolServerException(Constants.ERR_SENSOR_EXISTE, Constants.ERR_SENSOR_CODE);
 			}
 
 			if (sensorNumericoDto.getNombreUbicacion() == null || sensorNumericoDto.getNombreUbicacion().isEmpty())
 			{
 				log.error(Constants.ERR_UBICACION_NULO_VACIO);
-				throw new SistemaVozException(Constants.ERR_UBICACION_NULO_VACIO, Constants.ERR_UBICACION_CODE);
+				throw new AutomationSchoolServerException(Constants.ERR_UBICACION_NULO_VACIO, Constants.ERR_UBICACION_CODE);
 			}
 
 			Ubicacion ubicacion = ubicacionRepo.findById(sensorNumericoDto.getNombreUbicacion())
-					.orElseThrow(() -> new SistemaVozException(Constants.ERR_UBICACION_NO_EXISTE, Constants.ERR_UBICACION_CODE));
+					.orElseThrow(() -> new AutomationSchoolServerException(Constants.ERR_UBICACION_NO_EXISTE, Constants.ERR_UBICACION_CODE));
 
 			SensorNumerico sensor = new SensorNumerico();
 			sensor.setMac(sensorNumericoDto.getMac());
@@ -170,7 +176,6 @@ public class AdminRestController
 			sensor.setValorActual(sensorNumericoDto.getValorActual());
 			sensor.setUmbralMinimo(sensorNumericoDto.getUmbralMinimo());
 			sensor.setUmbralMaximo(sensorNumericoDto.getUmbralMaximo());
-			sensor.setUltimaAcualizacion(new Date());
 			sensor.setUbicacion(ubicacion);
 
 			sensorNumericoRepo.saveAndFlush(sensor);
@@ -178,7 +183,7 @@ public class AdminRestController
 
 			return ResponseEntity.ok().build();
 
-		} catch (SistemaVozException e)
+		} catch (AutomationSchoolServerException e)
 		{
 			log.error(e.getMessage());
 			return ResponseEntity.badRequest().body(e);
@@ -195,7 +200,7 @@ public class AdminRestController
 						s.getValorActual(),
 						s.getUmbralMinimo(), 
 						s.getUmbralMaximo(), 
-						s.getUltimaAcualizacion().getTime(),
+						s.getUltimaActualizacion().getTime(),
 						s.getUbicacion().getNombreUbicacion())).toList();
 		
 		return ResponseEntity.ok(lista);
@@ -209,16 +214,15 @@ public class AdminRestController
 			if (!sensorNumericoRepo.existsById(mac))
 			{
 				log.error(Constants.ERR_SENSOR_NO_EXISTE);
-				throw new SistemaVozException(Constants.ERR_SENSOR_CODE, Constants.ERR_SENSOR_NO_EXISTE);
+				throw new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_SENSOR_NO_EXISTE);
 			}
 
 			sensorNumericoRepo.deleteById(mac);
 			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
 
-		} catch (SistemaVozException exception )
+		} catch (AutomationSchoolServerException exception )
 		{
-			log.error(exception.getMessage());
 			return ResponseEntity.badRequest().body(exception);
 		}
 	}
@@ -232,16 +236,16 @@ public class AdminRestController
             if (actuadorRequestDto.getMac() == null || actuadorRequestDto.getMac().isEmpty()) 
             {
                 log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
-                throw new SistemaVozException(Constants.ERR_ACTUADOR_NULO_VACIO, Constants.ERR_ACTUADOR_CODE);
+                throw new AutomationSchoolServerException(Constants.ERR_ACTUADOR_NULO_VACIO, Constants.ERR_ACTUADOR_CODE);
             }
             if (this.actuadorRepository.existsById(actuadorRequestDto.getMac())) 
             {
                 log.error(Constants.ERR_ACTUADOR_EXISTE);
-                throw new SistemaVozException(Constants.ERR_ACTUADOR_EXISTE, Constants.ERR_ACTUADOR_CODE);
+                throw new AutomationSchoolServerException(Constants.ERR_ACTUADOR_EXISTE, Constants.ERR_ACTUADOR_CODE);
             }
             
             Ubicacion ubicacion = ubicacionRepo.findById(actuadorRequestDto.getNombreUbicacion())
-					.orElseThrow(() -> new SistemaVozException(Constants.ERR_UBICACION_NO_EXISTE, Constants.ERR_UBICACION_CODE));
+					.orElseThrow(() -> new AutomationSchoolServerException(Constants.ERR_UBICACION_NO_EXISTE, Constants.ERR_UBICACION_CODE));
             
             Actuador actuador = new Actuador();
             actuador.setMac(actuadorRequestDto.getMac());
@@ -251,10 +255,9 @@ public class AdminRestController
             log.info(Constants.ELEMENTO_AGREGADO);
             return ResponseEntity.ok().build();
         } 
-        catch (SistemaVozException exception) 
+        catch (AutomationSchoolServerException automationSchoolServerException) 
         {
-            log.error(exception.getMessage());
-            return ResponseEntity.badRequest().body(exception);
+            return ResponseEntity.badRequest().body(automationSchoolServerException);
         }
     }
     
@@ -274,13 +277,13 @@ public class AdminRestController
             if (!this.actuadorRepository.existsById(mac)) 
             {
                 log.error(Constants.ERR_ACTUADOR_NO_EXISTE);
-                throw new SistemaVozException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NO_EXISTE); 
+                throw new AutomationSchoolServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NO_EXISTE); 
             }
             this.actuadorRepository.deleteById(mac);
             log.info(Constants.ELEMENTO_ELIMINADO);
             return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
         } 
-        catch (SistemaVozException exception) 
+        catch (AutomationSchoolServerException exception) 
         {
             log.error(exception.getMessage());
             return ResponseEntity.badRequest().body(exception);

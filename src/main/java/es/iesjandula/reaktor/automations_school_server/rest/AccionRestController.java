@@ -18,7 +18,7 @@ import es.iesjandula.reaktor.automations_school_server.repository.IAccionReposit
 import es.iesjandula.reaktor.automations_school_server.repository.IActuadorRepository;
 import es.iesjandula.reaktor.automations_school_server.repository.IOrdenRepository;
 import es.iesjandula.reaktor.automations_school_server.utils.Constants;
-import es.iesjandula.reaktor.automations_school_server.utils.SistemaVozException;
+import es.iesjandula.reaktor.automations_school_server.utils.AutomationSchoolServerException;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Optional;
 
@@ -43,19 +43,19 @@ public class AccionRestController
 			if (actuadorNombre == null || actuadorNombre.isEmpty() || ordenId == null)
 			{
 				log.error(Constants.ERR_ACCION_DATOS_NULOS);
-				throw new SistemaVozException(Constants.ERR_ACCION_DATOS_NULOS, Constants.ERR_ACCION_CODE);
+				throw new AutomationSchoolServerException(Constants.ERR_ACCION_DATOS_NULOS, Constants.ERR_ACCION_CODE);
 			}
 			Optional<Actuador> actuadorOpt = actuadorRepository.findById(actuadorNombre);
 			if (actuadorOpt.isEmpty())
 			{
 				log.error(Constants.ERR_ACTUADOR_NO_EXISTE);
-				throw new SistemaVozException(Constants.ERR_ACTUADOR_NO_EXISTE, Constants.ERR_ACTUADOR_CODE);
+				throw new AutomationSchoolServerException(Constants.ERR_ACTUADOR_NO_EXISTE, Constants.ERR_ACTUADOR_CODE);
 			}
 			Optional<Orden> ordenOpt = ordenRepository.findById(ordenId);
 			if (ordenOpt.isEmpty())
 			{
 				log.error(Constants.ERR_ORDEN_NO_EXISTE);
-				throw new SistemaVozException(Constants.ERR_ORDEN_NO_EXISTE, Constants.ERR_ORDEN_CODE);
+				throw new AutomationSchoolServerException(Constants.ERR_ORDEN_NO_EXISTE, Constants.ERR_ORDEN_CODE);
 			}
 			Accion accion = new Accion();
 			accion.setResultado(accionRequestDto.getResultado());
@@ -65,7 +65,7 @@ public class AccionRestController
 			log.info(Constants.ELEMENTO_AGREGADO);
 			return ResponseEntity.ok().body(nuevaAccion);
 		} 
-		catch (SistemaVozException exception)
+		catch (AutomationSchoolServerException exception)
 		{
 			log.error(exception.getMessage());
 			return ResponseEntity.badRequest().body(exception);
@@ -84,13 +84,13 @@ public class AccionRestController
 			if (!this.accionRepository.existsById(id))
 			{
 				log.error(Constants.ERR_ACCION_NO_EXISTE);
-				throw new SistemaVozException(Constants.ERR_ACCION_CODE, Constants.ERR_ACCION_NO_EXISTE);
+				throw new AutomationSchoolServerException(Constants.ERR_ACCION_CODE, Constants.ERR_ACCION_NO_EXISTE);
 			}
 			this.accionRepository.deleteById(id);
 			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
 		} 
-		catch (SistemaVozException exception)
+		catch (AutomationSchoolServerException exception)
 		{
 			log.error(exception.getMessage());
 			return ResponseEntity.badRequest().body(exception);

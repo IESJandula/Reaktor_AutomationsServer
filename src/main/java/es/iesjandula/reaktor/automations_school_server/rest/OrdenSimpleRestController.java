@@ -13,7 +13,7 @@ import es.iesjandula.reaktor.automations_school_server.dtos.OrdenSimpleRequestDt
 import es.iesjandula.reaktor.automations_school_server.models.OrdenSimple;
 import es.iesjandula.reaktor.automations_school_server.repository.IOrdenSimpleRepository;
 import es.iesjandula.reaktor.automations_school_server.utils.Constants;
-import es.iesjandula.reaktor.automations_school_server.utils.SistemaVozException;
+import es.iesjandula.reaktor.automations_school_server.utils.AutomationSchoolServerException;
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequestMapping("/api/ordensimple")
@@ -33,13 +33,13 @@ public class OrdenSimpleRestController
             if (ordenSimple.getFecha() == null)
             {
                 log.error(Constants.ERR_SIMPLE_NULO_VACIO);
-                throw new SistemaVozException(Constants.ERR_SIMPLE_NULO_VACIO, Constants.ERR_SIMPLE_CODE);
+                throw new AutomationSchoolServerException(Constants.ERR_SIMPLE_NULO_VACIO, Constants.ERR_SIMPLE_CODE);
             }
             OrdenSimple nuevaOrden = this.ordenSimpleRepository.saveAndFlush(ordenSimple);
             log.info(Constants.ELEMENTO_AGREGADO); 
             return ResponseEntity.ok().body(nuevaOrden); 
         } 
-        catch (SistemaVozException exception) 
+        catch (AutomationSchoolServerException exception) 
         {
             log.error(exception.getMessage());
             return ResponseEntity.badRequest().body(exception);
@@ -58,13 +58,13 @@ public class OrdenSimpleRestController
             if (!this.ordenSimpleRepository.existsById(id)) 
             {
                 log.error(Constants.ERR_SIMPLE_NO_EXISTE);
-                throw new SistemaVozException(Constants.ERR_SIMPLE_CODE, Constants.ERR_SIMPLE_NO_EXISTE); 
+                throw new AutomationSchoolServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_SIMPLE_NO_EXISTE); 
             }
             this.ordenSimpleRepository.deleteById(id);
             log.info(Constants.ELEMENTO_ELIMINADO);
             return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
         } 
-        catch (SistemaVozException exception) 
+        catch (AutomationSchoolServerException exception) 
         {
             log.error(exception.getMessage());
             return ResponseEntity.badRequest().body(exception);

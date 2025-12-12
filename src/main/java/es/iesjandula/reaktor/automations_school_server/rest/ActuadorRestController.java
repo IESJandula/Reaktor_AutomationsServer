@@ -13,7 +13,7 @@ import es.iesjandula.reaktor.automations_school_server.dtos.ActuadorRequestDto;
 import es.iesjandula.reaktor.automations_school_server.models.Actuador;
 import es.iesjandula.reaktor.automations_school_server.repository.IActuadorRepository;
 import es.iesjandula.reaktor.automations_school_server.utils.Constants;
-import es.iesjandula.reaktor.automations_school_server.utils.SistemaVozException;
+import es.iesjandula.reaktor.automations_school_server.utils.AutomationSchoolServerException;
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequestMapping("/api/actuador")
@@ -30,12 +30,12 @@ public class ActuadorRestController
             if (actuadorRequestDto.getMac() == null || actuadorRequestDto.getMac().isEmpty()) 
             {
                 log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
-                throw new SistemaVozException(Constants.ERR_ACTUADOR_NULO_VACIO, Constants.ERR_ACTUADOR_CODE);
+                throw new AutomationSchoolServerException(Constants.ERR_ACTUADOR_NULO_VACIO, Constants.ERR_ACTUADOR_CODE);
             }
             if (this.actuadorRepository.existsById(actuadorRequestDto.getMac())) 
             {
                 log.error(Constants.ERR_ACTUADOR_EXISTE);
-                throw new SistemaVozException(Constants.ERR_ACTUADOR_EXISTE, Constants.ERR_ACTUADOR_CODE);
+                throw new AutomationSchoolServerException(Constants.ERR_ACTUADOR_EXISTE, Constants.ERR_ACTUADOR_CODE);
             }
             Actuador actuador = new Actuador();
             actuador.setMac(actuadorRequestDto.getMac());
@@ -44,7 +44,7 @@ public class ActuadorRestController
             log.info(Constants.ELEMENTO_AGREGADO);
             return ResponseEntity.ok().build();
         } 
-        catch (SistemaVozException exception) 
+        catch (AutomationSchoolServerException exception) 
         {
             log.error(exception.getMessage());
             return ResponseEntity.badRequest().body(exception);
@@ -63,13 +63,13 @@ public class ActuadorRestController
             if (!this.actuadorRepository.existsById(mac)) 
             {
                 log.error(Constants.ERR_ACTUADOR_NO_EXISTE);
-                throw new SistemaVozException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NO_EXISTE); 
+                throw new AutomationSchoolServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NO_EXISTE); 
             }
             this.actuadorRepository.deleteById(mac);
             log.info(Constants.ELEMENTO_ELIMINADO);
             return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
         } 
-        catch (SistemaVozException exception) 
+        catch (AutomationSchoolServerException exception) 
         {
             log.error(exception.getMessage());
             return ResponseEntity.badRequest().body(exception);
