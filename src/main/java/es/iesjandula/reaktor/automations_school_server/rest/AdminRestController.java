@@ -1,6 +1,5 @@
 package es.iesjandula.reaktor.automations_school_server.rest;
 
-import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.sun.org.apache.bcel.internal.classfile.Constant;
 
 import es.iesjandula.reaktor.automations_school_server.dtos.ActuadorRequestDto;
 import es.iesjandula.reaktor.automations_school_server.dtos.SensorBooleanoRequestDto;
@@ -29,8 +26,8 @@ import es.iesjandula.reaktor.automations_school_server.repository.IActuadorRepos
 import es.iesjandula.reaktor.automations_school_server.repository.ISensorBooleanoRepository;
 import es.iesjandula.reaktor.automations_school_server.repository.ISensorNumericoRpository;
 import es.iesjandula.reaktor.automations_school_server.repository.IUbicacionRepository;
-import es.iesjandula.reaktor.automations_school_server.utils.Constants;
 import es.iesjandula.reaktor.automations_school_server.utils.AutomationSchoolServerException;
+import es.iesjandula.reaktor.automations_school_server.utils.Constants;
 import es.iesjandula.reaktor.base.utils.BaseConstants;
 import lombok.extern.slf4j.Slf4j;
 
@@ -101,7 +98,7 @@ public class AdminRestController
 		}
 		catch (Exception exception) 
 		{
-			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_SENSOR_CODE);
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
 			return ResponseEntity.status(500).body(automationSchoolServerException); 
 		}
 		
@@ -110,14 +107,23 @@ public class AdminRestController
 	@GetMapping("/sensor/booleano")
 	public ResponseEntity<?> obtenerSensoresBooleanos()
 	{
-		List<SensorBooleanoResponseDto> lista = sensorBooleanoRepo
-				.findAll().stream().map(s -> new SensorBooleanoResponseDto(s.getMac(), 
-						s.getEstado(),
-						s.getValorActual(), 
-						s.getUltimaActualizacion().getTime(), 
-						s.getUbicacion().getNombreUbicacion())).toList();
 		
-		return ResponseEntity.ok(lista);
+		try
+		{
+			List<SensorBooleanoResponseDto> lista = sensorBooleanoRepo
+					.findAll().stream().map(s -> new SensorBooleanoResponseDto(s.getMac(), 
+							s.getEstado(),
+							s.getValorActual(), 
+							s.getUltimaActualizacion().getTime(), 
+							s.getUbicacion().getNombreUbicacion())).toList();
+			
+			return ResponseEntity.ok(lista);
+		}	
+		catch (Exception exception) 
+		{
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			return ResponseEntity.status(500).body(automationSchoolServerException); 
+		}
 	}
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
 	@DeleteMapping("/sensor/booleano/{mac}")
@@ -136,11 +142,14 @@ public class AdminRestController
 			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
 
 		} 
-		catch (AutomationSchoolServerException exception)
+		catch (AutomationSchoolServerException automationSchoolServerException)
 		{
-			log.error(exception.getMessage());
-			
-			return ResponseEntity.badRequest().body(exception);
+			return ResponseEntity.badRequest().body(automationSchoolServerException);
+		}
+		catch (Exception exception) 
+		{
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			return ResponseEntity.status(500).body(automationSchoolServerException); 
 		}
 	}
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
@@ -183,10 +192,15 @@ public class AdminRestController
 
 			return ResponseEntity.ok().build();
 
-		} catch (AutomationSchoolServerException e)
+		} 
+		catch (AutomationSchoolServerException automationSchoolServerException)
 		{
-			log.error(e.getMessage());
-			return ResponseEntity.badRequest().body(e);
+			return ResponseEntity.badRequest().body(automationSchoolServerException);
+		}
+		catch (Exception exception) 
+		{
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			return ResponseEntity.status(500).body(automationSchoolServerException); 
 		}
 	}
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
@@ -221,9 +235,15 @@ public class AdminRestController
 			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
 
-		} catch (AutomationSchoolServerException exception )
+		} 
+		catch (AutomationSchoolServerException automationSchoolServerException)
 		{
-			return ResponseEntity.badRequest().body(exception);
+			return ResponseEntity.badRequest().body(automationSchoolServerException);
+		}
+		catch (Exception exception) 
+		{
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			return ResponseEntity.status(500).body(automationSchoolServerException); 
 		}
 	}
 	
@@ -255,17 +275,31 @@ public class AdminRestController
             log.info(Constants.ELEMENTO_AGREGADO);
             return ResponseEntity.ok().build();
         } 
-        catch (AutomationSchoolServerException automationSchoolServerException) 
-        {
-            return ResponseEntity.badRequest().body(automationSchoolServerException);
-        }
+		catch (AutomationSchoolServerException automationSchoolServerException)
+		{
+			return ResponseEntity.badRequest().body(automationSchoolServerException);
+		}
+		catch (Exception exception) 
+		{
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
+			return ResponseEntity.status(500).body(automationSchoolServerException); 
+		}
     }
     
     @PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
     @GetMapping(value = "/actuador")
     public ResponseEntity<?> obtenerActuador() 
     {
-        return ResponseEntity.ok(this.actuadorRepository.buscarActuadores());
+    	try
+		{
+    		return ResponseEntity.ok(this.actuadorRepository.buscarActuadores());
+			
+		} 
+		catch (Exception exception) 
+		{
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
+			return ResponseEntity.status(500).body(automationSchoolServerException); 
+		}
     }
     
     @PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
@@ -283,17 +317,30 @@ public class AdminRestController
             log.info(Constants.ELEMENTO_ELIMINADO);
             return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
         } 
-        catch (AutomationSchoolServerException exception) 
-        {
-            log.error(exception.getMessage());
-            return ResponseEntity.badRequest().body(exception);
-        }
+		catch (AutomationSchoolServerException automationSchoolServerException)
+		{
+			return ResponseEntity.badRequest().body(automationSchoolServerException);
+		}
+		catch (Exception exception) 
+		{
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
+			return ResponseEntity.status(500).body(automationSchoolServerException); 
+		}
     }
     
     @PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
     @GetMapping(value = "/ubicacion")
     public ResponseEntity<?> obtenerUbicacion() 
     {
-        return ResponseEntity.ok(this.ubicacionRepository.buscarUbicaciones());
+    	try
+		{
+    		return ResponseEntity.ok(this.ubicacionRepository.buscarUbicaciones());
+			
+		} 
+		catch (Exception exception) 
+		{
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_UBICACION_CODE, Constants.ERR_CODE);
+			return ResponseEntity.status(500).body(automationSchoolServerException); 
+		}
     }
 }

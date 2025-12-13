@@ -5,6 +5,7 @@ public class Constants
 	public static final String ELEMENTO_AGREGADO = "Elemento agregado";
     public static final String ELEMENTO_MODIFICADO = "Elemento modificado correctamente.";
     public static final String ELEMENTO_ELIMINADO = "Elemento eliminado correctamente.";
+    public static final String ERR_CODE = "Error de servidor";
 	
 	public static final String ERR_ACTUADOR_CODE = "ACTUADOR_ERROR";
 	public static final String ERR_ACTUADOR_NULO_VACIO = "El nombre del actuador no puede ser nulo ni vacío.";
