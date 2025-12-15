@@ -1,5 +1,7 @@
 package es.iesjandula.reaktor.automations_school_server.dtos;
 
+import java.util.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,5 +36,25 @@ public class SensorNumericoResponseDto
     
     // Nombre de la ubicación asociada
     private String nombreUbicacion;
+    
+    public SensorNumericoResponseDto(
+            String mac,
+            String estado,
+            Double valorActual,
+            Double umbralMinimo,
+            Double umbralMaximo,
+            Date ultimaActualizacion,
+            String nombreUbicacion
+    ) {
+        this.mac = mac;
+        this.estado = estado;
+        this.valorActual = valorActual;
+        this.umbralMinimo = umbralMinimo;
+        this.umbralMaximo = umbralMaximo;
+        this.ultimaActualizacion = ultimaActualizacion != null
+                ? ultimaActualizacion.getTime()
+                : null;
+        this.nombreUbicacion = nombreUbicacion;
+    }
 }
 

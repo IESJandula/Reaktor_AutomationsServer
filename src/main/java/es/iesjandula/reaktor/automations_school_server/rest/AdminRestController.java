@@ -140,25 +140,30 @@ public class AdminRestController
 	@GetMapping("/sensor/booleano")
 	public ResponseEntity<?> obtenerSensoresBooleanos()
 	{
-
 		try
 		{
-			// Obtiene todos los sensores, los convierte a DTOs de respuesta y los recoge en
-			// una lista.
-			List<SensorBooleanoResponseDto> lista = sensorBooleanoRepo.findAll().stream()
-					.map(s -> new SensorBooleanoResponseDto(s.getMac(), s.getEstado(), s.getValorActual(),
-							s.getUltimaActualizacion().getTime(), // Convertir Date a timestamp (long)
-							s.getUbicacion().getNombreUbicacion()))
-					.toList();
+			List<SensorBooleanoResponseDto> sensores =
+					this.sensorBooleanoRepo.buscarSensoresBooleanos();
 
-			return ResponseEntity.ok(lista);
+			if (sensores.isEmpty())
+			{
+				throw new AutomationSchoolServerException(
+						Constants.ERR_SENSOR_CODE,
+						"No se encontraron sensores booleanos"
+				);
+			}
 
+			return ResponseEntity.ok(sensores);
+		}
+		catch (AutomationSchoolServerException automationSchoolServerException)
+		{
+			return ResponseEntity.badRequest().body(automationSchoolServerException);
 		}
 		catch (Exception exception)
 		{
-			// Manejo de errores inesperados
-			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			log.error("Excepción genérica al crear la incidencia", automationSchoolServerException );
+			AutomationSchoolServerException automationSchoolServerException =
+					new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica", automationSchoolServerException);
 			return ResponseEntity.status(500).body(automationSchoolServerException.getBodyExceptionMessage());
 		}
 	}
@@ -277,30 +282,30 @@ public class AdminRestController
 	@GetMapping("/sensor/numerico")
 	public ResponseEntity<?> obtenerSensoresNumericos()
 	{
-
 		try
 		{
-			// Obtiene todos los sensores, los mapea a DTOs de respuesta, incluyendo los
-			// umbrales.
-			List<SensorNumericoResponseDto> lista = sensorNumericoRepo.findAll().stream()
-					.map(s -> new SensorNumericoResponseDto(s.getMac(), s.getEstado(), s.getValorActual(),
-							s.getUmbralMinimo(),
-							s.getUmbralMaximo(), 
-							s.getUltimaActualizacion().getTime(), // Convertir
-																											// Date a
-																											// timestamp
-																								// (long)
-							s.getUbicacion().getNombreUbicacion()))
-					.toList();
+			List<SensorNumericoResponseDto> sensores =
+					this.sensorNumericoRepo.buscarSensoresNumericos();
 
-			return ResponseEntity.ok(lista);
+			if (sensores.isEmpty())
+			{
+				throw new AutomationSchoolServerException(
+						Constants.ERR_SENSOR_CODE,
+						"No se encontraron sensores numéricos"
+				);
+			}
 
+			return ResponseEntity.ok(sensores);
 		}
-
+		catch (AutomationSchoolServerException automationSchoolServerException)
+		{
+			return ResponseEntity.badRequest().body(automationSchoolServerException);
+		}
 		catch (Exception exception)
 		{
-			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			log.error("Excepción genérica al crear la incidencia", automationSchoolServerException );
+			AutomationSchoolServerException automationSchoolServerException =
+					new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica", automationSchoolServerException);
 			return ResponseEntity.status(500).body(automationSchoolServerException.getBodyExceptionMessage());
 		}
 	}

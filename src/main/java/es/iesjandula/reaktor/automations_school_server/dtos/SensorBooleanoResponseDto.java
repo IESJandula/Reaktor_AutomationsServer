@@ -1,5 +1,7 @@
 package es.iesjandula.reaktor.automations_school_server.dtos;
 
+import java.util.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,4 +30,20 @@ public class SensorBooleanoResponseDto
     
     // Nombre de la ubicación asociada
     private String nombreUbicacion;
+    
+    public SensorBooleanoResponseDto(
+            String mac,
+            String estado,
+            Boolean valorActual,
+            Date ultimaActualizacion,
+            String nombreUbicacion
+    ) {
+        this.mac = mac;
+        this.estado = estado;
+        this.valorActual = valorActual;
+        this.ultimaActualizacion = ultimaActualizacion != null
+                ? ultimaActualizacion.getTime()
+                : null;
+        this.nombreUbicacion = nombreUbicacion;
+    }
 }
