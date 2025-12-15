@@ -83,6 +83,7 @@ public class ActualizacionesSensoresRestController
 		catch (Exception exception) 
 		{
 			// Manejo de errores inesperados (sistema)
+			log.error("Internal Server Error");
 			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
 			return ResponseEntity.status(500).body(automationSchoolServerException); // Devuelve 500 Internal Server Error
 		}
@@ -134,6 +135,7 @@ public class ActualizacionesSensoresRestController
 		}
 		catch (Exception exception) 
 		{
+			log.error("Internal Server Error");
 			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
 			return ResponseEntity.status(500).body(automationSchoolServerException); 
 		}
