@@ -49,7 +49,7 @@ public class ActualizacionesSensoresRestController
 	 */
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')") // Solo usuarios con rol ADMINISTRADOR pueden actualizar
 	@PostMapping(value = "/sensor/booleano")
-	public ResponseEntity<?> actualizarSensorBooleano(@RequestHeader Boolean valorActual, String mac)
+	public ResponseEntity<?> actualizarSensorBooleano(@RequestHeader(value="valorActual") Boolean valorActual, @RequestHeader(value="mac") String mac)
 	{
 		try
 		{
@@ -103,7 +103,7 @@ public class ActualizacionesSensoresRestController
 	 */
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')") // Solo usuarios con rol ADMINISTRADOR pueden actualizar
 	@PostMapping(value = "/sensor/numerico")
-	public ResponseEntity<?> actualizarSensorNumerico(@RequestHeader Double valorActual, String mac)
+	public ResponseEntity<?> actualizarSensorNumerico(@RequestHeader(value="valorActual") Double valorActual, @RequestHeader(value="mac") String mac)
 	{
 		try
 		{
