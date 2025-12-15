@@ -122,11 +122,10 @@ public class AdminRestController
 		catch (Exception exception)
 		{
 			// Manejo de errores inesperados del sistema
-			log.error("Internal Server Error");
-			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(
-					Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			return ResponseEntity.status(500).body(automationSchoolServerException); // Devuelve 500 Internal Server
-																						// Error
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", automationSchoolServerException );
+			return ResponseEntity.status(500).body(automationSchoolServerException.getBodyExceptionMessage());
+																						
 		}
 
 	}
@@ -153,23 +152,14 @@ public class AdminRestController
 					.toList();
 
 			return ResponseEntity.ok(lista);
-			/*
-			 * Cuando Manu corriga el codigo se podra lanzar un
-			 * "throw new AutomationSchoolServerException" y se podra descomentar el catch
-			 * (BORRAR ESTE COMENTARIO)
-			 */
+
 		}
-//        catch (AutomationSchoolServerException automationSchoolServerException)
-//        {
-//            return ResponseEntity.badRequest().body(automationSchoolServerException);
-//        }
 		catch (Exception exception)
 		{
 			// Manejo de errores inesperados
-			log.error("Internal Server Error");
-			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(
-					Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			return ResponseEntity.status(500).body(automationSchoolServerException);
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", automationSchoolServerException );
+			return ResponseEntity.status(500).body(automationSchoolServerException.getBodyExceptionMessage());
 		}
 	}
 
@@ -204,10 +194,9 @@ public class AdminRestController
 		} 
 		catch (Exception exception)
 		{
-			log.error("Internal Server Error");
-			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(
-					Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			return ResponseEntity.status(500).body(automationSchoolServerException);
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", automationSchoolServerException );
+			return ResponseEntity.status(500).body(automationSchoolServerException.getBodyExceptionMessage());
 		}
 	}
 
@@ -273,10 +262,9 @@ public class AdminRestController
 		} 
 		catch (Exception exception)
 		{
-			log.error("Internal Server Error");
-			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(
-					Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			return ResponseEntity.status(500).body(automationSchoolServerException);
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", automationSchoolServerException );
+			return ResponseEntity.status(500).body(automationSchoolServerException.getBodyExceptionMessage());
 		}
 	}
 
@@ -296,30 +284,24 @@ public class AdminRestController
 			// umbrales.
 			List<SensorNumericoResponseDto> lista = sensorNumericoRepo.findAll().stream()
 					.map(s -> new SensorNumericoResponseDto(s.getMac(), s.getEstado(), s.getValorActual(),
-							s.getUmbralMinimo(), s.getUmbralMaximo(), s.getUltimaActualizacion().getTime(), // Convertir
+							s.getUmbralMinimo(),
+							s.getUmbralMaximo(), 
+							s.getUltimaActualizacion().getTime(), // Convertir
 																											// Date a
 																											// timestamp
-																											// (long)
+																								// (long)
 							s.getUbicacion().getNombreUbicacion()))
 					.toList();
 
 			return ResponseEntity.ok(lista);
-			/*
-			 * Cuando Manu corriga el codigo se podra lanzar un
-			 * "throw new AutomationSchoolServerException" y se podra descomentar el catch
-			 * (BORRAR ESTE COMENTARIO)
-			 */
+
 		}
-//      catch (AutomationSchoolServerException automationSchoolServerException)
-//      {
-//          return ResponseEntity.badRequest().body(automationSchoolServerException);
-//      }
+
 		catch (Exception exception)
 		{
-			log.error("Internal Server Error");
-			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(
-					Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			return ResponseEntity.status(500).body(automationSchoolServerException);
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", automationSchoolServerException );
+			return ResponseEntity.status(500).body(automationSchoolServerException.getBodyExceptionMessage());
 		}
 	}
 
@@ -354,10 +336,9 @@ public class AdminRestController
 		} 
 		catch (Exception exception)
 		{
-			log.error("Internal Server Error");
-			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(
-					Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			return ResponseEntity.status(500).body(automationSchoolServerException);
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", automationSchoolServerException );
+			return ResponseEntity.status(500).body(automationSchoolServerException.getBodyExceptionMessage());
 		}
 	}
 
@@ -411,10 +392,9 @@ public class AdminRestController
 		} 
 		catch (Exception exception)
 		{
-			log.error("Internal Server Error");
-			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(
-					Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
-			return ResponseEntity.status(500).body(automationSchoolServerException);
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", automationSchoolServerException );
+			return ResponseEntity.status(500).body(automationSchoolServerException.getBodyExceptionMessage());
 		}
 	}
 
@@ -468,8 +448,8 @@ public class AdminRestController
 		catch (Exception exception)
 		{
 			// Captura excepciones inesperadas y devuelve HTTP 500 con detalle
-			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(
-					Constants.ERR_ACTUADOR_CODE, "Error interno del servidor", exception);
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", automationSchoolServerException );
 			return ResponseEntity.status(500).body(automationSchoolServerException.getBodyExceptionMessage());
 		}
 	}
@@ -505,9 +485,9 @@ public class AdminRestController
 		catch (Exception exception)
 		{
 			log.error("Internal Server Error");
-			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(
-					Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
-			return ResponseEntity.status(500).body(automationSchoolServerException);
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", automationSchoolServerException );
+			return ResponseEntity.status(500).body(automationSchoolServerException.getBodyExceptionMessage());
 		}
 	}
 
@@ -544,10 +524,9 @@ public class AdminRestController
 		} 
 		catch (Exception exception)
 		{
-			log.error("Internal Server Error");
-			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(
-					Constants.ERR_UBICACION_CODE, Constants.ERR_CODE);
-			return ResponseEntity.status(500).body(automationSchoolServerException);
+			AutomationSchoolServerException automationSchoolServerException = new AutomationSchoolServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", automationSchoolServerException );
+			return ResponseEntity.status(500).body(automationSchoolServerException.getBodyExceptionMessage());
 		}
 	}
 }
