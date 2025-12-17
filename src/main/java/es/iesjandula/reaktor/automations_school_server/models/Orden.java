@@ -10,6 +10,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -54,4 +56,12 @@ public abstract class Orden
      */
     @OneToMany(mappedBy = "orden")
     private List<Validacion> validaciones;
+    
+    @ManyToOne
+    @JoinColumn(name = "email")
+    private Usuario usuario;
+    
+
+    @OneToMany(mappedBy = "orden")
+    private List<Comando> comandos;
 }

@@ -5,7 +5,9 @@ import java.util.List;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -14,6 +16,8 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name="actuador")
 public class Actuador extends Dispositivo
@@ -25,4 +29,10 @@ public class Actuador extends Dispositivo
      */
     @OneToMany(mappedBy = "actuador")
     private List<Accion> acciones;
+    
+    @OneToMany(mappedBy = "actuador")
+    private List<ComandoActuador> listaComandos;
+
+
+
 }
