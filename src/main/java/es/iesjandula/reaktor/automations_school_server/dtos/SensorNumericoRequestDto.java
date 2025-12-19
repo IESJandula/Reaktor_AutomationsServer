@@ -20,9 +20,6 @@ public class SensorNumericoRequestDto
     // Estado del sensor (ej. activo/inactivo)
     private String estado;
     
-    // Valor actual del sensor
-    private Double valorActual;
-    
     // Umbral mínimo permitido
     private Double umbralMinimo;
     

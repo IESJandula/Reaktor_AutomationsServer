@@ -252,7 +252,6 @@ public class AdminRestController
 			SensorNumerico sensor = new SensorNumerico();
 			sensor.setMac(sensorNumericoDto.getMac());
 			sensor.setEstado(sensorNumericoDto.getEstado());
-			sensor.setValorActual(sensorNumericoDto.getValorActual());
 			sensor.setUmbralMinimo(sensorNumericoDto.getUmbralMinimo());
 			sensor.setUmbralMaximo(sensorNumericoDto.getUmbralMaximo());
 			sensor.setUbicacion(ubicacion);
