@@ -10,8 +10,8 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
-	<artifactId>Reaktor_AutomationsSchoolServer</artifactId>
-	<name>Reaktor_AutomationsSchoolServer</name>
+	<artifactId>Reaktor_AutomationsServer</artifactId>
+	<name>Reaktor_AutomationsServer</name>
 
 	<dependencies>
 		<dependency>
@@ -69,7 +69,7 @@
 						<configuration>
 							<classifier>jar-with-dependencies</classifier>
 							<mainClass>
-								es.iesjandula.reaktor.automations_school_server.ReaktorSchoolAutomationServerApplication</mainClass>
+								es.iesjandula.reaktor.automations_school_server.ReaktorAutomationsServerApplication</mainClass>
 						</configuration>
 					</execution>
 				</executions>
