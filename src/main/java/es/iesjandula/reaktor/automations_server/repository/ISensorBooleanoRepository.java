@@ -17,7 +17,7 @@ public interface ISensorBooleanoRepository extends JpaRepository<SensorBooleano,
 	  * Utiliza un constructor de DTO para seleccionar solo los campos necesarios y evitar cargar entidades completas.
 	  */
 	@Query("""
-		    SELECT new es.iesjandula.reaktor.automations_school_server.dtos.SensorBooleanoResponseDto(
+		    SELECT new es.iesjandula.reaktor.automations_server.dtos.SensorBooleanoResponseDto(
 		        s.mac,
 		        s.estado,
 		        s.valorActual,

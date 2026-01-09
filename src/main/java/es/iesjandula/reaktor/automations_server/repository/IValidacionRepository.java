@@ -17,7 +17,7 @@ public interface IValidacionRepository extends JpaRepository<Validacion, Long>
     /**
      * Devuelve una lista de validaciones usando un DTO.
      */
-    @Query("SELECT new es.iesjandula.reaktor.automations_school_server.dtos.ValidacionResponseDto(" +
+    @Query("SELECT new es.iesjandula.reaktor.automations_server.dtos.ValidacionResponseDto(" +
            "v.id, v.score, v.resultado, v.motivoRechazo, v.orden.id) " +
            "FROM Validacion v")
     List<ValidacionResponseDto> buscarValidaciones();

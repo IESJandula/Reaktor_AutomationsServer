@@ -16,7 +16,7 @@ public interface IUbicacionRepository extends JpaRepository<Ubicacion, String>
 	/**
 	 * Devuelve una lista de ubicaciones usando un DTO.
 	 */
-	@Query("SELECT new es.iesjandula.reaktor.automations_school_server.dtos.UbicacionResponseDto(u.nombreUbicacion) "
+	@Query("SELECT new es.iesjandula.reaktor.automations_server.dtos.UbicacionResponseDto(u.nombreUbicacion) "
 			+ "FROM Ubicacion u")
 	List<UbicacionResponseDto> buscarUbicaciones();
 }

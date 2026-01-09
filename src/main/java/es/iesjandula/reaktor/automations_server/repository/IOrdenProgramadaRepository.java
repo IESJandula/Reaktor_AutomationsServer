@@ -16,7 +16,7 @@ public interface IOrdenProgramadaRepository extends JpaRepository<OrdenProgramad
     /**
      * Devuelve una lista de órdenes programadas usando un DTO.
      */
-    @Query("SELECT new es.iesjandula.reaktor.automations_school_server.dtos.OrdenProgramadaResponseDto(" +
+    @Query("SELECT new es.iesjandula.reaktor.automations_server.dtos.OrdenProgramadaResponseDto(" +
             "o.id, o.fecha, o.frase, o.fechaProgramada, o.repeticion) " +
             "FROM OrdenProgramada o")
      List<OrdenProgramadaResponseDto> buscarOrdenesProgramadas();

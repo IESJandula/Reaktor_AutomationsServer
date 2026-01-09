@@ -18,7 +18,7 @@ public interface ISensorNumericoRpository extends JpaRepository<SensorNumerico, 
 	 * directamente a objetos DTO mediante su constructor.
 	 */ 
 	@Query("""
-		    SELECT new es.iesjandula.reaktor.automations_school_server.dtos.SensorNumericoResponseDto(
+		    SELECT new es.iesjandula.reaktor.automations_server.dtos.SensorNumericoResponseDto(
 		        s.mac,
 		        s.estado,
 		        s.valorActual,
