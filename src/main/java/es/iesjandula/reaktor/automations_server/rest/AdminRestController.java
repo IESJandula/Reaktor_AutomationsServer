@@ -434,7 +434,7 @@ public class AdminRestController
 							"Existe un actuador sin dirección MAC");
 				}
 				// Ubicación no puede ser nula o vacía
-				if (a.getUbicacionNombre() == null || a.getUbicacionNombre().isEmpty())
+				if (a.getNombreUbicacion() == null || a.getNombreUbicacion().isEmpty())
 				{
 					throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE,
 							"Existe un actuador sin ubicación asignada");

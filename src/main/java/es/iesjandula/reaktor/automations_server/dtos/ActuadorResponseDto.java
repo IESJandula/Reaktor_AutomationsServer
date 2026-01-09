@@ -21,6 +21,6 @@ public class ActuadorResponseDto
     private String estado;
     
     // Nombre de la ubicación asociada
-    private String ubicacionNombre;
+    private String nombreUbicacion;
 }
 

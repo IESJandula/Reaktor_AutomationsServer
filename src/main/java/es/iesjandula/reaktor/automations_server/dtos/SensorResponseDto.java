@@ -21,7 +21,7 @@ public class SensorResponseDto
     private String estado;
     
     // Nombre de la ubicación asociada
-    private String ubicacionNombre;
+    private String nombreUbicacion;
     
     // Valor actual del sensor como cadena
     private String valorActual;
