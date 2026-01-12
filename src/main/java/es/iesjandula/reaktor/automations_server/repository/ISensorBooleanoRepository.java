@@ -11,22 +11,39 @@ import es.iesjandula.reaktor.automations_server.models.SensorBooleano;
 /**
  * Repositorio JPA para la entidad SensorBooleano.
  */
-public interface ISensorBooleanoRepository extends JpaRepository<SensorBooleano, String>
-{
-	 /* Consulta personalizada definida mediante para recuperar datos específicos.
-	  * Utiliza un constructor de DTO para seleccionar solo los campos necesarios y evitar cargar entidades completas.
-	  */
+public interface ISensorBooleanoRepository extends JpaRepository<SensorBooleano, String> {
+	/*
+	 * Consulta personalizada definida mediante para recuperar datos específicos.
+	 * Utiliza un constructor de DTO para seleccionar solo los campos necesarios y
+	 * evitar cargar entidades completas.
+	 */
 	@Query("""
-		    SELECT new es.iesjandula.reaktor.automations_server.dtos.SensorBooleanoResponseDto(
-		        s.mac,
-		        s.estado,
-		        s.valorActual,
-		        s.ultimaActualizacion,
-		        s.ubicacion.nombreUbicacion,
-		        s.umbralMinimo,
-		        s.umbralMaximo
-		    )
-		    FROM SensorBooleano s
-		""")
-		List<SensorBooleanoResponseDto> buscarSensoresBooleanos();
+			    SELECT new es.iesjandula.reaktor.automations_server.dtos.SensorBooleanoResponseDto(
+			        s.mac,
+			        s.estado,
+			        s.valorActual,
+			        s.ultimaActualizacion,
+			        s.ubicacion.nombreUbicacion,
+			        s.umbralMinimo,
+			        s.umbralMaximo
+			    )
+			    FROM SensorBooleano s
+			""")
+	List<SensorBooleanoResponseDto> buscarSensoresBooleanos();
+
+//	@Query("""
+//			    SELECT new es.iesjandula.reaktor.automations_server.dtos.SensorBooleanoResponseDto(
+//			        s.mac,
+//			        s.estado,
+//			        s.valorActual,
+//			        s.ubicacion.nombreUbicacion,
+//			        s.ultimaActualizacion,
+//			        s.umbralMinimo,
+//			        s.umbralMaximo
+//			    )
+//			    FROM SensorBooleano s
+//			    WHERE s.ubicacion.nombreUbicacion = :nombreUbicacion
+//			""")
+//	List<SensorBooleanoResponseDto> buscarSensoresBooleanosPorUbicacion(@Param("nombreUbicacion") String nombreUbicacion);
+
 }

@@ -11,13 +11,24 @@ import es.iesjandula.reaktor.automations_server.models.Actuador;
 /**
  * Repositorio JPA para la entidad Actuador.
  */
-public interface IActuadorRepository extends JpaRepository<Actuador, String>
-{
+public interface IActuadorRepository extends JpaRepository<Actuador, String> {
 	/**
-	 * Devuelve una lista de actuadores usando un DTO
-	 * con su MAC, estado y ubicación.
+	 * Devuelve una lista de actuadores usando un DTO con su MAC, estado y
+	 * ubicación.
 	 */
 	@Query("SELECT new es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto("
 			+ "a.mac, a.estado, a.ubicacion.nombreUbicacion) " + "FROM Actuador a")
 	List<ActuadorResponseDto> buscarActuadores();
+
+//	@Query("""
+//			    SELECT new es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto(
+//			        a.mac,
+//			        a.estado,
+//			        a.ubicacion.nombreUbicacion
+//			    )
+//			    FROM Actuador a
+//			    WHERE a.ubicacion.nombreUbicacion = :nombreUbicacion
+//			""")
+//	List<ActuadorResponseDto> buscarActuadoresPorUbicacion(@Param("nombreUbicacion") String nombreUbicacion);
+
 }

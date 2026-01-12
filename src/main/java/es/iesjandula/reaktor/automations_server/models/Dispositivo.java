@@ -23,8 +23,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @Table(name="dispositivo")
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public abstract class Dispositivo
+@Inheritance(strategy = InheritanceType.JOINED)
+public class Dispositivo
 {
     /** Clave primaria (Primary Key) que utiliza la dirección MAC del dispositivo. */
     @Id
@@ -43,5 +43,4 @@ public abstract class Dispositivo
     @ManyToOne
     @JoinColumn(name = "ubicacion_nombre")
     private Ubicacion ubicacion;
-    
 }

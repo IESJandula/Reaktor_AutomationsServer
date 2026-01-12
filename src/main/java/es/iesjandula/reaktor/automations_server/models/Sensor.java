@@ -20,7 +20,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @Table(name="sensor")
-public abstract class Sensor extends Dispositivo
+public class Sensor extends Dispositivo
 {
 
     /** Fecha y hora de la última vez que el sensor envió datos o se actualizó su estado.
