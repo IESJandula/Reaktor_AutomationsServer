@@ -25,6 +25,7 @@ import es.iesjandula.reaktor.automations_server.models.SensorBooleano;
 import es.iesjandula.reaktor.automations_server.models.SensorNumerico;
 import es.iesjandula.reaktor.automations_server.models.Ubicacion;
 import es.iesjandula.reaktor.automations_server.repository.IActuadorRepository;
+import es.iesjandula.reaktor.automations_server.repository.IDispositivoRepository;
 import es.iesjandula.reaktor.automations_server.repository.ISensorBooleanoRepository;
 import es.iesjandula.reaktor.automations_server.repository.ISensorNumericoRpository;
 import es.iesjandula.reaktor.automations_server.repository.IUbicacionRepository;
@@ -44,6 +45,9 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminRestController
 {
 
+	@Autowired
+	private IDispositivoRepository dispositivoRepository;
+	
 	@Autowired
 	private ISensorBooleanoRepository sensorBooleanoRepo;
 
@@ -81,11 +85,28 @@ public class AdminRestController
 				throw new AutomationsServerException(Constants.ERR_SENSOR_NULO_VACIO, Constants.ERR_SENSOR_CODE);
 			}
 
-			// Validación: El sensor no debe existir previamente
+			// Si el dispositivo existe lo modificamos
 			if (sensorBooleanoRepo.existsById(sensorBooleanoDto.getMac()))
 			{
-				log.error(Constants.ERR_SENSOR_EXISTE);
-				throw new AutomationsServerException(Constants.ERR_SENSOR_EXISTE, Constants.ERR_SENSOR_CODE);
+				Ubicacion ubicacion = new Ubicacion();
+				SensorBooleano sensor = new SensorBooleano();
+				sensor.setEstado(sensorBooleanoDto.getEstado());
+				sensor.setUmbralMaximo(sensorBooleanoDto.getUmbralMaximo());
+				sensor.setUmbralMinimo(sensorBooleanoDto.getUmbralMinimo());
+				sensor.setUbicacion(ubicacion);
+			}
+			
+			String mac = sensorBooleanoDto.getMac();
+
+			// Si existe como actuador → borra
+			if (actuadorRepository.existsById(mac)) 
+			{
+			    actuadorRepository.deleteById(mac);
+			}
+			// Si existe como sensor numérico → borra
+			if (sensorNumericoRepo.existsById(mac)) 
+			{
+			    sensorNumericoRepo.deleteById(mac);
 			}
 
 			// Validación: Nombre de Ubicación no nulo o vacío
@@ -230,10 +251,28 @@ public class AdminRestController
 				throw new AutomationsServerException(Constants.ERR_SENSOR_NULO_VACIO, Constants.ERR_SENSOR_CODE);
 			}
 
+			// Si el dispositivo existe lo modificamos
 			if (sensorNumericoRepo.existsById(sensorNumericoDto.getMac()))
 			{
-				log.error(Constants.ERR_SENSOR_EXISTE);
-				throw new AutomationsServerException(Constants.ERR_SENSOR_EXISTE, Constants.ERR_SENSOR_CODE);
+				Ubicacion ubicacion = new Ubicacion();
+				SensorNumerico sensor = new SensorNumerico();
+				sensor.setEstado(sensorNumericoDto.getEstado());
+				sensor.setUmbralMaximo(sensorNumericoDto.getUmbralMaximo());
+				sensor.setUmbralMinimo(sensorNumericoDto.getUmbralMinimo());
+				sensor.setUbicacion(ubicacion);
+			}
+			
+			String mac = sensorNumericoDto.getMac();
+
+			// Si existe como actuador → borra
+			if (actuadorRepository.existsById(mac)) 
+			{
+			    actuadorRepository.deleteById(mac);
+			}
+			// Si existe como sensor booleano → borra
+			if (sensorBooleanoRepo.existsById(mac)) 
+			{
+			    sensorBooleanoRepo.deleteById(mac);
 			}
 
 			if (sensorNumericoDto.getNombreUbicacion() == null || sensorNumericoDto.getNombreUbicacion().isEmpty())
@@ -370,10 +409,27 @@ public class AdminRestController
 				throw new AutomationsServerException(Constants.ERR_ACTUADOR_NULO_VACIO,
 						Constants.ERR_ACTUADOR_CODE);
 			}
-			if (this.actuadorRepository.existsById(actuadorRequestDto.getMac()))
+			
+			// Si el dispositivo existe lo modificamos
+			if (actuadorRepository.existsById(actuadorRequestDto.getMac()))
 			{
-				log.error(Constants.ERR_ACTUADOR_EXISTE);
-				throw new AutomationsServerException(Constants.ERR_ACTUADOR_EXISTE, Constants.ERR_ACTUADOR_CODE);
+				Ubicacion ubicacion = new Ubicacion();
+				Actuador actuador = new Actuador();
+				actuador.setEstado(actuadorRequestDto.getEstado());
+				actuador.setUbicacion(ubicacion);
+			}
+			
+			
+			String mac = actuadorRequestDto.getMac();
+			
+			// Si existe como sensor booleano → borra
+			if (sensorBooleanoRepo.existsById(mac)) {
+			    sensorBooleanoRepo.deleteById(mac);
+			}
+
+			// Si existe como sensor numérico → borra
+			if (sensorNumericoRepo.existsById(mac)) {
+			    sensorNumericoRepo.deleteById(mac);
 			}
 
 			// Búsqueda de Ubicación
