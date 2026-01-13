@@ -1,6 +1,7 @@
 package es.iesjandula.reaktor.automations_server.repository;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,15 +21,11 @@ public interface IActuadorRepository extends JpaRepository<Actuador, String> {
 			+ "a.mac, a.estado, a.ubicacion.nombreUbicacion) " + "FROM Actuador a")
 	List<ActuadorResponseDto> buscarActuadores();
 
-//	@Query("""
-//			    SELECT new es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto(
-//			        a.mac,
-//			        a.estado,
-//			        a.ubicacion.nombreUbicacion
-//			    )
-//			    FROM Actuador a
-//			    WHERE a.ubicacion.nombreUbicacion = :nombreUbicacion
-//			""")
-//	List<ActuadorResponseDto> buscarActuadoresPorUbicacion(@Param("nombreUbicacion") String nombreUbicacion);
-
+	@Query("""
+			    SELECT a.ubicacion.nombreUbicacion, 
+			           new es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto(a.mac, a.estado, a.ubicacion.nombreUbicacion)
+			    FROM Actuador a
+			    GROUP BY a.ubicacion.nombreUbicacion
+			""")
+	Map<String, List<ActuadorResponseDto>> buscarActuadoresPorUbicacion();
 }

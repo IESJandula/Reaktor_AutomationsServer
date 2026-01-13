@@ -1,10 +1,12 @@
 package es.iesjandula.reaktor.automations_server.repository;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto;
 import es.iesjandula.reaktor.automations_server.dtos.SensorNumericoResponseDto;
 import es.iesjandula.reaktor.automations_server.models.SensorNumerico;
 
@@ -30,19 +32,19 @@ public interface ISensorNumericoRpository extends JpaRepository<SensorNumerico, 
 			""")
 	List<SensorNumericoResponseDto> buscarSensoresNumericos();
 
-//	@Query("""
-//			    SELECT new es.iesjandula.reaktor.automations_server.dtos.SensorNumericoResponseDto(
-//			        s.mac,
-//			        s.estado,
-//			        s.ubicacion.nombreUbicacion,
-//			        s.ultimaActualizacion,
-//			        s.valorActual,
-//			        s.umbralMinimo,
-//			        s.umbralMaximo
-//			    )
-//			    FROM SensorNumerico s
-//			    WHERE s.ubicacion.nombreUbicacion = :nombreUbicacion
-//			""")
-//	List<SensorNumericoResponseDto> buscarSensoresNumericosPorUbicacion(@Param("nombreUbicacion") String nombreUbicacion);
+	@Query("""
+			    SELECT s.ubicacion.nombreUbicacion, 
+			           new es.iesjandula.reaktor.automations_server.dtos.SensorNumericoResponseDto(s.mac,
+			        s.estado,
+			        s.ubicacion.nombreUbicacion,
+			        s.ultimaActualizacion,
+			        s.valorActual,
+			        s.umbralMinimo,
+			        s.umbralMaximo
+			    )
+			    FROM SensorNumerico s
+			    GROUP BY s.ubicacion.nombreUbicacion
+			""")
+	Map<String, List<SensorNumericoResponseDto>> buscarSensoresNumericosPorUbicacion();
 
 }

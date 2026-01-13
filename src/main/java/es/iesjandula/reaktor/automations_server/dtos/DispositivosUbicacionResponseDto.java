@@ -1,6 +1,7 @@
 package es.iesjandula.reaktor.automations_server.dtos;
 
 import java.util.List;
+import java.util.Map;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,8 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class DispositivosUbicacionResponseDto
 {
-    private String nombreUbicacion;
-    private List<ActuadorResponseDto> actuadores;
-    private List<SensorNumericoResponseDto> sensoresNumericos;
-    private List<SensorBooleanoResponseDto> sensoresBooleanos;
+    private Map<String, List<ActuadorResponseDto>> actuadores;
+    private Map<String, List<SensorNumericoResponseDto>> sensoresNumericos;
+    private Map<String, List<SensorBooleanoResponseDto>> sensoresBooleanos;
 }

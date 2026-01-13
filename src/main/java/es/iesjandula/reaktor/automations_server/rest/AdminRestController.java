@@ -25,7 +25,6 @@ import es.iesjandula.reaktor.automations_server.models.SensorBooleano;
 import es.iesjandula.reaktor.automations_server.models.SensorNumerico;
 import es.iesjandula.reaktor.automations_server.models.Ubicacion;
 import es.iesjandula.reaktor.automations_server.repository.IActuadorRepository;
-import es.iesjandula.reaktor.automations_server.repository.IDispositivoRepository;
 import es.iesjandula.reaktor.automations_server.repository.ISensorBooleanoRepository;
 import es.iesjandula.reaktor.automations_server.repository.ISensorNumericoRpository;
 import es.iesjandula.reaktor.automations_server.repository.IUbicacionRepository;
@@ -44,9 +43,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/automations/admin")
 public class AdminRestController
 {
-
-	@Autowired
-	private IDispositivoRepository dispositivoRepository;
 	
 	@Autowired
 	private ISensorBooleanoRepository sensorBooleanoRepo;
