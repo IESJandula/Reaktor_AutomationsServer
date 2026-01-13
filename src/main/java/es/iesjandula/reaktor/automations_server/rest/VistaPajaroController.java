@@ -50,6 +50,8 @@ public class VistaPajaroController {
 			Map<String, List<SensorNumericoResponseDto>> sensoresNumericos = this.sensorNumericoRepo.buscarSensoresNumericosPorUbicacion();
 
 			Map<String, List<SensorBooleanoResponseDto>> sensoresBooleanos = this.sensorBooleanoRepo.buscarSensoresBooleanosPorUbicacion();
+			
+			
 
 			DispositivosUbicacionResponseDto dispositivosUbicacionResponseDto = new DispositivosUbicacionResponseDto(actuadores, sensoresNumericos, sensoresBooleanos);
 
