@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import es.iesjandula.reaktor.automations_server.dtos.SensorNumericoResponseDto;
 import es.iesjandula.reaktor.automations_server.models.SensorNumerico;
@@ -42,9 +41,9 @@ public interface ISensorNumericoRpository extends JpaRepository<SensorNumerico, 
 		        s.umbralMaximo
 		    )
 		    FROM SensorNumerico s
-		    WHERE s.ubicacion.nombreUbicacion = :nombreUbicacion
+		    WHERE s.ubicacion.nombreUbicacion
 		""")
-		List<SensorNumericoResponseDto> buscarSensoresNumericosPorUbicacion(@Param("nombreUbicacion") String nombreUbicacion);
+		List<SensorNumericoResponseDto> buscarSensoresNumericosPorUbicacion();
 
 
 }

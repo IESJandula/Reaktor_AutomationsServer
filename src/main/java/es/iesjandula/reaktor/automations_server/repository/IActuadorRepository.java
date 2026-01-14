@@ -28,7 +28,7 @@ public interface IActuadorRepository extends JpaRepository<Actuador, String> {
 		        a.ubicacion.nombreUbicacion
 		    )
 		    FROM Actuador a
-		    WHERE a.ubicacion.nombreUbicacion = :nombreUbicacion
+		    WHERE a.ubicacion.nombreUbicacion
 		""")
-		List<ActuadorResponseDto> buscarActuadoresPorUbicacion(@Param("nombreUbicacion") String nombreUbicacion);
+		List<ActuadorResponseDto> buscarActuadoresPorUbicacion();
 }

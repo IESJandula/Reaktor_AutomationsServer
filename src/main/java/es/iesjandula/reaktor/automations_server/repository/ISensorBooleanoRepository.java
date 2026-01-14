@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import es.iesjandula.reaktor.automations_server.dtos.SensorBooleanoResponseDto;
 import es.iesjandula.reaktor.automations_server.models.SensorBooleano;
@@ -43,9 +42,9 @@ public interface ISensorBooleanoRepository extends JpaRepository<SensorBooleano,
 		        s.umbralMaximo
 		    )
 		    FROM SensorBooleano s
-		    WHERE s.ubicacion.nombreUbicacion = :nombreUbicacion
+		    WHERE s.ubicacion.nombreUbicacion
 		""")
-		List<SensorBooleanoResponseDto> buscarSensoresBooleanosPorUbicacion(@Param("nombreUbicacion") String nombreUbicacion);
+		List<SensorBooleanoResponseDto> buscarSensoresBooleanosPorUbicacion();
 
 
 }
