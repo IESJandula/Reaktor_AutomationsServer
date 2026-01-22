@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto;
 import es.iesjandula.reaktor.automations_server.models.Actuador;
@@ -28,7 +27,7 @@ public interface IActuadorRepository extends JpaRepository<Actuador, String> {
 		        a.ubicacion.nombreUbicacion
 		    )
 		    FROM Actuador a
-		    WHERE a.ubicacion.nombreUbicacion
 		""")
 		List<ActuadorResponseDto> buscarActuadoresPorUbicacion();
+
 }

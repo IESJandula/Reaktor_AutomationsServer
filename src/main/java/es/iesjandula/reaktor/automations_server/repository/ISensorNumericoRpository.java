@@ -34,16 +34,16 @@ public interface ISensorNumericoRpository extends JpaRepository<SensorNumerico, 
 		    SELECT new es.iesjandula.reaktor.automations_server.dtos.SensorNumericoResponseDto(
 		        s.mac,
 		        s.estado,
-		        s.ubicacion.nombreUbicacion,
-		        s.ultimaActualizacion,
 		        s.valorActual,
 		        s.umbralMinimo,
-		        s.umbralMaximo
+		        s.umbralMaximo,
+		        s.ultimaActualizacion,
+		        s.ubicacion.nombreUbicacion
 		    )
 		    FROM SensorNumerico s
-		    WHERE s.ubicacion.nombreUbicacion
 		""")
 		List<SensorNumericoResponseDto> buscarSensoresNumericosPorUbicacion();
+
 
 
 }

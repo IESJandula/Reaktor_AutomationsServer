@@ -58,8 +58,7 @@ public class AutomationsServerException extends Exception
      * Devuelve el código de la excepción como Integer.
      * 
      */
-	public Integer getCodigo()
-	{
-		return this.getCodigo(); 
+	public Integer getCodigo() {
+	    return this.codigo == null ? null : Integer.valueOf(this.codigo);
 	}
 }

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,8 +40,8 @@ public class VistaPajaroController
 	@Autowired
 	private ISensorBooleanoRepository sensorBooleanoRepo;
 
-	@PreAuthorize("hasRole('" + BaseConstants.ROLE_PROFESOR + "')")
-	@GetMapping("/ubicacion/")
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/ubicacion/", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> obtenerDispositivosUbicacion()
 	{
 		try
