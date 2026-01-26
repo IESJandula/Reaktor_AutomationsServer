@@ -103,7 +103,7 @@
 						<configuration>
 							<classifier>jar-with-dependencies</classifier>
 							<mainClass>
-								es.iesjandula.reaktor.automations_school_server.ReaktorAutomationsServerApplication</mainClass>
+								es.iesjandula.reaktor.automations_server.ReaktorAutomationsServerApplication</mainClass>
 						</configuration>
 					</execution>
 				</executions>
