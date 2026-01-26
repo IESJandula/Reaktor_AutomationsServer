@@ -35,13 +35,16 @@ public class SensorBooleanoResponseDto {
 
 	// Umbral máximo permitido
 	private Double umbralMaximo;
+	
+	// aplicabilidad del dispositivo
+	private String aplicabilidad;
 				
 	/**
 	 * Constructor para inicializar un objeto de respuesta DTO (Data Transfer Object) para un sensor booleano.
 	 *
 	 */
 	
-	public SensorBooleanoResponseDto(String mac, String estado, Boolean valorActual, Date ultimaActualizacion, String nombreUbicacion, Double umbralMinimo, Double umbralMaximo  ) 
+	public SensorBooleanoResponseDto(String mac, String estado, Boolean valorActual, Date ultimaActualizacion, String nombreUbicacion, Double umbralMinimo, Double umbralMaximo, String aplicabilidad ) 
 	{
 	    // Asigna la dirección MAC proporcionada al campo correspondiente del objeto.
 	    this.mac = mac;
@@ -58,5 +61,7 @@ public class SensorBooleanoResponseDto {
 		this.umbralMinimo = umbralMinimo;
 		// Umbral máximo permitido
 		this.umbralMaximo = umbralMaximo;
+		// aplicabilidad del dispositivo
+		this.aplicabilidad = aplicabilidad;
 	}
 }

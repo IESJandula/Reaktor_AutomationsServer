@@ -22,5 +22,9 @@ public class ActuadorResponseDto
     
     // Nombre de la ubicación asociada
     private String nombreUbicacion;
+    
+	// aplicabilidad del dispositivo
+	private String aplicabilidad;
 }
+
 

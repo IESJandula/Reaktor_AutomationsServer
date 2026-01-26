@@ -41,7 +41,7 @@ public class VistaPajaroController
 	private ISensorBooleanoRepository sensorBooleanoRepo;
 
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
-	@GetMapping(value = "/ubicacion/", produces = MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(value = "/ubicacion/")
 	public ResponseEntity<?> obtenerDispositivosUbicacion()
 	{
 		try

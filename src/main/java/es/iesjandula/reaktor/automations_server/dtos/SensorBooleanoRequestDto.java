@@ -28,4 +28,7 @@ public class SensorBooleanoRequestDto
     
     // Valor máximo permitido o configurado para la alerta del sensor
     private Double umbralMaximo;
+    
+	// aplicabilidad del dispositivo
+	private String aplicabilidad;
 }

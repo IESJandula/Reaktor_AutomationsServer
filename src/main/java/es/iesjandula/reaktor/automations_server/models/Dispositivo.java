@@ -30,6 +30,9 @@ public class Dispositivo
     @Id
     @Column
     private String mac;
+    
+    @Column
+    private String aplicabilidad;
 
     /** Estado actual del dispositivo (e.g., 'Encendido', 'Apagado'). */
     @Column(length = 25)

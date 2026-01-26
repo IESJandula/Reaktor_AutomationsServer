@@ -17,14 +17,15 @@ public interface IActuadorRepository extends JpaRepository<Actuador, String> {
 	 * ubicación.
 	 */
 	@Query("SELECT new es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto("
-			+ "a.mac, a.estado, a.ubicacion.nombreUbicacion) " + "FROM Actuador a")
+			+ "a.mac, a.estado, a.ubicacion.nombreUbicacion, a.aplicabilidad) " + "FROM Actuador a")
 	List<ActuadorResponseDto> buscarActuadores();
 
 	@Query("""
 		    SELECT new es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto(
 		        a.mac,
 		        a.estado,
-		        a.ubicacion.nombreUbicacion
+		        a.ubicacion.nombreUbicacion,
+		        a.aplicabilidad
 		    )
 		    FROM Actuador a
 		""")

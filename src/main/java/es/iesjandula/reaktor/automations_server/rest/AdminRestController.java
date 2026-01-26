@@ -89,6 +89,7 @@ public class AdminRestController
 				sensor.setEstado(sensorBooleanoDto.getEstado());
 				sensor.setUmbralMaximo(sensorBooleanoDto.getUmbralMaximo());
 				sensor.setUmbralMinimo(sensorBooleanoDto.getUmbralMinimo());
+				sensor.setAplicabilidad(sensorBooleanoDto.getAplicabilidad());
 				sensor.setUbicacion(ubicacion);
 			}
 			
@@ -124,6 +125,7 @@ public class AdminRestController
 			sensor.setEstado(sensorBooleanoDto.getEstado());
 			sensor.setUmbralMaximo(sensorBooleanoDto.getUmbralMaximo());
 			sensor.setUmbralMinimo(sensorBooleanoDto.getUmbralMinimo());
+			sensor.setAplicabilidad(sensorBooleanoDto.getAplicabilidad());
 			sensor.setUbicacion(ubicacion);
 
 			// Guardar el nuevo sensor en la base de datos
@@ -255,6 +257,7 @@ public class AdminRestController
 				sensor.setEstado(sensorNumericoDto.getEstado());
 				sensor.setUmbralMaximo(sensorNumericoDto.getUmbralMaximo());
 				sensor.setUmbralMinimo(sensorNumericoDto.getUmbralMinimo());
+				sensor.setAplicabilidad(sensorNumericoDto.getAplicabilidad());
 				sensor.setUbicacion(ubicacion);
 			}
 			
@@ -289,6 +292,7 @@ public class AdminRestController
 			sensor.setEstado(sensorNumericoDto.getEstado());
 			sensor.setUmbralMinimo(sensorNumericoDto.getUmbralMinimo());
 			sensor.setUmbralMaximo(sensorNumericoDto.getUmbralMaximo());
+			sensor.setAplicabilidad(sensorNumericoDto.getAplicabilidad());
 			sensor.setUbicacion(ubicacion);
 
 
@@ -412,6 +416,7 @@ public class AdminRestController
 				Ubicacion ubicacion = new Ubicacion();
 				Actuador actuador = new Actuador();
 				actuador.setEstado(actuadorRequestDto.getEstado());
+				actuador.setAplicabilidad(actuador.getAplicabilidad());
 				actuador.setUbicacion(ubicacion);
 			}
 			
@@ -437,6 +442,7 @@ public class AdminRestController
 			Actuador actuador = new Actuador();
 			actuador.setMac(actuadorRequestDto.getMac());
 			actuador.setEstado(actuadorRequestDto.getEstado());
+			actuador.setAplicabilidad(actuadorRequestDto.getAplicabilidad());
 			actuador.setUbicacion(ubicacion);
 			this.actuadorRepository.saveAndFlush(actuador);
 
@@ -585,5 +591,26 @@ public class AdminRestController
 			log.error("Excepción genérica al crear la incidencia", AutomationsServerException );
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
 		}
+	}
+	
+	/**
+	 * Endpoint para obtener la aplicabilidad del dispositvo
+	 * 
+	 * @return ResponseEntity con la lista de aplicabilidades de los dispositivos
+	 */
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/aplicabilidad")
+	public ResponseEntity<?> obtenerAplicabilidad()
+	{
+		try
+		{
+			return ResponseEntity.ok(Constants.APLICABILIDAD);
+		} 
+		catch (Exception exception)
+		{
+			AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", AutomationsServerException );
+			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
+		}		
 	}
 }
