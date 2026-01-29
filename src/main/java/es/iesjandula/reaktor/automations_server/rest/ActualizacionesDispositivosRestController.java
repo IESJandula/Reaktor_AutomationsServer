@@ -10,8 +10,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import es.iesjandula.reaktor.automations_server.models.Actuador;
 import es.iesjandula.reaktor.automations_server.models.SensorBooleano;
 import es.iesjandula.reaktor.automations_server.models.SensorNumerico;
+import es.iesjandula.reaktor.automations_server.repository.IActuadorRepository;
 import es.iesjandula.reaktor.automations_server.repository.ISensorBooleanoRepository;
 import es.iesjandula.reaktor.automations_server.repository.ISensorNumericoRpository;
 import es.iesjandula.reaktor.automations_server.utils.AutomationsServerException;
@@ -26,8 +28,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequestMapping("/automations/admin/actualizacion")
-public class ActualizacionesSensoresRestController
+public class ActualizacionesDispositivosRestController
 {
+	@Autowired
+	private IActuadorRepository actuadorRepository;
+	
 	@Autowired
 	private ISensorBooleanoRepository sensorBooleanoRepo;
 
@@ -105,26 +110,27 @@ public class ActualizacionesSensoresRestController
 	{
 		try
 		{
-			// 1. Buscar el sensor por su MAC
+			// Buscar el sensor por su MAC
 			Optional<SensorNumerico> optionalSensorNumerico = sensorNumericoRepo.findById(mac);
 			
-			// 2. Validación: Si el sensor no existe, lanzar excepción
+			// Validación: Si el sensor no existe, lanzar excepción
 			if (!optionalSensorNumerico.isPresent())
 			{
 				log.error(Constants.ERR_SENSOR_NO_EXISTE);
 				throw new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_SENSOR_NO_EXISTE);
 			}
 			
-			// 3. Actualizar el valor
+			// Actualizar el valor
 			SensorNumerico sensorNumerico = optionalSensorNumerico.get();
-			sensorNumerico.setValorActual(valorActual); // Establece el nuevo valor numérico
+			sensorNumerico.setValorActual(valorActual);
 			
-			// 4. Guardar los cambios
+			// Guardar los cambios
 			sensorNumericoRepo.saveAndFlush(sensorNumerico);
 			
 			log.info(Constants.ELEMENTO_MODIFICADO);
 			
 			return ResponseEntity.ok().build();
+			
 			
 		} 
 		catch (AutomationsServerException AutomationsServerException)
@@ -136,6 +142,41 @@ public class ActualizacionesSensoresRestController
 			AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al crear la incidencia", AutomationsServerException );
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
+			
+		}
+		
+	}
+	
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@PostMapping("/actuador/estado")
+	public ResponseEntity<?> actuadorEstado(@RequestHeader("mac") String mac, @RequestHeader("estado") String estado) {
+
+		try 
+		{
+		    if (!actuadorRepository.existsById(mac)) 
+		    {
+		    	log.error(Constants.ERR_ACTUADOR_NO_EXISTE);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NULO_VACIO);
+		    }
+
+		    Actuador actuador = actuadorRepository.findById(mac).get();
+		    actuador.setEstado(estado);
+		    actuadorRepository.saveAndFlush(actuador);
+	    	
+	    return ResponseEntity.ok().build();
+		}
+		
+		catch (AutomationsServerException AutomationsServerException)
+		{
+			return ResponseEntity.badRequest().body(AutomationsServerException);
+		}
+		catch (Exception exception) 
+		{
+				
+		AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
+		log.error("Excepción genérica al crear la incidencia", AutomationsServerException );
+		return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
+			
 		}
 		
 	}
