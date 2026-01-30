@@ -33,3 +33,4 @@ reaktor:
   school_base_server_url: http://localhost:8093/
   clientId: automations
   http_connection_timeout: 30000
+  comprobadorEstadoDispositivosTiempoMaximo: 30000

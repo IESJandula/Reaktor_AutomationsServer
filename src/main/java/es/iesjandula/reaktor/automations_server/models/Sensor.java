@@ -25,8 +25,7 @@ public class Sensor extends Dispositivo
 
     /** Fecha y hora de la última vez que el sensor envió datos o se actualizó su estado.
      */
-    @Column
-    private Date ultimaActualizacion;
+
     
     /** Valor mínimo permitido o configurado para la alerta del sensor. */
     @Column

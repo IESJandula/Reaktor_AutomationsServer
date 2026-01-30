@@ -1,5 +1,6 @@
 package es.iesjandula.reaktor.automations_server.repository;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -30,5 +31,8 @@ public interface IActuadorRepository extends JpaRepository<Actuador, String> {
 		    FROM Actuador a
 		""")
 		List<ActuadorResponseDto> buscarActuadoresPorUbicacion();
+
+	List<Actuador> findByEstadoAndUltimaActualizacionBefore(String estado, Date fecha);
+	
 
 }

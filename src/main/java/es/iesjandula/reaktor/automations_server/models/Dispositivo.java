@@ -1,5 +1,7 @@
 package es.iesjandula.reaktor.automations_server.models;
 
+import java.util.Date;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -35,8 +37,11 @@ public class Dispositivo
     private String aplicabilidad;
 
     /** Estado actual del dispositivo (e.g., 'Encendido', 'Apagado'). */
-    @Column(length = 25)
+    
     private String estado;
+    
+    @Column
+    private Date ultimaActualizacion;
     
     /**
      * Relación Muchos a Uno con la entidad Ubicacion.

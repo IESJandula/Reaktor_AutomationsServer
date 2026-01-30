@@ -1,5 +1,6 @@
 package es.iesjandula.reaktor.automations_server.rest;
 
+import java.util.Date;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -149,18 +150,20 @@ public class ActualizacionesDispositivosRestController
 	
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
 	@PostMapping("/actuador/estado")
-	public ResponseEntity<?> actuadorEstado(@RequestHeader("mac") String mac, @RequestHeader("estado") String estado) {
+	public ResponseEntity<?> actuadorEstado(@RequestHeader("mac") String mac) {
 
 		try 
 		{
-		    if (!actuadorRepository.existsById(mac)) 
+	
+		    Optional<Actuador> optionalActuador = this.actuadorRepository.findById(mac);	
+		    if (optionalActuador.isEmpty()) 
 		    {
 		    	log.error(Constants.ERR_ACTUADOR_NO_EXISTE);
 				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NULO_VACIO);
 		    }
-
-		    Actuador actuador = actuadorRepository.findById(mac).get();
-		    actuador.setEstado(estado);
+		    Actuador actuador = optionalActuador.get();
+		    actuador.setEstado("on");
+		    actuador.setUltimaActualizacion(new Date());
 		    actuadorRepository.saveAndFlush(actuador);
 	    	
 	    return ResponseEntity.ok().build();
