@@ -52,7 +52,7 @@
 					(keystore) del filtrado -->
 					<exclude>**/*.csv</exclude> <!-- Excluir archivos .csv del
 					filtrado -->
-					<exclude>**/*.jar</exclude>
+					<exclude>src/main/resources/puertas</exclude> <!-- Excluir la carpeta puertas del filtrado -->
 				</excludes>
 			</resource>
 			<!-- Añadir otra sección de recursos para incluir archivos binarios
@@ -65,8 +65,7 @@
 					<include>**/*.p12</include>
 					<include>**/*.pem</include>
 					<include>**/*.csv</include>
-					<include>**/*.jar</include>
-					
+					<include>src/main/resources/puertas</include>
 				</includes>
 			</resource>
 			<!-- FIN - Util para la asignación de secretos desde Github -->
