@@ -1,6 +1,5 @@
 package es.iesjandula.reaktor.automations_server.dtos;
 
-import es.iesjandula.reaktor.automations_server.models.Aplicabilidad;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,7 +28,7 @@ public class SensorNumericoRequestDto
     
     // Nombre de la ubicación asociada
     private String nombreUbicacion;
-	// aplicabilidad del dispositivo
-	private Aplicabilidad aplicabilidad;
+	// tipo del dispositivo
+	private String tipo;
 }
 

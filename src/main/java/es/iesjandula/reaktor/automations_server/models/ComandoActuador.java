@@ -1,11 +1,15 @@
 package es.iesjandula.reaktor.automations_server.models;
 
-import es.iesjandula.reaktor.automations_server.models.ids.ComandoActuadoresId;
+import java.util.List;
+
+import es.iesjandula.reaktor.automations_server.models.ids.ComandoActuadorId;
+import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,20 +21,20 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name="comando_actuador")
-public class ComandoActuador 
-{
-	@EmbeddedId
-	private ComandoActuadoresId comandoActuadoresId;
-	
-	@ManyToOne
-	@MapsId("mac")
-	@JoinColumn(name = "mac")
-	private Actuador actuador;
-	
-	@ManyToOne
-	@MapsId("keyword")
-	@JoinColumn(name = "keyword")
-	private Comando comando;
-	
+@Table(name = "comando_actuador")
+public class ComandoActuador {
+
+    @EmbeddedId
+    private ComandoActuadorId comandoActuadorId;
+
+    @Column
+    private String comandos;
+
+    @ManyToOne
+    @MapsId("mac")
+    @JoinColumn(name = "mac")
+    private Actuador actuador;
+    
+    @OneToMany(mappedBy = "comandoActuador")
+    private List<Comando> listaComandos;
 }

@@ -24,7 +24,7 @@ public class ActuadorResponseDto
     private String nombreUbicacion;
     
 	// aplicabilidad del dispositivo
-	private String aplicabilidad;
+	private String tipo;
 }
 
 

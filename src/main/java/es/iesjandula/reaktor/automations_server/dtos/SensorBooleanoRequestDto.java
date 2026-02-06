@@ -1,6 +1,5 @@
 package es.iesjandula.reaktor.automations_server.dtos;
 
-import es.iesjandula.reaktor.automations_server.models.Aplicabilidad;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,6 +29,6 @@ public class SensorBooleanoRequestDto
     // Valor máximo permitido o configurado para la alerta del sensor
     private Double umbralMaximo;
     
-	// aplicabilidad del dispositivo
-	private Aplicabilidad aplicabilidad;
+	// tipo del dispositivo
+	private String tipo ;
 }

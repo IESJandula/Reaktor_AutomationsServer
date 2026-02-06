@@ -89,7 +89,7 @@ public class AdminRestController
 				sensor.setEstado(sensorBooleanoDto.getEstado());
 				sensor.setUmbralMaximo(sensorBooleanoDto.getUmbralMaximo());
 				sensor.setUmbralMinimo(sensorBooleanoDto.getUmbralMinimo());
-				sensor.setAplicabilidad(sensorBooleanoDto.getAplicabilidad());
+				sensor.setTipo(sensorBooleanoDto.getTipo());
 				sensor.setUbicacion(ubicacion);
 			}
 			
@@ -125,7 +125,7 @@ public class AdminRestController
 			sensor.setEstado(sensorBooleanoDto.getEstado());
 			sensor.setUmbralMaximo(sensorBooleanoDto.getUmbralMaximo());
 			sensor.setUmbralMinimo(sensorBooleanoDto.getUmbralMinimo());
-			sensor.setAplicabilidad(sensorBooleanoDto.getAplicabilidad());
+			sensor.setTipo(sensorBooleanoDto.getTipo());
 			sensor.setUbicacion(ubicacion);
 
 			// Guardar el nuevo sensor en la base de datos
@@ -257,7 +257,7 @@ public class AdminRestController
 				sensor.setEstado(sensorNumericoDto.getEstado());
 				sensor.setUmbralMaximo(sensorNumericoDto.getUmbralMaximo());
 				sensor.setUmbralMinimo(sensorNumericoDto.getUmbralMinimo());
-				sensor.setAplicabilidad(sensorNumericoDto.getAplicabilidad());
+				sensor.setTipo(sensorNumericoDto.getTipo());
 				sensor.setUbicacion(ubicacion);
 			}
 			
@@ -292,7 +292,7 @@ public class AdminRestController
 			sensor.setEstado(sensorNumericoDto.getEstado());
 			sensor.setUmbralMinimo(sensorNumericoDto.getUmbralMinimo());
 			sensor.setUmbralMaximo(sensorNumericoDto.getUmbralMaximo());
-			sensor.setAplicabilidad(sensorNumericoDto.getAplicabilidad());
+			sensor.setTipo(sensorNumericoDto.getTipo());
 			sensor.setUbicacion(ubicacion);
 
 
@@ -416,7 +416,7 @@ public class AdminRestController
 				Ubicacion ubicacion = new Ubicacion();
 				Actuador actuador = new Actuador();
 				actuador.setEstado(actuadorRequestDto.getEstado());
-				actuador.setAplicabilidad(actuador.getAplicabilidad());
+				actuador.setTipo(actuador.getTipo());
 				actuador.setUbicacion(ubicacion);
 			}
 			
@@ -442,7 +442,7 @@ public class AdminRestController
 			Actuador actuador = new Actuador();
 			actuador.setMac(actuadorRequestDto.getMac());
 			actuador.setEstado(actuadorRequestDto.getEstado());
-			actuador.setAplicabilidad(actuadorRequestDto.getAplicabilidad());
+			actuador.setTipo(actuadorRequestDto.getTipo());
 			actuador.setUbicacion(ubicacion);
 			this.actuadorRepository.saveAndFlush(actuador);
 
