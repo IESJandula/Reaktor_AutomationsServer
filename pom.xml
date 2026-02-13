@@ -1,117 +1,140 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>es.iesjandula.reaktor</groupId>
-		<artifactId>Dependencies</artifactId>
-		<version>1.0.0</version>
-		<relativePath /> <!-- lookup parent from repository -->
-	</parent>
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>es.iesjandula.reaktor</groupId>
+        <artifactId>Dependencies</artifactId>
+        <version>1.0.0</version>
+        <relativePath /> <!-- lookup parent from repository -->
+    </parent>
 
-	<artifactId>Reaktor_AutomationsServer</artifactId>
-	<name>Reaktor_AutomationsServer</name>
+    <artifactId>Reaktor_AutomationsServer</artifactId>
+    <name>Reaktor_AutomationsServer</name>
 
-	<dependencies>
-		<dependency>
-			<groupId>es.iesjandula.reaktor</groupId>
-			<artifactId>BaseServer</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<dependency>
-			<groupId>es.iesjandula.reaktor</groupId>
-			<artifactId>BaseClient</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId> <!-- añadir para getStackTrace-->
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.mysql</groupId>
-			<artifactId>mysql-connector-j</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-	</dependencies>
-	
-	<build>
-		<!-- Util para la asignación de secretos desde Github -->
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-				<filtering>true</filtering> <!-- Activar filtrado de recursos -->
-				<excludes>
-					<exclude>**/*.p12</exclude> <!-- Excluir archivos .p12
-					(keystore) del filtrado -->
-					<exclude>**/*.pem</exclude> <!-- Excluir archivos .pem
-					(keystore) del filtrado -->
-					<exclude>**/*.csv</exclude> <!-- Excluir archivos .csv del
-					filtrado -->
-					<exclude>**/*.jar</exclude>
-				</excludes>
-			</resource>
-			<!-- Añadir otra sección de recursos para incluir archivos binarios
-			sin filtrado -->
-			<resource>
-				<directory>src/main/resources</directory>
-				<filtering>false</filtering> <!-- No aplicar filtrado a archivos
-				binarios -->
-				<includes>
-					<include>**/*.p12</include>
-					<include>**/*.pem</include>
-					<include>**/*.csv</include>
-					<include>**/*.jar</include>
-					
-				</includes>
-			</resource>
-			<!-- FIN - Util para la asignación de secretos desde Github -->
-		</resources>
-		<plugins>
-			<!-- Util para la asignación de secretos desde Github -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-resources-plugin</artifactId>
-				<configuration>
-					<encoding>UTF-8</encoding>
-					<useDefaultDelimiters>true</useDefaultDelimiters> <!--
-					Asegura el uso de delimitadores por defecto (${...}) -->
-					<filters>
-						<filter>
-							src/main/resources/application-VPS-filter.properties</filter>
-					</filters>
-				</configuration>
-			</plugin>
-			<!-- FIN - Util para la asignación de secretos desde Github -->
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>repackage</goal>
-						</goals>
-						<configuration>
-							<classifier>jar-with-dependencies</classifier>
-							<mainClass>
-								es.iesjandula.reaktor.automations_server.ReaktorAutomationsServerApplication</mainClass>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
+    <dependencies>
+        <dependency>
+            <groupId>es.iesjandula.reaktor</groupId>
+            <artifactId>BaseServer</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>es.iesjandula.reaktor</groupId>
+            <artifactId>BaseClient</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId> <!-- añadir para
+            getStackTrace-->
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Vosk -->
+        <dependency>
+            <groupId>com.alphacephei</groupId>
+            <artifactId>vosk</artifactId>
+            <version>0.3.38</version>
+        </dependency>
+
+        <!-- JSON (para leer resultado) -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20231013</version>
+        </dependency>
+        <dependency>
+            <groupId>ws.schild</groupId>
+            <artifactId>jave-core</artifactId>
+            <version>3.3.1</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <!-- Util para la asignación de secretos desde Github -->
+        <resources>
+
+            <!-- 1) Recursos FILTRADOS (texto), excluyendo TODO puertas -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <excludes>
+                    <!-- CLAVE: no filtrar nada de puertas -->
+                    <exclude>puertas/**</exclude>
+                    <exclude>speech/**</exclude>
+
+                    <exclude>**/*.p12</exclude>
+                    <exclude>**/*.pem</exclude>
+                    <exclude>**/*.csv</exclude>
+                    <exclude>**/*.jar</exclude>
+                </excludes>
+            </resource>
+
+            <!-- 2) Recursos NO FILTRADOS (binarios + carpeta puertas completa) -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>**/*.p12</include>
+                    <include>**/*.pem</include>
+                    <include>**/*.csv</include>
+                    <include>puertas/**</include>
+                    <include>speech/**</include>
+                </includes>
+            </resource>
+
+        </resources>
+
+        <plugins>
+            <!-- Util para la asignación de secretos desde Github -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <useDefaultDelimiters>true</useDefaultDelimiters>
+                    <filters>
+                        <filter>
+                            src/main/resources/application-VPS-filter.properties</filter>
+                    </filters>
+                </configuration>
+            </plugin>
+            <!-- FIN - Util para la asignación de secretos desde Github -->
+
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>jar-with-dependencies</classifier>
+                            <mainClass>
+                                es.iesjandula.reaktor.automations_server.ReaktorAutomationsServerApplication</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

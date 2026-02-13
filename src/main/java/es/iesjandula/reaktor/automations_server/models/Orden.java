@@ -38,12 +38,19 @@ public abstract class Orden
     /** Descripción textual o frase asociada a la orden. */
     @Column(length = 255)
     private String frase;
+    
+    /** Email del usuario que da la orden*/
+	@Column
+	private String email;
+    
     /** Nombre del usuario que da la orden*/
 	@Column
 	private String nombre;
+	
 	/** Apellido del usuario que da la orden*/
 	@Column
-	private String apellido;
+	private String apellidos;
+	
     /**
      * Relación Uno a Muchos con la entidad Accion.
      * Mapeado por el campo 'orden' en la clase Accion.
