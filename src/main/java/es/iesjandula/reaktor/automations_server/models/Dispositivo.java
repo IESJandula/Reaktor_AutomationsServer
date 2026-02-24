@@ -32,9 +32,9 @@ public class Dispositivo
     @Id
     @Column
     private String mac;
-    
+    /** Indica el tipo del dispositivo*/
     @Column
-    private String aplicabilidad;
+    private String tipo;
 
     /** Estado actual del dispositivo (e.g., 'Encendido', 'Apagado'). */
     

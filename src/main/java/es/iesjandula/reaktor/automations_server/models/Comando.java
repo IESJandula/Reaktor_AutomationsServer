@@ -1,13 +1,12 @@
 package es.iesjandula.reaktor.automations_server.models;
 
-import java.util.List;
-
-import jakarta.persistence.Column;
+import es.iesjandula.reaktor.automations_server.models.ids.ComandoId;
+import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinColumns;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,19 +21,18 @@ import lombok.Setter;
 @Table(name="comando")
 public class Comando 
 {
-	@Id
-	@Column
-	private String keyword;
+	@EmbeddedId
+	private ComandoId comandoId;
 	
-	@Column
-	private String comando;
-	
+	@MapsId("ordenId")
 	@ManyToOne
 	@JoinColumn(name = "orden_id")
 	private Orden orden;
 	
-    @OneToMany(mappedBy = "comando")
-    private List<ComandoActuador> listaComandos;
-	
-	
+    @ManyToOne
+    @JoinColumns({
+        @JoinColumn(name = "mac",      referencedColumnName = "mac",      insertable = false, updatable = false),
+        @JoinColumn(name = "keyword",  referencedColumnName = "keyword",  insertable = false, updatable = false)
+    })
+    private ComandoActuador comandoActuador;
 }

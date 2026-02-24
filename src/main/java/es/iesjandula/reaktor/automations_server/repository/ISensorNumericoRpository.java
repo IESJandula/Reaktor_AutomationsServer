@@ -25,7 +25,7 @@ public interface ISensorNumericoRpository extends JpaRepository<SensorNumerico, 
 			        s.umbralMaximo,
 			        s.ultimaActualizacion,
 			        s.ubicacion.nombreUbicacion,
-			        s.aplicabilidad
+			        s.tipo
 			    )
 			    FROM SensorNumerico s
 			""")
@@ -40,7 +40,7 @@ public interface ISensorNumericoRpository extends JpaRepository<SensorNumerico, 
 		        s.umbralMaximo,
 		        s.ultimaActualizacion,
 		        s.ubicacion.nombreUbicacion,
-		        s.aplicabilidad
+		        s.tipo
 		    )
 		    FROM SensorNumerico s
 		""")

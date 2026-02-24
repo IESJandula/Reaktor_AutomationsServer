@@ -28,7 +28,7 @@ public class SensorNumericoRequestDto
     
     // Nombre de la ubicación asociada
     private String nombreUbicacion;
-	// aplicabilidad del dispositivo
-	private String aplicabilidad;
+	// tipo del dispositivo
+	private String tipo;
 }
 

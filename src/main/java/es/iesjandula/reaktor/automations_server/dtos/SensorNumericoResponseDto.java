@@ -36,12 +36,12 @@ public class SensorNumericoResponseDto {
 	// Nombre de la ubicación asociada
 	private String nombreUbicacion;
 	// aplicabilidad del dispositivo
-	private String aplicabilidad;
+	private String tipo;
 
 	/**
 	 * Constructor para inicializar un objeto DTO (Data Transfer Object) de respuesta para un sensor numérico.
 	 */
-	public SensorNumericoResponseDto(String mac, String estado, Double valorActual, Double umbralMinimo, Double umbralMaximo, Date ultimaActualizacion, String nombreUbicacion,	String aplicabilidad)
+	public SensorNumericoResponseDto(String mac, String estado, Double valorActual, Double umbralMinimo, Double umbralMaximo, Date ultimaActualizacion, String nombreUbicacion,	String tipo)
 	{
 	    // Asigna la dirección MAC única del sensor.
 	    this.mac = mac;
@@ -59,6 +59,6 @@ public class SensorNumericoResponseDto {
 	    // Asigna el nombre de la ubicación física o lógica del sensor.
 	    this.nombreUbicacion = nombreUbicacion;
 		// aplicabilidad del dispositivo
-		this.aplicabilidad = aplicabilidad;
+		this.tipo = tipo;
 	}
 }

@@ -10,8 +10,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -40,7 +38,19 @@ public abstract class Orden
     /** Descripción textual o frase asociada a la orden. */
     @Column(length = 255)
     private String frase;
-
+    
+    /** Email del usuario que da la orden*/
+	@Column
+	private String email;
+    
+    /** Nombre del usuario que da la orden*/
+	@Column
+	private String nombre;
+	
+	/** Apellido del usuario que da la orden*/
+	@Column
+	private String apellidos;
+	
     /**
      * Relación Uno a Muchos con la entidad Accion.
      * Mapeado por el campo 'orden' en la clase Accion.
@@ -57,11 +67,10 @@ public abstract class Orden
     @OneToMany(mappedBy = "orden")
     private List<Validacion> validaciones;
     
-    @ManyToOne
-    @JoinColumn(name = "email")
-    private Usuario usuario;
-    
-
+    /**
+     * Relación Uno a Muchos con la entidad Comandos.
+     * Mapeado por el campo 'orden' en la clase Comandos.
+     */
     @OneToMany(mappedBy = "orden")
     private List<Comando> comandos;
 }

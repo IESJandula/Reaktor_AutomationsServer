@@ -1,7 +1,8 @@
 package es.iesjandula.reaktor.automations_server.utils;
 
-import java.util.Arrays;
 import java.util.List;
+
+import io.jsonwebtoken.lang.Arrays;
 
 public class Constants
 {
@@ -52,5 +53,5 @@ public class Constants
     public static final String ERR_ORDEN_NO_EXISTE = "La orden no existe en el sistema.";
     
     /** Aplicabilidad para los dispositivos */
-    public static final List<String> APLICABILIDAD = Arrays.asList(new String[] {"Puerta", "Puerta Carrito Grande", "Puerta Carrito chico"}) ; 
+    public static final List<String> APLICABILIDAD = Arrays.asList(new String[] {"Puerta", "Proyector"});    
 }

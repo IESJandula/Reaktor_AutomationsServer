@@ -1,50 +1,135 @@
 package es.iesjandula.reaktor.automations_server.rest;
+import java.util.Date;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
-import es.iesjandula.reaktor.automations_server.dtos.OrdenSimpleRequestDto;
+import es.iesjandula.reaktor.automations_server.dtos.OrdenTextoRequest;
 import es.iesjandula.reaktor.automations_server.models.OrdenSimple;
 import es.iesjandula.reaktor.automations_server.repository.IOrdenSimpleRepository;
+import es.iesjandula.reaktor.automations_server.services.SpeechService;
 import es.iesjandula.reaktor.automations_server.utils.AutomationsServerException;
 import es.iesjandula.reaktor.automations_server.utils.Constants;
+import es.iesjandula.reaktor.base.security.models.DtoUsuarioExtended;
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/automations/ordensimple")
 @RestController
 public class OrdenSimpleRestController
 {
     @Autowired
     private IOrdenSimpleRepository ordenSimpleRepository;
-    @PostMapping(value = "/", consumes = "application/json")
-    public ResponseEntity<?> crearOrdenSimple(@RequestBody(required = true) OrdenSimpleRequestDto ordenSimpleRequestDto) 
+    
+    
+    @Autowired
+    private SpeechService speechService ;
+    
+    @PostMapping(value = "/texto", consumes = "application/json")
+    public ResponseEntity<?> crearOrdenSimpleTexto(
+            @AuthenticationPrincipal DtoUsuarioExtended usuario,
+            @RequestBody OrdenTextoRequest request)
+    {
+        try
+        {
+            String frase = request.getFrase();
+
+            if (frase == null || frase.isBlank())
+            {
+                throw new AutomationsServerException(
+                        Constants.ERR_SIMPLE_NULO_VACIO,
+                        Constants.ERR_SIMPLE_CODE);
+            }
+
+            OrdenSimple ordenSimple = new OrdenSimple();
+            ordenSimple.setFecha(new Date());
+            ordenSimple.setFrase(frase);
+
+            // 👇 Soporte con y sin JWT
+            if (usuario != null)
+            {
+                ordenSimple.setEmail(usuario.getEmail());
+                ordenSimple.setNombre(usuario.getNombre());
+                ordenSimple.setApellidos(usuario.getApellidos());
+            }
+            else
+            {
+                ordenSimple.setEmail("anonimo@local");
+                ordenSimple.setNombre("Anonimo");
+                ordenSimple.setApellidos("SinLogin");
+            }
+
+            OrdenSimple nuevaOrden = this.ordenSimpleRepository.saveAndFlush(ordenSimple);
+
+            return ResponseEntity.ok(nuevaOrden);
+        }
+        catch (AutomationsServerException exception)
+        {
+            return ResponseEntity.badRequest().body(exception.getMessage());
+        }
+    }
+    
+    @PostMapping(value = "/audio", consumes = "multipart/form-data")
+    public ResponseEntity<?> crearOrdenSimpleAudio(
+            @AuthenticationPrincipal DtoUsuarioExtended usuario,
+            @RequestParam("file") MultipartFile file)
     {
         try 
         {
-            OrdenSimple ordenSimple = new OrdenSimple();
-            ordenSimple.setFecha(ordenSimpleRequestDto.getFecha());
-            ordenSimple.setFrase(ordenSimpleRequestDto.getFrase());
-            if (ordenSimple.getFecha() == null)
+            if (file == null || file.isEmpty())
             {
-                log.error(Constants.ERR_SIMPLE_NULO_VACIO);
-                throw new AutomationsServerException(Constants.ERR_SIMPLE_NULO_VACIO, Constants.ERR_SIMPLE_CODE);
+                throw new AutomationsServerException("Audio vacío", "AUDIO_EMPTY");
             }
+
+            log.info("Archivo recibido: " + file.getOriginalFilename());
+            log.info("Tamaño: " + file.getSize());
+
+            String frase = this.speechService.transcribe(file.getInputStream());
+
+            log.info("Texto reconocido: " + frase);
+
+            OrdenSimple ordenSimple = new OrdenSimple();
+            ordenSimple.setFecha(new Date());
+            ordenSimple.setFrase(frase);
+
+            // 👇 SOLO si hay usuario autenticado
+            if (usuario != null)
+            {
+                ordenSimple.setEmail(usuario.getEmail());
+                ordenSimple.setNombre(usuario.getNombre());
+                ordenSimple.setApellidos(usuario.getApellidos());
+            }
+            else
+            {
+                // Para pruebas sin JWT
+                ordenSimple.setEmail("anonimo@local");
+                ordenSimple.setNombre("Anonimo");
+                ordenSimple.setApellidos("SinLogin");
+            }
+
             OrdenSimple nuevaOrden = this.ordenSimpleRepository.saveAndFlush(ordenSimple);
-            log.info(Constants.ELEMENTO_AGREGADO); 
-            return ResponseEntity.ok().body(nuevaOrden); 
-        } 
-        catch (AutomationsServerException exception) 
+
+            return ResponseEntity.ok(nuevaOrden);
+        }
+        catch (Exception e)
         {
-            log.error(exception.getMessage());
-            return ResponseEntity.badRequest().body(exception);
+            log.error("Error procesando audio", e);
+            return ResponseEntity.badRequest().body("Error procesando audio");
         }
     }
+
     @GetMapping(value = "/")
     public ResponseEntity<?> obtenerOrdenesSimples() 
     {
