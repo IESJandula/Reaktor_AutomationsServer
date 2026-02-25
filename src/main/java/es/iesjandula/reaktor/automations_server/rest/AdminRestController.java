@@ -758,11 +758,6 @@ public class AdminRestController
 			{
 				throw new AutomationsServerException("MAC vacía o nula", "ERR_COMANDO_ACTUADOR");
 			}
-
-			if (comandoActuadorRequestDto.getComandos() == null || comandoActuadorRequestDto.getComandos().isEmpty())
-			{
-				throw new AutomationsServerException("Comando vacío o nulo", "ERR_COMANDO_ACTUADOR");
-			}
 			
 			if (comandoActuadorRequestDto.getTextoOk() == null || comandoActuadorRequestDto.getTextoOk().isEmpty())
 			{
@@ -787,7 +782,6 @@ public class AdminRestController
 			comandoActuador.setTextoOk(comandoActuadorRequestDto.getTextoOk());
 			comandoActuador.setComandos(comandoActuadorRequestDto.getComandos());
 
-			// ✅ CAMBIO NECESARIO
 			comandoActuador.setActuador(actuador);
 
 			this.comandoActuadorRepository.saveAndFlush(comandoActuador);
