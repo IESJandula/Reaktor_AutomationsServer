@@ -5,6 +5,7 @@ import java.io.Serializable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,6 +14,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 @Embeddable
 public class ComandoActuadorId implements Serializable 
 {
@@ -21,9 +23,9 @@ public class ComandoActuadorId implements Serializable
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	@Column
-	private String mac;
-	
-	@Column
-	private String keyword;
+    @Column(name = "mac")
+    private String mac;
+
+    @Column(name = "keyword")
+    private String keyword;
 }

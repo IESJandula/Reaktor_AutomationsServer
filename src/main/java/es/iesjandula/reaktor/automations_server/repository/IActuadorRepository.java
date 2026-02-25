@@ -17,20 +17,16 @@ public interface IActuadorRepository extends JpaRepository<Actuador, String> {
 	 * Devuelve una lista de actuadores usando un DTO con su MAC, estado y
 	 * ubicación.
 	 */
-	@Query("SELECT new es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto("
-			+ "a.mac, a.estado, a.ubicacion.nombreUbicacion, a.tipo) " + "FROM Actuador a")
-	List<ActuadorResponseDto> buscarActuadores();
-
 	@Query("""
 		    SELECT new es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto(
 		        a.mac,
 		        a.estado,
-		        a.ubicacion.nombreUbicacion,
+		        a.nombreUbicacion,
 		        a.tipo
 		    )
 		    FROM Actuador a
 		""")
-		List<ActuadorResponseDto> buscarActuadoresPorUbicacion();
+	List<ActuadorResponseDto> buscarActuadores();
 
 	List<Actuador> findByEstadoAndUltimaActualizacionBefore(String estado, Date fecha);
 	

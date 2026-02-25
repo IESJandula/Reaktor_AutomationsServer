@@ -37,18 +37,15 @@ public class Dispositivo
     private String tipo;
 
     /** Estado actual del dispositivo (e.g., 'Encendido', 'Apagado'). */
-    
+    @Column
     private String estado;
     
+    /** Ubicacion del dispositivo*/
+    @Column
+    private String nombreUbicacion;
+    
+    /**Ultima actualizacion del dispositivo */
     @Column
     private Date ultimaActualizacion;
     
-    /**
-     * Relación Muchos a Uno con la entidad Ubicacion.
-     * Un dispositivo está asociado a UNA ubicación.
-     * Clave foránea: 'ubicacion_nombre'.
-     */
-    @ManyToOne
-    @JoinColumn(name = "ubicacion_nombre")
-    private Ubicacion ubicacion;
 }

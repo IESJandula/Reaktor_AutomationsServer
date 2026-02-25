@@ -15,19 +15,28 @@ import org.springframework.web.bind.annotation.RestController;
 
 import es.iesjandula.reaktor.automations_server.dtos.ActuadorRequestDto;
 import es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto;
+import es.iesjandula.reaktor.automations_server.dtos.ComandoActuadorRequestDto;
+import es.iesjandula.reaktor.automations_server.dtos.ComandoActuadorResponseDto;
+import es.iesjandula.reaktor.automations_server.dtos.ComandoRequestDto;
+import es.iesjandula.reaktor.automations_server.dtos.ComandoResponseDto;
 import es.iesjandula.reaktor.automations_server.dtos.SensorBooleanoRequestDto;
 import es.iesjandula.reaktor.automations_server.dtos.SensorBooleanoResponseDto;
 import es.iesjandula.reaktor.automations_server.dtos.SensorNumericoRequestDto;
 import es.iesjandula.reaktor.automations_server.dtos.SensorNumericoResponseDto;
-import es.iesjandula.reaktor.automations_server.dtos.UbicacionResponseDto;
 import es.iesjandula.reaktor.automations_server.models.Actuador;
+import es.iesjandula.reaktor.automations_server.models.Comando;
+import es.iesjandula.reaktor.automations_server.models.ComandoActuador;
+import es.iesjandula.reaktor.automations_server.models.Orden;
 import es.iesjandula.reaktor.automations_server.models.SensorBooleano;
 import es.iesjandula.reaktor.automations_server.models.SensorNumerico;
-import es.iesjandula.reaktor.automations_server.models.Ubicacion;
+import es.iesjandula.reaktor.automations_server.models.ids.ComandoActuadorId;
+import es.iesjandula.reaktor.automations_server.models.ids.ComandoId;
 import es.iesjandula.reaktor.automations_server.repository.IActuadorRepository;
+import es.iesjandula.reaktor.automations_server.repository.IComandoActuadorRepository;
+import es.iesjandula.reaktor.automations_server.repository.IComandoRepository;
+import es.iesjandula.reaktor.automations_server.repository.IOrdenRepository;
 import es.iesjandula.reaktor.automations_server.repository.ISensorBooleanoRepository;
 import es.iesjandula.reaktor.automations_server.repository.ISensorNumericoRpository;
-import es.iesjandula.reaktor.automations_server.repository.IUbicacionRepository;
 import es.iesjandula.reaktor.automations_server.utils.AutomationsServerException;
 import es.iesjandula.reaktor.automations_server.utils.Constants;
 import es.iesjandula.reaktor.base.utils.BaseConstants;
@@ -43,7 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/automations/admin")
 public class AdminRestController
 {
-	
+
 	@Autowired
 	private ISensorBooleanoRepository sensorBooleanoRepo;
 
@@ -51,10 +60,16 @@ public class AdminRestController
 	private ISensorNumericoRpository sensorNumericoRepo;
 
 	@Autowired
-	private IUbicacionRepository ubicacionRepository;
+	private IActuadorRepository actuadorRepository;
 
 	@Autowired
-	private IActuadorRepository actuadorRepository;
+	private IComandoRepository comandoRepository;
+
+	@Autowired
+	private IOrdenRepository ordenRepository;
+
+	@Autowired
+	private IComandoActuadorRepository comandoActuadorRepository;
 
 	// ----------------------------------------------------------------------------------
 	// --- ENDPOINTS PARA SENSOR BOOLEANO ---
@@ -84,26 +99,27 @@ public class AdminRestController
 			// Si el dispositivo existe lo modificamos
 			if (sensorBooleanoRepo.existsById(sensorBooleanoDto.getMac()))
 			{
-				Ubicacion ubicacion = new Ubicacion();
+
 				SensorBooleano sensor = new SensorBooleano();
 				sensor.setEstado(sensorBooleanoDto.getEstado());
 				sensor.setUmbralMaximo(sensorBooleanoDto.getUmbralMaximo());
 				sensor.setUmbralMinimo(sensorBooleanoDto.getUmbralMinimo());
 				sensor.setTipo(sensorBooleanoDto.getTipo());
-				sensor.setUbicacion(ubicacion);
+				sensor.setNombreUbicacion(sensorBooleanoDto.getNombreUbicacion());
+				;
 			}
-			
+
 			String mac = sensorBooleanoDto.getMac();
 
 			// Si existe como actuador → borra
-			if (actuadorRepository.existsById(mac)) 
+			if (actuadorRepository.existsById(mac))
 			{
-			    actuadorRepository.deleteById(mac);
+				actuadorRepository.deleteById(mac);
 			}
 			// Si existe como sensor numérico → borra
-			if (sensorNumericoRepo.existsById(mac)) 
+			if (sensorNumericoRepo.existsById(mac))
 			{
-			    sensorNumericoRepo.deleteById(mac);
+				sensorNumericoRepo.deleteById(mac);
 			}
 
 			// Validación: Nombre de Ubicación no nulo o vacío
@@ -114,11 +130,6 @@ public class AdminRestController
 						Constants.ERR_UBICACION_CODE);
 			}
 
-			// Busca la Ubicación por nombre. Si no existe, lanza excepción.
-			Ubicacion ubicacion = ubicacionRepository.findById(sensorBooleanoDto.getNombreUbicacion())
-					.orElseThrow(() -> new AutomationsServerException(Constants.ERR_UBICACION_NO_EXISTE,
-							Constants.ERR_UBICACION_CODE));
-
 			// Mapeo del DTO a la entidad SensorBooleano
 			SensorBooleano sensor = new SensorBooleano();
 			sensor.setMac(sensorBooleanoDto.getMac());
@@ -126,7 +137,7 @@ public class AdminRestController
 			sensor.setUmbralMaximo(sensorBooleanoDto.getUmbralMaximo());
 			sensor.setUmbralMinimo(sensorBooleanoDto.getUmbralMinimo());
 			sensor.setTipo(sensorBooleanoDto.getTipo());
-			sensor.setUbicacion(ubicacion);
+			sensor.setNombreUbicacion(sensorBooleanoDto.getNombreUbicacion());
 
 			// Guardar el nuevo sensor en la base de datos
 			sensorBooleanoRepo.saveAndFlush(sensor);
@@ -134,19 +145,20 @@ public class AdminRestController
 			log.info(Constants.ELEMENTO_AGREGADO);
 
 			return ResponseEntity.ok().build(); // Devuelve 200 OK
-		} 
+		}
 		catch (AutomationsServerException AutomationsServerException)
 		{
 			// Manejo de errores controlados
 			return ResponseEntity.badRequest().body(AutomationsServerException); // Devuelve 400 Bad Request
-		} 
+		}
 		catch (Exception exception)
 		{
 			// Manejo de errores inesperados del sistema
-			AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			log.error("Excepción genérica al crear la incidencia", AutomationsServerException );
+			AutomationsServerException AutomationsServerException =
+					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
-																						
+
 		}
 
 	}
@@ -163,26 +175,15 @@ public class AdminRestController
 	{
 		try
 		{
-			List<SensorBooleanoResponseDto> sensores =
-					this.sensorBooleanoRepo.buscarSensoresBooleanos();
-
-			if (sensores.isEmpty())
-			{
-				throw new AutomationsServerException(
-						Constants.ERR_SENSOR_CODE,
-						"No se encontraron sensores booleanos"
-				);
-			}
+			List<SensorBooleanoResponseDto> sensores = this.sensorBooleanoRepo.buscarSensoresBooleanos();
 
 			return ResponseEntity.ok(sensores);
-		}
-		catch (AutomationsServerException AutomationsServerException)
-		{
-			return ResponseEntity.badRequest().body(AutomationsServerException);
+
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			AutomationsServerException AutomationsServerException =
+					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
 		}
@@ -212,15 +213,16 @@ public class AdminRestController
 			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
 
-		} 
+		}
 		catch (AutomationsServerException AutomationsServerException)
 		{
 			return ResponseEntity.badRequest().body(AutomationsServerException);
-		} 
+		}
 		catch (Exception exception)
 		{
-			AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			log.error("Excepción genérica al crear la incidencia", AutomationsServerException );
+			AutomationsServerException AutomationsServerException =
+					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
 		}
 	}
@@ -252,26 +254,27 @@ public class AdminRestController
 			// Si el dispositivo existe lo modificamos
 			if (sensorNumericoRepo.existsById(sensorNumericoDto.getMac()))
 			{
-				Ubicacion ubicacion = new Ubicacion();
+
 				SensorNumerico sensor = new SensorNumerico();
 				sensor.setEstado(sensorNumericoDto.getEstado());
 				sensor.setUmbralMaximo(sensorNumericoDto.getUmbralMaximo());
 				sensor.setUmbralMinimo(sensorNumericoDto.getUmbralMinimo());
 				sensor.setTipo(sensorNumericoDto.getTipo());
-				sensor.setUbicacion(ubicacion);
+				sensor.setNombreUbicacion(sensorNumericoDto.getNombreUbicacion());
+				;
 			}
-			
+
 			String mac = sensorNumericoDto.getMac();
 
 			// Si existe como actuador → borra
-			if (actuadorRepository.existsById(mac)) 
+			if (actuadorRepository.existsById(mac))
 			{
-			    actuadorRepository.deleteById(mac);
+				actuadorRepository.deleteById(mac);
 			}
 			// Si existe como sensor booleano → borra
-			if (sensorBooleanoRepo.existsById(mac)) 
+			if (sensorBooleanoRepo.existsById(mac))
 			{
-			    sensorBooleanoRepo.deleteById(mac);
+				sensorBooleanoRepo.deleteById(mac);
 			}
 
 			if (sensorNumericoDto.getNombreUbicacion() == null || sensorNumericoDto.getNombreUbicacion().isEmpty())
@@ -281,11 +284,6 @@ public class AdminRestController
 						Constants.ERR_UBICACION_CODE);
 			}
 
-			// Búsqueda de Ubicación
-			Ubicacion ubicacion = ubicacionRepository.findById(sensorNumericoDto.getNombreUbicacion())
-					.orElseThrow(() -> new AutomationsServerException(Constants.ERR_UBICACION_NO_EXISTE,
-							Constants.ERR_UBICACION_CODE));
-
 			// Mapeo del DTO a la entidad SensorNumerico
 			SensorNumerico sensor = new SensorNumerico();
 			sensor.setMac(sensorNumericoDto.getMac());
@@ -293,22 +291,23 @@ public class AdminRestController
 			sensor.setUmbralMinimo(sensorNumericoDto.getUmbralMinimo());
 			sensor.setUmbralMaximo(sensorNumericoDto.getUmbralMaximo());
 			sensor.setTipo(sensorNumericoDto.getTipo());
-			sensor.setUbicacion(ubicacion);
-
+			sensor.setNombreUbicacion(sensorNumericoDto.getNombreUbicacion());
+			;
 
 			sensorNumericoRepo.saveAndFlush(sensor);
 			log.info(Constants.ELEMENTO_AGREGADO);
 
 			return ResponseEntity.ok().build();
-		} 
+		}
 		catch (AutomationsServerException AutomationsServerException)
 		{
 			return ResponseEntity.badRequest().body(AutomationsServerException);
-		} 
+		}
 		catch (Exception exception)
 		{
-			AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			log.error("Excepción genérica al crear la incidencia", AutomationsServerException );
+			AutomationsServerException AutomationsServerException =
+					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
 		}
 	}
@@ -324,26 +323,15 @@ public class AdminRestController
 	{
 		try
 		{
-			List<SensorNumericoResponseDto> sensores =
-					this.sensorNumericoRepo.buscarSensoresNumericos();
-
-			if (sensores.isEmpty())
-			{
-				throw new AutomationsServerException(
-						Constants.ERR_SENSOR_CODE,
-						"No se encontraron sensores numéricos"
-				);
-			}
+			List<SensorNumericoResponseDto> sensores = this.sensorNumericoRepo.buscarSensoresNumericos();
 
 			return ResponseEntity.ok(sensores);
-		}
-		catch (AutomationsServerException AutomationsServerException)
-		{
-			return ResponseEntity.badRequest().body(AutomationsServerException);
+
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			AutomationsServerException AutomationsServerException =
+					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
 		}
@@ -373,15 +361,16 @@ public class AdminRestController
 			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
 
-		} 
+		}
 		catch (AutomationsServerException AutomationsServerException)
 		{
 			return ResponseEntity.badRequest().body(AutomationsServerException);
-		} 
+		}
 		catch (Exception exception)
 		{
-			AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			log.error("Excepción genérica al crear la incidencia", AutomationsServerException );
+			AutomationsServerException AutomationsServerException =
+					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
 		}
 	}
@@ -409,54 +398,52 @@ public class AdminRestController
 				throw new AutomationsServerException(Constants.ERR_ACTUADOR_NULO_VACIO,
 						Constants.ERR_ACTUADOR_CODE);
 			}
-			
+
 			// Si el dispositivo existe lo modificamos
 			if (actuadorRepository.existsById(actuadorRequestDto.getMac()))
 			{
-				Ubicacion ubicacion = new Ubicacion();
+
 				Actuador actuador = new Actuador();
 				actuador.setEstado(actuadorRequestDto.getEstado());
 				actuador.setTipo(actuador.getTipo());
-				actuador.setUbicacion(ubicacion);
+				actuador.setNombreUbicacion(actuadorRequestDto.getNombreUbicacion());
+				;
 			}
-			
-			
+
 			String mac = actuadorRequestDto.getMac();
-			
+
 			// Si existe como sensor booleano → borra
-			if (sensorBooleanoRepo.existsById(mac)) {
-			    sensorBooleanoRepo.deleteById(mac);
+			if (sensorBooleanoRepo.existsById(mac))
+			{
+				sensorBooleanoRepo.deleteById(mac);
 			}
 
 			// Si existe como sensor numérico → borra
-			if (sensorNumericoRepo.existsById(mac)) {
-			    sensorNumericoRepo.deleteById(mac);
+			if (sensorNumericoRepo.existsById(mac))
+			{
+				sensorNumericoRepo.deleteById(mac);
 			}
-
-			// Búsqueda de Ubicación
-			Ubicacion ubicacion = ubicacionRepository.findById(actuadorRequestDto.getNombreUbicacion())
-					.orElseThrow(() -> new AutomationsServerException(Constants.ERR_UBICACION_NO_EXISTE,
-							Constants.ERR_UBICACION_CODE));
 
 			// Mapeo y guardado
 			Actuador actuador = new Actuador();
 			actuador.setMac(actuadorRequestDto.getMac());
 			actuador.setEstado(actuadorRequestDto.getEstado());
 			actuador.setTipo(actuadorRequestDto.getTipo());
-			actuador.setUbicacion(ubicacion);
+			actuador.setNombreUbicacion(actuadorRequestDto.getNombreUbicacion());
 			this.actuadorRepository.saveAndFlush(actuador);
 
 			log.info(Constants.ELEMENTO_AGREGADO);
 			return ResponseEntity.ok().build();
-		} 
+		}
 		catch (AutomationsServerException AutomationsServerException)
 		{
 			return ResponseEntity.badRequest().body(AutomationsServerException);
-		} 
+		}
 		catch (Exception exception)
 		{
-			AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			log.error("Excepción genérica al crear la incidencia", AutomationsServerException );
+			AutomationsServerException AutomationsServerException =
+					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
 		}
 	}
@@ -474,13 +461,6 @@ public class AdminRestController
 		{
 			// Llama al repositorio para obtener la lista de actuadores (DTOs)
 			List<ActuadorResponseDto> actuadores = this.actuadorRepository.buscarActuadores();
-
-			// Validación: si la lista está vacía, lanza excepción personalizada
-			if (actuadores.isEmpty())
-			{
-				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE,
-						"No se encontraron actuadores registrados");
-			}
 
 			// Validación de campos críticos de cada actuador
 			for (ActuadorResponseDto a : actuadores)
@@ -502,17 +482,18 @@ public class AdminRestController
 			// Devuelve la lista de actuadores en la respuesta HTTP 200 OK
 			return ResponseEntity.ok(actuadores);
 
-		} 
+		}
 		catch (AutomationsServerException AutomationsServerException)
 		{
 			// Captura las excepciones controladas y devuelve HTTP 400 con el detalle
 			return ResponseEntity.badRequest().body(AutomationsServerException.getBodyExceptionMessage());
-		} 
+		}
 		catch (Exception exception)
 		{
 			// Captura excepciones inesperadas y devuelve HTTP 500 con detalle
-			AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			log.error("Excepción genérica al crear la incidencia", AutomationsServerException );
+			AutomationsServerException AutomationsServerException =
+					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
 		}
 	}
@@ -540,77 +521,340 @@ public class AdminRestController
 			this.actuadorRepository.deleteById(mac);
 			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
-		} 
+		}
 		catch (AutomationsServerException AutomationsServerException)
 		{
 			return ResponseEntity.badRequest().body(AutomationsServerException);
-		} 
+		}
 		catch (Exception exception)
 		{
 			log.error("Internal Server Error");
-			AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			log.error("Excepción genérica al crear la incidencia", AutomationsServerException );
+			AutomationsServerException AutomationsServerException =
+					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
 		}
 	}
 
-	// ----------------------------------------------------------------------------------
-	// --- ENDPOINTS PARA UBICACION ---
-	// ----------------------------------------------------------------------------------
-
 	/**
-	 * Endpoint para obtener la lista de todas las Ubicaciones.
-	 * 
-	 * @return ResponseEntity con la lista de Ubicaciones.
-	 */
-	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
-	@GetMapping(value = "/ubicacion")
-	public ResponseEntity<?> obtenerUbicacion()
-	{
-		try
-		{
-			// Valida si la lista de Ubicacion no este vacia
-			List<UbicacionResponseDto> ubicaciones = this.ubicacionRepository.buscarUbicaciones();
-			if (ubicaciones.isEmpty())
-			{
-				throw new AutomationsServerException(Constants.ERR_UBICACION_CODE,
-						"No se encontraron ubicaciones");
-			}
-
-			// Asume que el repositorio tiene un método customizado 'buscarUbicaciones' que
-			// devuelve los DTOs correctos.
-			return ResponseEntity.ok(ubicaciones);
-		} 
-		catch (AutomationsServerException AutomationsServerException)
-		{
-			return ResponseEntity.badRequest().body(AutomationsServerException);
-		} 
-		catch (Exception exception)
-		{
-			AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			log.error("Excepción genérica al crear la incidencia", AutomationsServerException );
-			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
-		}
-	}
-	
-	/**
-	 * Endpoint para obtener la aplicabilidad del dispositvo
+	 * Endpoint para obtener el tipo del dispositvo
 	 * 
 	 * @return ResponseEntity con la lista de aplicabilidades de los dispositivos
 	 */
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
-	@GetMapping(value = "/aplicabilidad")
-	public ResponseEntity<?> obtenerAplicabilidad()
+	@GetMapping(value = "/tipo")
+	public ResponseEntity<?> obtenerTipos()
 	{
 		try
 		{
 			return ResponseEntity.ok(Constants.APLICABILIDAD);
-		} 
+		}
 		catch (Exception exception)
 		{
-			AutomationsServerException AutomationsServerException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
-			log.error("Excepción genérica al crear la incidencia", AutomationsServerException );
+			AutomationsServerException AutomationsServerException =
+					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
-		}		
+		}
+	}
+
+	// ----------------------------------------------------------------------------------
+	// --- ENDPOINTS PARA COMANDO ---
+	// ----------------------------------------------------------------------------------
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@PostMapping(value = "/comando", consumes = "application/json")
+	public ResponseEntity<?> crearComando(@RequestBody ComandoRequestDto comandoRequestdto)
+	{
+		try
+		{
+			if (comandoRequestdto.getKeyword() == null || comandoRequestdto.getKeyword().isEmpty())
+			{
+				throw new AutomationsServerException("Keyword vacía o nula", "ERR_COMANDO");
+			}
+			if (comandoRequestdto.getMac() == null || comandoRequestdto.getMac().isEmpty())
+			{
+				throw new AutomationsServerException("MAC vacía o nula", "ERR_COMANDO");
+			}
+			if (comandoRequestdto.getOrdenId() == null)
+			{
+				throw new AutomationsServerException("OrdenId nulo", "ERR_COMANDO");
+			}
+
+			Orden orden = this.ordenRepository.findById(comandoRequestdto.getOrdenId())
+					.orElseThrow(() -> new AutomationsServerException("No existe esa orden", "ERR_COMANDO"));
+
+			Comando comando = new Comando();
+
+			ComandoActuadorId comandoActuadorId = new ComandoActuadorId();
+			comandoActuadorId.setMac(comandoRequestdto.getMac());
+			comandoActuadorId.setKeyword(comandoRequestdto.getKeyword());
+
+			ComandoId comandoId = new ComandoId();
+			comandoId.setOrdenId(comandoRequestdto.getOrdenId());
+			comandoId.setComandoActuadorId(comandoActuadorId);
+
+			comando.setComandoId(comandoId);
+			comando.setOrden(orden);
+
+			this.comandoRepository.saveAndFlush(comando);
+
+			return ResponseEntity.ok().build();
+		}
+		catch (AutomationsServerException ex)
+		{
+			return ResponseEntity.badRequest().body(ex);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			log.error("Excepción genérica al crear comando", ex);
+			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+		}
+	}
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/comando")
+	public ResponseEntity<?> obtenerComandos()
+	{
+		try
+		{
+			List<ComandoResponseDto> lista = this.comandoRepository.buscarComandos();
+
+			if (lista.isEmpty())
+			{
+				throw new AutomationsServerException("ERR_COMANDO", "No se encontraron comandos");
+			}
+
+			return ResponseEntity.ok(lista);
+		}
+		catch (AutomationsServerException ex)
+		{
+			return ResponseEntity.badRequest().body(ex);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			log.error("Excepción genérica al obtener comandos", ex);
+			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+		}
+	}
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/comando/orden/{ordenId}")
+	public ResponseEntity<?> obtenerComandosPorOrden(@PathVariable Long ordenId)
+	{
+		try
+		{
+			if (ordenId == null)
+			{
+				throw new AutomationsServerException("OrdenId nulo", "ERR_COMANDO");
+			}
+
+			List<ComandoResponseDto> lista = this.comandoRepository.buscarComandosPorOrden(ordenId);
+
+			if (lista.isEmpty())
+			{
+				throw new AutomationsServerException("ERR_COMANDO", "No hay comandos para esa orden");
+			}
+
+			return ResponseEntity.ok(lista);
+		}
+		catch (AutomationsServerException ex)
+		{
+			return ResponseEntity.badRequest().body(ex);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			log.error("Excepción genérica al obtener comandos por orden", ex);
+			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+		}
+	}
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/comando/mac/{mac}")
+	public ResponseEntity<?> obtenerComandosPorMac(@PathVariable String mac)
+	{
+		try
+		{
+			if (mac == null || mac.isEmpty())
+			{
+				throw new AutomationsServerException("MAC vacía o nula", "ERR_COMANDO");
+			}
+
+			List<ComandoResponseDto> lista = this.comandoRepository.buscarComandosPorMac(mac);
+
+			if (lista.isEmpty())
+			{
+				throw new AutomationsServerException("ERR_COMANDO", "No hay comandos para esa MAC");
+			}
+
+			return ResponseEntity.ok(lista);
+		}
+		catch (AutomationsServerException ex)
+		{
+			return ResponseEntity.badRequest().body(ex);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			log.error("Excepción genérica al obtener comandos por mac", ex);
+			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+		}
+	}
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@DeleteMapping(value = "/comando/{ordenId}/{mac}/{keyword}")
+	public ResponseEntity<?> eliminarComando(@PathVariable Long ordenId, @PathVariable String mac, @PathVariable String keyword)
+	{
+		try
+		{
+			if (ordenId == null || mac == null || mac.isEmpty() || keyword == null || keyword.isEmpty())
+			{
+				throw new AutomationsServerException("ERR_COMANDO", "Parámetros inválidos");
+			}
+
+			ComandoActuadorId comandoActuadorId = new ComandoActuadorId(mac, keyword);
+			ComandoId comandoId = new ComandoId(comandoActuadorId, ordenId);
+
+			if (!this.comandoRepository.existsById(comandoId))
+			{
+				throw new AutomationsServerException("ERR_COMANDO", "No existe comando con esa clave");
+			}
+
+			this.comandoRepository.deleteById(comandoId);
+			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
+		}
+		catch (AutomationsServerException ex)
+		{
+			return ResponseEntity.badRequest().body(ex);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			log.error("Excepción genérica al eliminar comando", ex);
+			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+		}
+	}
+
+	// ----------------------------------------------------------------------------------
+	// --- ENDPOINTS PARA COMANDO_ACTUADOR ---
+	// ----------------------------------------------------------------------------------
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@PostMapping(value = "/comando/actuador", consumes = "application/json")
+	public ResponseEntity<?> crearComandoActuador(@RequestBody ComandoActuadorRequestDto comandoActuadorRequestDto)
+	{
+		try
+		{
+			if (comandoActuadorRequestDto.getKeyword() == null || comandoActuadorRequestDto.getKeyword().isEmpty())
+			{
+				// TODO poner logs
+				throw new AutomationsServerException("Keyword vacía o nula", "ERR_COMANDO_ACTUADOR");
+			}
+
+			if (comandoActuadorRequestDto.getMac() == null || comandoActuadorRequestDto.getMac().isEmpty())
+			{
+				throw new AutomationsServerException("MAC vacía o nula", "ERR_COMANDO_ACTUADOR");
+			}
+
+			if (comandoActuadorRequestDto.getComandos() == null || comandoActuadorRequestDto.getComandos().isEmpty())
+			{
+				throw new AutomationsServerException("Comando vacío o nulo", "ERR_COMANDO_ACTUADOR");
+			}
+			
+			if (comandoActuadorRequestDto.getTextoOk() == null || comandoActuadorRequestDto.getTextoOk().isEmpty())
+			{
+				throw new AutomationsServerException("Información de respuesta correcta vacío o nulo", "ERR_COMANDO_ACTUADOR");
+			}
+
+			// ✅ CAMBIO NECESARIO: con tu modelo ComandoActuador (@ManyToOne @MapsId("mac"))
+			// necesitas setear el actuador para que Hibernate pueda persistir bien el FK/PK.
+			if (!this.actuadorRepository.existsById(comandoActuadorRequestDto.getMac()))
+			{
+				throw new AutomationsServerException("No existe actuador con esa MAC", "ERR_COMANDO_ACTUADOR");
+			}
+
+			Actuador actuador = this.actuadorRepository.findById(comandoActuadorRequestDto.getMac()).get();
+
+			ComandoActuadorId comandoActuadorId = new ComandoActuadorId();
+			comandoActuadorId.setMac(comandoActuadorRequestDto.getMac());
+			comandoActuadorId.setKeyword(comandoActuadorRequestDto.getKeyword());
+
+			ComandoActuador comandoActuador = new ComandoActuador();
+			comandoActuador.setComandoActuadorId(comandoActuadorId);
+			comandoActuador.setTextoOk(comandoActuadorRequestDto.getTextoOk());
+			comandoActuador.setComandos(comandoActuadorRequestDto.getComandos());
+
+			// ✅ CAMBIO NECESARIO
+			comandoActuador.setActuador(actuador);
+
+			this.comandoActuadorRepository.saveAndFlush(comandoActuador);
+
+			return ResponseEntity.ok().build();
+		}
+		catch (AutomationsServerException ex)
+		{
+			return ResponseEntity.badRequest().body(ex);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO_ACTUADOR", Constants.ERR_CODE);
+			log.error("Excepción genérica al crear comando_actuador", ex);
+			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+		}
+	}
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/comando/actuador")
+	public ResponseEntity<?> obtenerComandosActuador()
+	{
+	    try
+	    {
+	        List<ComandoActuadorResponseDto> lista = this.comandoActuadorRepository.buscarComandosActuador();
+
+	        return ResponseEntity.ok(lista);
+	   
+	    }
+	    catch (Exception exception)
+	    {
+	        AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO_ACTUADOR", Constants.ERR_CODE);
+	        log.error("Excepción genérica al obtener comandos_actuador", ex);
+	        return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+	    }
+	}
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@DeleteMapping(value = "/comando/actuador/{mac}/{keyword}")
+	public ResponseEntity<?> eliminarComandoActuador(@PathVariable String mac, @PathVariable String keyword)
+	{
+		try
+		{
+			if (mac == null || mac.isEmpty() || keyword == null || keyword.isEmpty())
+			{
+				throw new AutomationsServerException("Parámetros inválidos", "ERR_COMANDO_ACTUADOR");
+			}
+
+			ComandoActuadorId comandoActuadorId = new ComandoActuadorId(mac, keyword);
+
+			if (!this.comandoActuadorRepository.existsById(comandoActuadorId))
+			{
+				throw new AutomationsServerException("No existe comando_actuador con esa clave", "ERR_COMANDO_ACTUADOR");
+			}
+
+			this.comandoActuadorRepository.deleteById(comandoActuadorId);
+
+			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
+		}
+		catch (AutomationsServerException ex)
+		{
+			return ResponseEntity.badRequest().body(ex);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO_ACTUADOR", Constants.ERR_CODE);
+			log.error("Excepción genérica al eliminar comando_actuador", ex);
+			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+		}
 	}
 }

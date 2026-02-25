@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,12 +40,12 @@ public class VistaPajaroController
 	private ISensorBooleanoRepository sensorBooleanoRepo;
 
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
-	@GetMapping(value = "/ubicacion/")
-	public ResponseEntity<?> obtenerDispositivosUbicacion()
+	@GetMapping(value = "/devices/")
+	public ResponseEntity<?> obtenerDispositivos()
 	{
 		try
 		{
-			List<ActuadorResponseDto> listaActuadores = this.actuadorRepository.buscarActuadoresPorUbicacion();
+			List<ActuadorResponseDto> listaActuadores = this.actuadorRepository.buscarActuadores();
 			
 			Map<String, List<ActuadorResponseDto>> mapaActuadores = new HashMap<String, List<ActuadorResponseDto>>() ;
 			
@@ -68,7 +67,7 @@ public class VistaPajaroController
 				}
 				
 			}
-				List<SensorNumericoResponseDto> listaSensoresNumericos = this.sensorNumericoRepo.buscarSensoresNumericosPorUbicacion();
+				List<SensorNumericoResponseDto> listaSensoresNumericos = this.sensorNumericoRepo.buscarSensoresNumericos();
 				
 				Map<String, List<SensorNumericoResponseDto>> mapaSensorNumerico = new HashMap<String, List<SensorNumericoResponseDto>>() ;
 				
@@ -91,7 +90,7 @@ public class VistaPajaroController
 			
 			}
 			
-			List<SensorBooleanoResponseDto> listaSensoresBooleanos = this.sensorBooleanoRepo.buscarSensoresBooleanosPorUbicacion();
+			List<SensorBooleanoResponseDto> listaSensoresBooleanos = this.sensorBooleanoRepo.buscarSensoresBooleanos();
 			
 			Map<String, List<SensorBooleanoResponseDto>> mapaSensorBooleano = new HashMap<String, List<SensorBooleanoResponseDto>>() ;
 			
