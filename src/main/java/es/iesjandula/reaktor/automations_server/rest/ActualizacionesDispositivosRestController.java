@@ -51,7 +51,7 @@ public class ActualizacionesDispositivosRestController
 	 * @param mac MAC del sensor a actualizar, obtenido como parámetro de la URL o cabecera (depende de la configuración, aquí se asume que se pasa implícitamente o es parte de la cabecera/cuerpo).
 	 * @return ResponseEntity 200 (OK) o 400 (Bad Request) si el sensor no existe.
 	 */
-	@PreAuthorize("hasRole('" + BaseConstants.ROLE_SENSOR + "')") // Solo usuarios con rol SENSOR pueden actualizar
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_APLICACION_SENSOR + "')") // Solo usuarios con rol SENSOR pueden actualizar
 	@PostMapping(value = "/sensor/booleano")
 	public ResponseEntity<?> actualizarSensorBooleano(@RequestHeader(value="valorActual") Boolean valorActual, @RequestHeader(value="mac") String mac)
 	{
@@ -105,7 +105,7 @@ public class ActualizacionesDispositivosRestController
 	 * @param mac MAC del sensor a actualizar.
 	 * @return ResponseEntity 200 (OK) o 400/500 en caso de error.
 	 */
-	@PreAuthorize("hasRole('" + BaseConstants.ROLE_SENSOR + "')") // Solo usuarios con rol SENSOR pueden actualizar
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_APLICACION_SENSOR + "')") // Solo usuarios con rol SENSOR pueden actualizar
 	@PostMapping(value = "/sensor/numerico")
 	public ResponseEntity<?> actualizarSensorNumerico(@RequestHeader(value="valorActual") Double valorActual, @RequestHeader(value="mac") String mac)
 	{
@@ -148,7 +148,7 @@ public class ActualizacionesDispositivosRestController
 		
 	}
 	
-	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ACTUADOR + "')")
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_APLICACION_ACTUADOR + "')")
 	@PostMapping("/actuador/estado")
 	public ResponseEntity<?> actuadorEstado(@RequestHeader("mac") String mac) {
 
