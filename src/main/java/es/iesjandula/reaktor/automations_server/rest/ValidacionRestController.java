@@ -29,6 +29,7 @@ public class ValidacionRestController
 	private IValidacionRepository validacionRepository;
 	@Autowired
 	private IOrdenRepository ordenRepository;
+	
 	@PostMapping(value = "/", consumes = "application/json")
 	public ResponseEntity<?> crearValidacion(@RequestBody(required = true) ValidacionRequestDto validacionRequestDto)
 	{
@@ -49,7 +50,7 @@ public class ValidacionRestController
 			Validacion validacion = new Validacion();
 			validacion.setScore(validacionRequestDto.getScore());
 			validacion.setResultado(validacionRequestDto.getResultado());
-			validacion.setMotivoRechazo(validacionRequestDto.getMotivoRechazo());
+			validacion.setTextoRespuesta(validacionRequestDto.getTextoRespuesta());
 			validacion.setOrden(ordenOpt.get());
 			Validacion nuevaValidacion = this.validacionRepository.saveAndFlush(validacion);
 			log.info(Constants.ELEMENTO_AGREGADO);
