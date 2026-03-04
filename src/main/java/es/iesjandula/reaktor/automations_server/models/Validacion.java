@@ -32,15 +32,15 @@ public class Validacion
 
     /** Puntuación o nivel de verificación de la validación. No puede ser nulo. */
     @Column(nullable = false)
-    private Integer score; 
+    private Double score; 
     
     /** Resultado final de la validación (e.g., 'Aceptado', 'Rechazado'). No puede ser nulo. */
     @Column(length = 50, nullable = false)
     private String resultado; 
 
-    /** Descripción del motivo si la validación fue rechazada. Puede ser nulo. */
-    @Column(length = 255)
-    private String motivoRechazo;
+    /** Texto de la respuesta. No puede ser nulo. */
+    @Column(length = 255, nullable = false)
+    private String textoRespuesta;
 
     /**
      * Relación Muchos a Uno con la entidad Orden.
