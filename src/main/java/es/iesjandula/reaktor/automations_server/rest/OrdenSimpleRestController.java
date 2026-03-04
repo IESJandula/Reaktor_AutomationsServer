@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import es.iesjandula.reaktor.automations_server.dtos.OrdenTextoRequest;
 import es.iesjandula.reaktor.automations_server.models.OrdenSimple;
 import es.iesjandula.reaktor.automations_server.repository.IOrdenSimpleRepository;
+import es.iesjandula.reaktor.automations_server.services.ProcesadorOrdenService;
 import es.iesjandula.reaktor.automations_server.services.SpeechService;
 import es.iesjandula.reaktor.automations_server.utils.AutomationsServerException;
 import es.iesjandula.reaktor.automations_server.utils.Constants;
@@ -33,9 +33,11 @@ public class OrdenSimpleRestController
     @Autowired
     private IOrdenSimpleRepository ordenSimpleRepository;
     
+    @Autowired
+    private SpeechService speechService;
     
     @Autowired
-    private SpeechService speechService ;
+    private ProcesadorOrdenService procesadorOrdenService;
     
     @PostMapping(value = "/texto", consumes = "application/json")
     public ResponseEntity<?> crearOrdenSimpleTexto(
@@ -72,6 +74,8 @@ public class OrdenSimpleRestController
             }
 
             OrdenSimple nuevaOrden = this.ordenSimpleRepository.saveAndFlush(ordenSimple);
+            
+            procesadorOrdenService.procesarOrden(nuevaOrden);
 
             return ResponseEntity.ok(nuevaOrden);
         }
@@ -120,6 +124,8 @@ public class OrdenSimpleRestController
             }
 
             OrdenSimple nuevaOrden = this.ordenSimpleRepository.saveAndFlush(ordenSimple);
+            
+            procesadorOrdenService.procesarOrden(nuevaOrden);
 
             return ResponseEntity.ok(nuevaOrden);
         }

@@ -29,6 +29,9 @@ public class ComandoActuador {
 
     @Column
     private String comandos;
+    
+    @Column
+    private String textoOk;
 
     @ManyToOne
     @MapsId("mac")

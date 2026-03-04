@@ -23,7 +23,7 @@ public interface ISensorBooleanoRepository extends JpaRepository<SensorBooleano,
 			        s.estado,
 			        s.valorActual,
 			        s.ultimaActualizacion,
-			        s.ubicacion.nombreUbicacion,
+			        s.nombreUbicacion,
 			        s.umbralMinimo,
 			        s.umbralMaximo,
 			        s.tipo
@@ -32,20 +32,6 @@ public interface ISensorBooleanoRepository extends JpaRepository<SensorBooleano,
 			""")
 	List<SensorBooleanoResponseDto> buscarSensoresBooleanos();
 
-	@Query("""
-		    SELECT new es.iesjandula.reaktor.automations_server.dtos.SensorBooleanoResponseDto(
-		        s.mac,
-		        s.estado,
-		        s.valorActual,
-		        s.ultimaActualizacion,
-		        s.ubicacion.nombreUbicacion,
-		        s.umbralMinimo,
-		        s.umbralMaximo,
-		        s.tipo
-		    )
-		    FROM SensorBooleano s
-		""")
-		List<SensorBooleanoResponseDto> buscarSensoresBooleanosPorUbicacion();
 
 
 

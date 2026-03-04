@@ -18,12 +18,12 @@ public class ValidacionRequestDto
 	private Long ordenId;
     
     // Puntuación de la validación
-    private Integer score; 
+    private Double score; 
     
     // Resultado de la validación (ej. aprobado/rechazado)
     private String resultado; 
     
     // Motivo del rechazo, si aplica
-    private String motivoRechazo;
+    private String textoRespuesta;
 }
 
