@@ -10,7 +10,7 @@ import es.iesjandula.reaktor.automations_server.dtos.ComandoActuadorResponseDto;
 import es.iesjandula.reaktor.automations_server.models.ComandoActuador;
 import es.iesjandula.reaktor.automations_server.models.ids.ComandoActuadorId;
 
-public interface IComandoActuadorRepository extends JpaRepository<ComandoActuador, ComandoActuadorId>, ComandoActuadorCustomRepository
+public interface IComandoActuadorRepository extends JpaRepository<ComandoActuador, ComandoActuadorId>
 {
 	@Query("""
 		select new es.iesjandula.reaktor.automations_server.dtos.ComandoActuadorResponseDto(
@@ -22,4 +22,31 @@ public interface IComandoActuadorRepository extends JpaRepository<ComandoActuado
 		from ComandoActuador c
 	""")
 	List<ComandoActuadorResponseDto> buscarComandosActuador();
+	
+	@Query(value = """
+			SELECT
+			    ca.keyword,
+			    ca.mac,
+
+			    (
+			        (
+			            CASE 
+			                WHEN LOWER(:input) LIKE CONCAT('%', SUBSTRING_INDEX(ca.keyword,' ',1), '%')
+			                THEN 1 ELSE 0
+			            END
+			            +
+			            CASE
+			                WHEN LOWER(:input) LIKE CONCAT('%', SUBSTRING_INDEX(ca.keyword,' ',-1), '%')
+			                OR LOWER(:input) LIKE CONCAT('%', REPLACE(SUBSTRING_INDEX(ca.keyword,' ',-1),'.',' '), '%')
+			                THEN 1 ELSE 0
+			            END
+			        ) / 2
+			    ) * 100 AS porcentaje
+
+			FROM comando_actuador ca
+			ORDER BY porcentaje DESC
+			LIMIT 1
+			""", nativeQuery = true)
+
+			List<Object[]> buscarMejorComando(@Param("input") String input);
 }

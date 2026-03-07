@@ -76,7 +76,7 @@ public class OrdenSimpleRestController
             OrdenSimple nuevaOrden = this.ordenSimpleRepository.saveAndFlush(ordenSimple);
             
             procesadorOrdenService.procesarOrden(nuevaOrden);
-
+            
             return ResponseEntity.ok(nuevaOrden);
         }
         catch (AutomationsServerException exception)
@@ -123,7 +123,7 @@ public class OrdenSimpleRestController
                 ordenSimple.setApellidos("SinLogin");
             }
 
-            OrdenSimple nuevaOrden = this.ordenSimpleRepository.saveAndFlush(ordenSimple);
+            OrdenSimple nuevaOrden = this.ordenSimpleRepository.saveAndFlush(ordenSimple);    
             
             procesadorOrdenService.procesarOrden(nuevaOrden);
 
