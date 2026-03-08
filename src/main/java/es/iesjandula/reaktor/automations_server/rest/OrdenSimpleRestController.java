@@ -1,5 +1,8 @@
 package es.iesjandula.reaktor.automations_server.rest;
+
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,148 +20,163 @@ import org.springframework.web.multipart.MultipartFile;
 
 import es.iesjandula.reaktor.automations_server.dtos.OrdenTextoRequest;
 import es.iesjandula.reaktor.automations_server.models.OrdenSimple;
+import es.iesjandula.reaktor.automations_server.models.Validacion;
 import es.iesjandula.reaktor.automations_server.repository.IOrdenSimpleRepository;
+import es.iesjandula.reaktor.automations_server.repository.IValidacionRepository;
 import es.iesjandula.reaktor.automations_server.services.ProcesadorOrdenService;
 import es.iesjandula.reaktor.automations_server.services.SpeechService;
 import es.iesjandula.reaktor.automations_server.utils.AutomationsServerException;
 import es.iesjandula.reaktor.automations_server.utils.Constants;
 import es.iesjandula.reaktor.base.security.models.DtoUsuarioExtended;
 import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/automations/ordensimple")
 @RestController
 public class OrdenSimpleRestController
 {
-    @Autowired
-    private IOrdenSimpleRepository ordenSimpleRepository;
-    
-    @Autowired
-    private SpeechService speechService;
-    
-    @Autowired
-    private ProcesadorOrdenService procesadorOrdenService;
-    
-    @PostMapping(value = "/texto", consumes = "application/json")
-    public ResponseEntity<?> crearOrdenSimpleTexto(
-            @AuthenticationPrincipal DtoUsuarioExtended usuario,
-            @RequestBody OrdenTextoRequest request)
-    {
-        try
-        {
-            String frase = request.getFrase();
+	@Autowired
+	private IOrdenSimpleRepository ordenSimpleRepository;
 
-            if (frase == null || frase.isBlank())
-            {
-                throw new AutomationsServerException(
-                        Constants.ERR_SIMPLE_NULO_VACIO,
-                        Constants.ERR_SIMPLE_CODE);
-            }
+	@Autowired
+	private SpeechService speechService;
 
-            OrdenSimple ordenSimple = new OrdenSimple();
-            ordenSimple.setFecha(new Date());
-            ordenSimple.setFrase(frase);
+	@Autowired
+	private ProcesadorOrdenService procesadorOrdenService;
 
-            // 👇 Soporte con y sin JWT
-            if (usuario != null)
-            {
-                ordenSimple.setEmail(usuario.getEmail());
-                ordenSimple.setNombre(usuario.getNombre());
-                ordenSimple.setApellidos(usuario.getApellidos());
-            }
-            else
-            {
-                ordenSimple.setEmail("anonimo@local");
-                ordenSimple.setNombre("Anonimo");
-                ordenSimple.setApellidos("SinLogin");
-            }
+	@Autowired
+	private IValidacionRepository validacionRepository;
 
-            OrdenSimple nuevaOrden = this.ordenSimpleRepository.saveAndFlush(ordenSimple);
-            
-            procesadorOrdenService.procesarOrden(nuevaOrden);
-            
-            return ResponseEntity.ok(nuevaOrden);
-        }
-        catch (AutomationsServerException exception)
-        {
-            return ResponseEntity.badRequest().body(exception.getMessage());
-        }
-    }
-    
-    @PostMapping(value = "/audio", consumes = "multipart/form-data")
-    public ResponseEntity<?> crearOrdenSimpleAudio(
-            @AuthenticationPrincipal DtoUsuarioExtended usuario,
-            @RequestParam("file") MultipartFile file)
-    {
-        try 
-        {
-            if (file == null || file.isEmpty())
-            {
-                throw new AutomationsServerException("Audio vacío", "AUDIO_EMPTY");
-            }
+	@PostMapping(value = "/texto", consumes = "application/json")
+	public ResponseEntity<?> crearOrdenSimpleTexto(@AuthenticationPrincipal DtoUsuarioExtended usuario,
+			@RequestBody OrdenTextoRequest request)
+	{
+		try
+		{
+			String frase = request.getFrase();
 
-            log.info("Archivo recibido: " + file.getOriginalFilename());
-            log.info("Tamaño: " + file.getSize());
+			if (frase == null || frase.isBlank())
+			{
+				throw new AutomationsServerException(Constants.ERR_SIMPLE_NULO_VACIO, Constants.ERR_SIMPLE_CODE);
+			}
 
-            String frase = this.speechService.transcribe(file.getInputStream());
+			OrdenSimple ordenSimple = new OrdenSimple();
+			ordenSimple.setFecha(new Date());
+			ordenSimple.setFrase(frase);
 
-            log.info("Texto reconocido: " + frase);
+			// Soporte con y sin JWT
+			if (usuario != null)
+			{
+				ordenSimple.setEmail(usuario.getEmail());
+				ordenSimple.setNombre(usuario.getNombre());
+				ordenSimple.setApellidos(usuario.getApellidos());
+			} 
+			else
+			{
+				ordenSimple.setEmail("anonimo@local");
+				ordenSimple.setNombre("Anonimo");
+				ordenSimple.setApellidos("SinLogin");
+			}
 
-            OrdenSimple ordenSimple = new OrdenSimple();
-            ordenSimple.setFecha(new Date());
-            ordenSimple.setFrase(frase);
+			OrdenSimple nuevaOrden = this.ordenSimpleRepository.saveAndFlush(ordenSimple);
 
-            // 👇 SOLO si hay usuario autenticado
-            if (usuario != null)
-            {
-                ordenSimple.setEmail(usuario.getEmail());
-                ordenSimple.setNombre(usuario.getNombre());
-                ordenSimple.setApellidos(usuario.getApellidos());
-            }
-            else
-            {
-                // Para pruebas sin JWT
-                ordenSimple.setEmail("anonimo@local");
-                ordenSimple.setNombre("Anonimo");
-                ordenSimple.setApellidos("SinLogin");
-            }
+			procesadorOrdenService.procesarOrden(nuevaOrden);
 
-            OrdenSimple nuevaOrden = this.ordenSimpleRepository.saveAndFlush(ordenSimple);    
-            
-            procesadorOrdenService.procesarOrden(nuevaOrden);
+			// obtenemos la validación que se acaba de crear
+			Validacion validacion = validacionRepository.findTopByOrdenOrderByIdDesc(nuevaOrden);
 
-            return ResponseEntity.ok(nuevaOrden);
-        }
-        catch (Exception e)
-        {
-            log.error("Error procesando audio", e);
-            return ResponseEntity.badRequest().body("Error procesando audio");
-        }
-    }
+			// construimos respuesta para el frontend
+			Map<String, Object> respuesta = new HashMap<>();
+			respuesta.put("frase", nuevaOrden.getFrase());
+			respuesta.put("textoRespuesta", validacion.getTextoRespuesta());
 
-    @GetMapping(value = "/")
-    public ResponseEntity<?> obtenerOrdenesSimples() 
-    {
-        return ResponseEntity.ok(this.ordenSimpleRepository.buscarOrdenesSimples());
-    }
-    @DeleteMapping(value = "/{id}")
-    public ResponseEntity<?> eliminarOrdenSimple(@PathVariable Long id) 
-    {
-        try 
-        {
-            if (!this.ordenSimpleRepository.existsById(id)) 
-            {
-                log.error(Constants.ERR_SIMPLE_NO_EXISTE);
-                throw new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_SIMPLE_NO_EXISTE); 
-            }
-            this.ordenSimpleRepository.deleteById(id);
-            log.info(Constants.ELEMENTO_ELIMINADO);
-            return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
-        } 
-        catch (AutomationsServerException exception) 
-        {
-            log.error(exception.getMessage());
-            return ResponseEntity.badRequest().body(exception);
-        }
-    }
+			return ResponseEntity.ok(respuesta);
+			
+		} catch (AutomationsServerException exception)
+		{
+			return ResponseEntity.badRequest().body(exception.getMessage());
+		}
+	}
+
+	@PostMapping(value = "/audio", consumes = "multipart/form-data")
+	public ResponseEntity<?> crearOrdenSimpleAudio(@AuthenticationPrincipal DtoUsuarioExtended usuario,
+			@RequestParam("file") MultipartFile file)
+	{
+		try
+		{
+			if (file == null || file.isEmpty())
+			{
+				throw new AutomationsServerException("Audio vacío", "AUDIO_EMPTY");
+			}
+
+			log.info("Archivo recibido: " + file.getOriginalFilename());
+			log.info("Tamaño: " + file.getSize());
+
+			String frase = this.speechService.transcribe(file.getInputStream());
+
+			log.info("Texto reconocido: " + frase);
+
+			OrdenSimple ordenSimple = new OrdenSimple();
+			ordenSimple.setFecha(new Date());
+			ordenSimple.setFrase(frase);
+
+			// 👇 SOLO si hay usuario autenticado
+			if (usuario != null)
+			{
+				ordenSimple.setEmail(usuario.getEmail());
+				ordenSimple.setNombre(usuario.getNombre());
+				ordenSimple.setApellidos(usuario.getApellidos());
+			} else
+			{
+				// Para pruebas sin JWT
+				ordenSimple.setEmail("anonimo@local");
+				ordenSimple.setNombre("Anonimo");
+				ordenSimple.setApellidos("SinLogin");
+			}
+
+			OrdenSimple nuevaOrden = this.ordenSimpleRepository.saveAndFlush(ordenSimple);
+
+			procesadorOrdenService.procesarOrden(nuevaOrden);
+
+			Validacion validacion = validacionRepository.findTopByOrdenOrderByIdDesc(nuevaOrden);
+
+			Map<String, Object> respuesta = new HashMap<>();
+			respuesta.put("frase", nuevaOrden.getFrase());
+			respuesta.put("textoRespuesta", validacion.getTextoRespuesta());
+
+			return ResponseEntity.ok(respuesta);
+			
+		} catch (Exception e)
+		{
+			log.error("Error procesando audio", e);
+			return ResponseEntity.badRequest().body("Error procesando audio");
+		}
+	}
+
+	@GetMapping(value = "/")
+	public ResponseEntity<?> obtenerOrdenesSimples()
+	{
+		return ResponseEntity.ok(this.ordenSimpleRepository.buscarOrdenesSimples());
+	}
+
+	@DeleteMapping(value = "/{id}")
+	public ResponseEntity<?> eliminarOrdenSimple(@PathVariable Long id)
+	{
+		try
+		{
+			if (!this.ordenSimpleRepository.existsById(id))
+			{
+				log.error(Constants.ERR_SIMPLE_NO_EXISTE);
+				throw new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_SIMPLE_NO_EXISTE);
+			}
+			this.ordenSimpleRepository.deleteById(id);
+			log.info(Constants.ELEMENTO_ELIMINADO);
+			return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
+		} catch (AutomationsServerException exception)
+		{
+			log.error(exception.getMessage());
+			return ResponseEntity.badRequest().body(exception);
+		}
+	}
 }
