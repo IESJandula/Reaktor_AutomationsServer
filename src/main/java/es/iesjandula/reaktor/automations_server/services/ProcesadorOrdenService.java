@@ -5,18 +5,21 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import es.iesjandula.reaktor.automations_server.models.Accion;
+import es.iesjandula.reaktor.automations_server.models.Actuador;
 import es.iesjandula.reaktor.automations_server.models.Comando;
 import es.iesjandula.reaktor.automations_server.models.OrdenSimple;
 import es.iesjandula.reaktor.automations_server.models.Validacion;
 import es.iesjandula.reaktor.automations_server.models.ids.ComandoActuadorId;
 import es.iesjandula.reaktor.automations_server.models.ids.ComandoId;
+import es.iesjandula.reaktor.automations_server.repository.IAccionRepository;
+import es.iesjandula.reaktor.automations_server.repository.IActuadorRepository;
 import es.iesjandula.reaktor.automations_server.repository.IComandoActuadorRepository;
 import es.iesjandula.reaktor.automations_server.repository.IComandoRepository;
 import es.iesjandula.reaktor.automations_server.repository.IValidacionRepository;
 
 @Service
-public class ProcesadorOrdenService
-{
+public class ProcesadorOrdenService {
 
     @Autowired
     private IComandoActuadorRepository comandoActuadorRepository;
@@ -26,23 +29,20 @@ public class ProcesadorOrdenService
 
     @Autowired
     private IComandoRepository comandoRepository;
+    
+    @Autowired
+    private IAccionRepository accionRepository;
 
-    public void procesarOrden(OrdenSimple orden)
-    {
+    @Autowired
+    private IActuadorRepository actuadorRepository;
 
-        List<Object[]> resultado =
-                comandoActuadorRepository.buscarMejorComando(
-                        orden.getFrase()
-                );
+    public void procesarOrden(OrdenSimple orden) {
+
+        List<Object[]> resultado = comandoActuadorRepository.buscarMejorComando(orden.getFrase().toLowerCase());
 
         if(resultado.isEmpty())
         {
-            guardarValidacion(
-                    orden,
-                    0.0,
-                    "Rechazado",
-                    "No se ha entendido la orden"
-            );
+            guardarValidacion(orden, 0.0, "Rechazado", "No se ha entendido la orden");
             return;
         }
 
@@ -50,50 +50,50 @@ public class ProcesadorOrdenService
 
         String keyword = (String) fila[0];
         String mac = (String) fila[1];
-        Double porcentaje = ((Number) fila[2]).doubleValue();
+        String textoOk = (String) fila[2];
+        Double score = ((Number) fila[4]).doubleValue();
 
-        if(porcentaje >= 80)
+        // guardar validación siempre
+        if(score >= 80) 
         {
+            guardarValidacion(orden, score, "Aceptado", textoOk);
 
-            guardarValidacion(
-                    orden,
-                    porcentaje,
-                    "Aceptado",
-                    "La puerta se abrió correctamente"
-            );
-
-            ComandoActuadorId comandoActuadorId =
-                    new ComandoActuadorId(mac, keyword);
-
-            ComandoId comandoId =
-                    new ComandoId(comandoActuadorId, orden.getId());
+            // guardar comando
+            ComandoActuadorId comandoActuadorId = new ComandoActuadorId(mac, keyword);
+            ComandoId comandoId = new ComandoId(comandoActuadorId, orden.getId());
 
             Comando comando = new Comando();
             comando.setComandoId(comandoId);
             comando.setOrden(orden);
 
             comandoRepository.save(comando);
+            
+            // CREAR ACCION
+            Actuador actuador = actuadorRepository.findById(mac).orElse(null);
 
-        }
-        else
+            if(actuador != null)
+            {
+                Accion accion = new Accion();
+
+                accion.setResultado("PENDIENTE");
+                accion.setActuador(actuador);
+                accion.setOrden(orden);
+
+                accionRepository.save(accion);
+            }
+
+        } 
+        else 
         {
-
-            guardarValidacion(
-                    orden,
-                    porcentaje,
-                    "Rechazado",
-                    "No se ha entendido la orden"
-            );
-
+            guardarValidacion(orden,score,"Rechazado",textoOk);
         }
-
     }
 
-    private void guardarValidacion(OrdenSimple orden,
-                                   Double score,
-                                   String resultado,
-                                   String textoRespuesta)
-    {
+    private void guardarValidacion(
+            OrdenSimple orden,
+            Double score,
+            String resultado,
+            String textoRespuesta) {
 
         Validacion validacion = new Validacion();
 
@@ -103,6 +103,5 @@ public class ProcesadorOrdenService
         validacion.setTextoRespuesta(textoRespuesta);
 
         validacionRepository.save(validacion);
-
     }
 }

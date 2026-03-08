@@ -27,26 +27,52 @@ public interface IComandoActuadorRepository extends JpaRepository<ComandoActuado
 			SELECT
 			    ca.keyword,
 			    ca.mac,
+			    ca.texto_ok,
+
+			    SUM(
+			        CASE 
+			            WHEN (
+			                    LOWER(:input) LIKE CONCAT('%', kw.palabra, '%')
+			                    OR (
+			                        kw.palabra LIKE '%.%' 
+			                        AND LOWER(:input) LIKE CONCAT('%', REPLACE(kw.palabra,'.',' '), '%')
+			                    )
+			                 )
+			            THEN 1 
+			            ELSE 0 
+			        END
+			    ) AS coincidencias,
 
 			    (
-			        (
+			        SUM(
 			            CASE 
-			                WHEN LOWER(:input) LIKE CONCAT('%', SUBSTRING_INDEX(ca.keyword,' ',1), '%')
-			                THEN 1 ELSE 0
+			                WHEN (
+			                        LOWER(:input) LIKE CONCAT('%', kw.palabra, '%')
+			                        OR (
+			                            kw.palabra LIKE '%.%' 
+			                            AND LOWER(:input) LIKE CONCAT('%', REPLACE(kw.palabra,'.',' '), '%')
+			                        )
+			                     )
+			                THEN 1 
+			                ELSE 0 
 			            END
-			            +
-			            CASE
-			                WHEN LOWER(:input) LIKE CONCAT('%', SUBSTRING_INDEX(ca.keyword,' ',-1), '%')
-			                OR LOWER(:input) LIKE CONCAT('%', REPLACE(SUBSTRING_INDEX(ca.keyword,' ',-1),'.',' '), '%')
-			                THEN 1 ELSE 0
-			            END
-			        ) / 2
+			        )
+			        /
+			        COUNT(kw.palabra)
 			    ) * 100 AS porcentaje
 
 			FROM comando_actuador ca
+
+			JOIN JSON_TABLE(
+			    CONCAT('["', REPLACE(ca.keyword, ' ', '","'), '"]'),
+			    '$[*]' COLUMNS (
+			        palabra VARCHAR(100) PATH '$'
+			    )
+			) kw
+
+			GROUP BY ca.keyword, ca.mac, ca.texto_ok
 			ORDER BY porcentaje DESC
 			LIMIT 1
 			""", nativeQuery = true)
-
 			List<Object[]> buscarMejorComando(@Param("input") String input);
 }
