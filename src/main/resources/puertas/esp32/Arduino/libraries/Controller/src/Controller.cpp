@@ -1,4 +1,5 @@
 #include "Controller.h"
+#include <ArduinoJson.h>
 
 // -------------------- Variables globales --------------------
 String WifiSSID;
@@ -6,12 +7,13 @@ String WifiPassword;
 
 String firebaseUrl;
 String actuadorEstadoUrl;
+String accionEstadoUrl;
 String xClientId;
 
 bool littleFSInitialized = false;
 bool sdCardInitialized = false;
 
-// -------------------- LittleFS (opcional) --------------------
+// -------------------- LittleFS --------------------
 bool initializeLittleFS() {
   if (!LittleFS.begin()) {
     LittleFS.begin(true);
@@ -23,8 +25,8 @@ bool initializeLittleFS() {
 
 // -------------------- SD --------------------
 bool initializeSDCard() {
-  SPI.begin();          // si tu SD usa pines por defecto
-  if (!SD.begin()) {    // si necesitas CS: SD.begin(CS_PIN);
+  SPI.begin();
+  if (!SD.begin()) {
     sdCardInitialized = false;
     digitalWrite(sdFSLed, LOW);
     return false;
@@ -34,7 +36,7 @@ bool initializeSDCard() {
   return true;
 }
 
-// Copiar SD -> LittleFS (no lo necesitas para esta versión, pero lo dejo)
+// Copiar SD -> LittleFS
 void compareAndCopy(String filePath, String metadataFilePath, String fileName) {
   (void)metadataFilePath;
   (void)fileName;
@@ -77,28 +79,29 @@ static void parseConfigLineSD(const String& lineRaw) {
     return;
   }
 
-  // Tu archivo: "FIREBASE_URL_http://...."
   if (line.startsWith("FIREBASE_URL=")) {
     firebaseUrl = line.substring(String("FIREBASE_URL=").length());
     firebaseUrl.trim();
     return;
   }
 
-  // Tu archivo: "ACTUADOR_ESTADO_URL_http://...."
   if (line.startsWith("ACTUADOR_ESTADO_URL=")) {
     actuadorEstadoUrl = line.substring(String("ACTUADOR_ESTADO_URL=").length());
     actuadorEstadoUrl.trim();
     return;
   }
 
-  // Opcional: CLIENT_ID=...
+  if (line.startsWith("ACCION_ESTADO_URL=")) {
+    accionEstadoUrl = line.substring(String("ACCION_ESTADO_URL=").length());
+    accionEstadoUrl.trim();
+    return;
+  }
+
   if (line.startsWith("X_CLIENT_ID=")) {
     xClientId = line.substring(12);
     xClientId.trim();
     return;
   }
-
-  // Ignorar claves desconocidas
 }
 
 bool loadConfigFromSD(const String& configPath) {
@@ -123,12 +126,11 @@ bool loadConfigFromSD(const String& configPath) {
   Serial.print("📄 Leyendo config desde SD: ");
   Serial.println(configPath);
 
-  // limpiar variables (por si reinicias sin power-cycle)
   WifiSSID = "";
   WifiPassword = "";
   firebaseUrl = "";
   actuadorEstadoUrl = "";
-  // xClientId NO lo vacío para mantener default si no viene
+  accionEstadoUrl = "";
 
   while (f.available()) {
     String line = f.readStringUntil('\n');
@@ -154,11 +156,16 @@ bool loadConfigFromSD(const String& configPath) {
     Serial.println("❌ Falta ACTUADOR_ESTADO_URL...");
     ok = false;
   }
+  if (accionEstadoUrl.length() == 0) {
+    Serial.println("❌ Falta ACCION_ESTADO_URL...");
+    ok = false;
+  }
 
   Serial.println("---- CONFIG CARGADA ----");
   Serial.print("SSID: "); Serial.println(WifiSSID);
   Serial.print("FIREBASE: "); Serial.println(firebaseUrl);
   Serial.print("ACTUADOR_ESTADO: "); Serial.println(actuadorEstadoUrl);
+  Serial.print("ACCION_ESTADO: "); Serial.println(accionEstadoUrl);
   Serial.print("CLIENT_ID: "); Serial.println(xClientId);
   Serial.println("------------------------");
 
@@ -202,10 +209,10 @@ void connectToWifi() {
   }
 }
 
-// (si luego sincronizas NTP)
+// -------------------- NTP --------------------
 void syncTimeToNtpServer() {
   Serial.println("Network Time Protocol");
-  configTzTime(TZ_INFO, "pool.ntp.org", "time.nist.gov", "time.google.com");  // Configurar NTP
+  configTzTime(TZ_INFO, "pool.ntp.org", "time.nist.gov", "time.google.com");
 
   struct tm timeinfo;
   const int maxRetries = 5;
@@ -213,7 +220,6 @@ void syncTimeToNtpServer() {
 
   while (attempt < maxRetries) {
     if (getLocalTime(&timeinfo)) {
-      // Éxito: imprimir hora formateada y salir
       char formattedDate[30];
       strftime(formattedDate, sizeof(formattedDate), "%Y-%m-%d %H:%M:%S", &timeinfo);
       Serial.println("- Date and time set successfully: ");
@@ -221,75 +227,62 @@ void syncTimeToNtpServer() {
       return;
     }
 
-    // Fallo: mostrar intento fallido y esperar un poco
     Serial.println("WARNING: Attempt ");
     Serial.println(String(attempt + 1));
     Serial.println("failed. Retrying...");
-    delay(1000);  // Espera 1 segundo antes de intentar otra vez
+    delay(1000);
     attempt++;
   }
 
-  // Si llegamos aquí, fallaron todos los intentos
   Serial.println("ERROR: Failed to obtain date and time from NTP server after multiple attempts.");
 }
 
 // -------------------- Token Firebase --------------------
 String getFirebaseToken(const String& urlFirebase, const String& xClientId)
 {
-  // ---------------------------------------------
-  // REQUEST SETUP
-  // ---------------------------------------------
-  HTTPClient httpJwt;         // HTTP client for the request.
-  httpJwt.setTimeout(20000);  // configura una ventana de tiempo mas amplia para la respuesta.
+  HTTPClient httpJwt;
+  httpJwt.setTimeout(20000);
+
   String httpResponseData = "";
   String authToken = "";
 
-  // Log request details.
   Serial.println("Request details: ");
   Serial.println("-- Server Address: ");
   Serial.println(urlFirebase);
   Serial.println("-- X-CLIENT-ID: ");
   Serial.println(xClientId);
 
-  // Llamada a funcion que intenta varias veces la conexión.
   if (!beginWithRetry(httpJwt, urlFirebase)) {
-    return "";  // Falló incluso tras varios intentos
+    return "";
   }
 
   httpJwt.addHeader("X-CLIENT-ID", xClientId);
 
-  int httpResponseCode = httpJwt.POST("");  // Send the request.
+  int httpResponseCode = httpJwt.POST("");
 
   if (httpResponseCode >= 200 && httpResponseCode < 300) {
-
     Serial.println("FIREBASE: Response received.");
-
     Serial.println("- HTTP Response Code:");
     Serial.println(String(httpResponseCode));
 
     httpResponseData = httpJwt.getString();
     if (httpResponseData.length() > 0) {
-
       Serial.println("- Server Response:");
       Serial.println(String(httpResponseData));
-
       authToken = httpResponseData;
-
     } else {
       Serial.println("WARNING: Received an empty response from the server.");
     }
-
   } else {
     Serial.println("ERROR: HTTP request failed. Code: ");
     Serial.println(String(httpResponseCode));
   }
 
-  httpJwt.end();  // Free memory resources.
-
+  httpJwt.end();
   return authToken;
 }
 
-// Funcion que permite reintentar una conexión por si falla.
+// -------------------- Reintentos HTTP --------------------
 bool beginWithRetry(HTTPClient& http, const String& url, int maxRetries) {
   int attempts = 0;
   while (attempts < maxRetries) {
@@ -299,11 +292,105 @@ bool beginWithRetry(HTTPClient& http, const String& url, int maxRetries) {
     Serial.println("Intento fallido al iniciar conexión HTTP. Reintentando... intento ");
     Serial.println(String(attempts + 1));
     attempts++;
-    delay(500);  // Espera entre reintentos
+    delay(500);
   }
 
   Serial.println("ERROR: No se pudo establecer conexión HTTP después de varios intentos.");
   return false;
+}
+
+// -------------------- Parsear acción pendiente --------------------
+AccionPendiente parsearAccionPendiente(const String& json) {
+  AccionPendiente accion;
+  accion.accionId = 0;
+  accion.estado = "";
+  accion.resultado = "";
+  accion.mac = "";
+  accion.ordenId = 0;
+  accion.hayAccion = false;
+
+  if (json.length() == 0) {
+    return accion;
+  }
+
+  DynamicJsonDocument doc(1024);
+  DeserializationError error = deserializeJson(doc, json);
+
+  if (error) {
+    Serial.print("❌ Error parseando JSON: ");
+    Serial.println(error.c_str());
+    return accion;
+  }
+
+  if (!doc["accionId"].isNull()) {
+    accion.accionId = doc["accionId"].as<long>();
+  }
+
+  accion.estado = doc["estado"] | "";
+  accion.resultado = doc["resultado"] | "";
+  accion.mac = doc["mac"] | "";
+
+  if (!doc["ordenId"].isNull()) {
+    accion.ordenId = doc["ordenId"].as<long>();
+  }
+
+  if (accion.accionId > 0) {
+    accion.hayAccion = true;
+  }
+
+  return accion;
+}
+
+// -------------------- Relé puerta --------------------
+void accionarRelePuerta(unsigned long tiempoMs) {
+  Serial.println("🚪 Abriendo puerta...");
+  digitalWrite(relePuertaPin, HIGH);   // cambia a LOW si tu relé es activo en bajo
+  delay(tiempoMs);
+  digitalWrite(relePuertaPin, LOW);    // cambia a HIGH si tu relé es activo en bajo
+  Serial.println("✅ Relé desactivado.");
+}
+
+// -------------------- Notificar estado final de acción --------------------
+String updateAccionEstado(
+  const String& url,
+  const String& token,
+  long accionId,
+  const String& estado,
+  const String& resultado) {
+
+  HTTPClient http;
+  http.setTimeout(20000);
+  String httpResponseData = "";
+
+  if (!beginWithRetry(http, url)) {
+    return "";
+  }
+
+  http.addHeader("Authorization", "Bearer " + token);
+  http.addHeader("Content-Type", "application/json");
+
+  DynamicJsonDocument doc(512);
+  doc["accionId"] = accionId;
+  doc["estado"] = estado;
+  doc["resultado"] = resultado;
+
+  String body;
+  serializeJson(doc, body);
+
+  int httpResponseCode = http.POST(body);
+
+  if (httpResponseCode >= 200 && httpResponseCode < 300) {
+    Serial.println("✅ Estado de acción actualizado correctamente.");
+    httpResponseData = http.getString();
+  } else {
+    Serial.println("❌ Error actualizando estado de acción.");
+    Serial.println(String(httpResponseCode));
+    httpResponseData = http.getString();
+    Serial.println(httpResponseData);
+  }
+
+  http.end();
+  return httpResponseData;
 }
 
 // -------------------- Update estado SIMPLE (solo MAC) --------------------
@@ -311,61 +398,56 @@ String updateActuatorStateSimple(
   const String& url,
   const String& token,
   const String& targetMac) {
-  // ---------------------------------------------
-  // REQUEST SETUP
-  // ---------------------------------------------
-  HTTPClient httpActualizarActuador;         // HTTP client for the request.
-  httpActualizarActuador.setTimeout(20000);  // configura una ventana de tiempo mas amplia para la respuesta.
-  String httpResponseData = "";
-  String authToken = "";
 
-  // Llamada a funcion que intenta varias veces la conexión.
+  HTTPClient httpActualizarActuador;
+  httpActualizarActuador.setTimeout(20000);
+  String httpResponseData = "";
+
   if (!beginWithRetry(httpActualizarActuador, url)) {
-    return "";  // Falló incluso tras varios intentos
+    return "";
   }
 
   httpActualizarActuador.addHeader("Authorization", "Bearer " + token);
   httpActualizarActuador.addHeader("mac", targetMac);
 
-  int httpResponseCode = httpActualizarActuador.POST("");  // Send the request.
+  int httpResponseCode = httpActualizarActuador.POST("");
 
   if (httpResponseCode >= 200 && httpResponseCode < 300) {
-
     Serial.println("ACTUALIZAR ACTUADOR: Response received.");
-
     Serial.println("- HTTP Response Code:");
     Serial.println(String(httpResponseCode));
 
     httpResponseData = httpActualizarActuador.getString();
     if (httpResponseData.length() > 0) {
-
       Serial.println("- Server Response:");
       Serial.println(String(httpResponseData));
-
-      // aQUÍ SERÍA VER SI TENGO UNA ACCIÓN A REALIZAR DE ABRIR PUERTA
     } else {
       Serial.println("WARNING: Received an empty response from the server.");
     }
-
   } else {
     Serial.println("ERROR: HTTP request failed. Code: ");
     Serial.println(String(httpResponseCode));
   }
 
-  httpActualizarActuador.end();  // Free memory resources.
+  httpActualizarActuador.end();
+  return httpResponseData;
 }
 
-// -------------------- Stubs (si no los usas, puedes borrarlos) --------------------
+// -------------------- Stubs --------------------
 String updateActuatorState(
   const String& url,
   const String& token,
   const String& targetMac,
   const String& estado) {
-  (void)url; (void)token; (void)targetMac; (void)estado;
+  (void)url;
+  (void)token;
+  (void)targetMac;
+  (void)estado;
   return "";
 }
 
 String getActuadoresJson(const String& url, const String& token) {
-  (void)url; (void)token;
+  (void)url;
+  (void)token;
   return "";
 }
