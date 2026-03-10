@@ -16,14 +16,16 @@ public class AccionResponseDto
 {
     // ID de la acción
     private Long id;
+
+    // Estado de la acción (pendiente, en_ejecucion, etc.)
+    private String estado;
     
     // Resultado de la acción
     private String resultado;
     
-    // Nombre del actuador asociado
-    private String actuadorNombre;
+    // MAC del actuador asociado
+    private String actuadorMac;
     
     // ID de la orden asociada
     private Long ordenId;
 }
-

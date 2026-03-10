@@ -7,18 +7,21 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import es.iesjandula.reaktor.automations_server.models.Accion;
 import es.iesjandula.reaktor.automations_server.models.Comando;
 import es.iesjandula.reaktor.automations_server.models.ComandoActuador;
 import es.iesjandula.reaktor.automations_server.models.OrdenSimple;
 import es.iesjandula.reaktor.automations_server.models.Validacion;
 import es.iesjandula.reaktor.automations_server.models.ids.ComandoId;
+import es.iesjandula.reaktor.automations_server.repository.IAccionRepository;
 import es.iesjandula.reaktor.automations_server.repository.IComandoActuadorRepository;
 import es.iesjandula.reaktor.automations_server.repository.IComandoRepository;
 import es.iesjandula.reaktor.automations_server.repository.IValidacionRepository;
+import es.iesjandula.reaktor.automations_server.utils.Constants;
 
 @Service
-public class ProcesadorOrdenService {
-
+public class ProcesadorOrdenService
+{
     @Autowired
     private IComandoActuadorRepository comandoActuadorRepository;
 
@@ -28,11 +31,15 @@ public class ProcesadorOrdenService {
     @Autowired
     private IComandoRepository comandoRepository;
 
-    public void procesarOrden(OrdenSimple orden) {
+    @Autowired
+    private IAccionRepository accionRepository;
 
+    public void procesarOrden(OrdenSimple orden)
+    {
         Set<String> tokensUsuario = limpiar(orden.getFrase());
 
-        if (tokensUsuario.isEmpty()) {
+        if (tokensUsuario.isEmpty())
+        {
             guardarValidacion(orden, 0.0, "Rechazado", "No se ha entendido la orden");
             return;
         }
@@ -42,37 +49,40 @@ public class ProcesadorOrdenService {
         double mejorScore = 0.0;
         ComandoActuador mejorComando = null;
 
-        for (ComandoActuador comando : comandos) {
-
-            Set<String> tokensKeyword =
-                    limpiar(comando.getComandoActuadorId().getKeyword());
+        for (ComandoActuador comando : comandos)
+        {
+            Set<String> tokensKeyword = limpiar(comando.getComandoActuadorId().getKeyword());
 
             if (tokensKeyword.isEmpty())
+            {
                 continue;
+            }
 
             Set<String> interseccion = new HashSet<>(tokensUsuario);
             interseccion.retainAll(tokensKeyword);
 
             if (interseccion.isEmpty())
+            {
                 continue;
+            }
 
-            // 🔥 FORMULA CORRECTA
-            double score =
-                    (double) interseccion.size() / tokensKeyword.size();
+            double score = (double) interseccion.size() / tokensKeyword.size();
 
-            if (score > mejorScore) {
+            if (score > mejorScore)
+            {
                 mejorScore = score;
                 mejorComando = comando;
             }
         }
 
-        if (mejorComando == null) {
+        if (mejorComando == null)
+        {
             guardarValidacion(orden, 0.0, "Rechazado", "No se ha entendido la orden");
             return;
         }
 
-        if (mejorScore >= 0.6) {
-
+        if (mejorScore >= 0.6)
+        {
             guardarValidacion(
                     orden,
                     mejorScore,
@@ -92,22 +102,40 @@ public class ProcesadorOrdenService {
 
             comandoRepository.save(comando);
 
-        } else {
+            // Crear ACCION pendiente para que luego la consuma el ESP
+            Accion accion = new Accion();
+            accion.setActuador(mejorComando.getActuador());
+            accion.setOrden(orden);
+            accion.setEstado(Constants.ESTADO_ACCION_PENDIENTE);
+            accion.setResultado(mejorComando.getTextoOk());
 
+            accionRepository.save(accion);
+        }
+        else
+        {
             guardarValidacion(
                     orden,
                     mejorScore,
                     "Rechazado",
                     "No se ha entendido la orden"
             );
+
+            // Si quieres registrar también la acción fallida de validación
+            Accion accion = new Accion();
+            accion.setActuador(mejorComando.getActuador());
+            accion.setOrden(orden);
+            accion.setEstado(Constants.ESTADO_ACCION_ERROR_VALIDACION);
+            accion.setResultado("No se ha entendido la orden");
+
+            accionRepository.save(accion);
         }
     }
 
     private void guardarValidacion(OrdenSimple orden,
                                    Double score,
                                    String resultado,
-                                   String textoRespuesta) {
-
+                                   String textoRespuesta)
+    {
         Validacion validacion = new Validacion();
         validacion.setOrden(orden);
         validacion.setScore(score);
@@ -117,8 +145,8 @@ public class ProcesadorOrdenService {
         validacionRepository.save(validacion);
     }
 
-    private Set<String> limpiar(String frase) {
-
+    private Set<String> limpiar(String frase)
+    {
         frase = frase.toLowerCase()
                 .replaceAll("[^a-z0-9. ]", "");
 
@@ -126,12 +154,12 @@ public class ProcesadorOrdenService {
 
         Set<String> resultado = new HashSet<>();
 
-        for (int i = 0; i < partes.length; i++) {
-
+        for (int i = 0; i < partes.length; i++)
+        {
             if (i < partes.length - 1 &&
                 partes[i].matches("\\d+") &&
-                partes[i + 1].matches("\\d+")) {
-
+                partes[i + 1].matches("\\d+"))
+            {
                 resultado.add(partes[i] + "." + partes[i + 1]);
                 i++;
                 continue;
