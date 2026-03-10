@@ -34,3 +34,4 @@ reaktor:
   clientId: automations
   http_connection_timeout: 30000
   comprobadorEstadoDispositivosTiempoMaximo: 30000
+  score_minimo_validacion: 80

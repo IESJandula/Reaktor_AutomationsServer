@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import es.iesjandula.reaktor.automations_server.dtos.ValidacionResponseDto;
+import es.iesjandula.reaktor.automations_server.models.OrdenSimple;
 import es.iesjandula.reaktor.automations_server.models.Validacion;
 
 /**
@@ -21,4 +22,6 @@ public interface IValidacionRepository extends JpaRepository<Validacion, Long>
            "v.id, v.score, v.resultado, v.textoRespuesta, v.orden.id) " +
            "FROM Validacion v")
     List<ValidacionResponseDto> buscarValidaciones();
+
+	Validacion findTopByOrdenOrderByIdDesc(OrdenSimple nuevaOrden);
 }

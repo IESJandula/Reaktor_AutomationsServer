@@ -7,11 +7,16 @@
 #include <SPI.h>
 #include <time.h>
 
-// para pedir token al servidor
+// HTTP
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 
-// LEDs
+// ---------------------------------------------
+// Timezone Configuration
+// ---------------------------------------------
+#define TZ_INFO "CET-1CEST,M3.5.0/02,M10.5.0/03"
+
+// LEDs (ajusta si quieres)
 #define offlinePin 4
 #define onlinePin 0
 #define littleFSLed 2
@@ -27,43 +32,55 @@
   #define debugln(x)
 #endif
 
-// Variables
+// WiFi
 extern String WifiSSID;
 extern String WifiPassword;
+
+// Config desde SD
+extern String firebaseUrl;
+extern String actuadorEstadoUrl;
+extern String xClientId;
+
+// Rutas
 extern String wifiConfigFilePath;
 extern String wifiConfigMetadataFilePath;
 
 extern bool littleFSInitialized;
 extern bool sdCardInitialized;
 
-// Funciones
+// FS
 bool initializeLittleFS();
 bool initializeSDCard();
 void compareAndCopy(String filePath, String metadataFilePath, String fileName);
-void loadConfigFromFile(String configFilePath);
+
+// ✅ Leer config directo desde SD
+bool loadConfigFromSD(const String& configPath);
+
+// WiFi
 void connectToWifi();
 void syncTimeToNtpServer();
 
 void printInterfaceSentence(String sentence);
 
-// token desde FirebaseServer
-String getFirebaseToken(const String& urlFirebase, const String& xClientId, bool insecureTLS = true);
+// Prueba de llamadas http/https
+bool beginWithRetry(HTTPClient& http, const String& url, int maxRetries = 5);
 
-// 
+// Token desde FirebaseServer
+String getFirebaseToken(const String& urlFirebase, const String& xClientId);
+
+// Update estado (si lo usas)
 String updateActuatorState(
   const String& url,
   const String& token,
   const String& targetMac,
-  const String& estado,
-  bool insecureTLS = true
+  const String& estado
 );
 
-// enviar SOLO MAC 
+// ✅ Enviar SOLO MAC
 String updateActuatorStateSimple(
   const String& url,
   const String& token,
-  const String& targetMac,
-  bool insecureTLS = true
+  const String& targetMac
 );
 
-String getActuadoresJson(const String& url, const String& token, bool insecureTLS = true);
+String getActuadoresJson(const String& url, const String& token);
