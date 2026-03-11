@@ -5,16 +5,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import es.iesjandula.reaktor.automations_server.models.Accion;
+import es.iesjandula.reaktor.automations_server.models.Actuador;
 import es.iesjandula.reaktor.automations_server.models.Comando;
 import es.iesjandula.reaktor.automations_server.models.OrdenSimple;
 import es.iesjandula.reaktor.automations_server.models.Validacion;
 import es.iesjandula.reaktor.automations_server.models.ids.ComandoActuadorId;
 import es.iesjandula.reaktor.automations_server.models.ids.ComandoId;
 import es.iesjandula.reaktor.automations_server.repository.IAccionRepository;
+import es.iesjandula.reaktor.automations_server.repository.IActuadorRepository;
 import es.iesjandula.reaktor.automations_server.repository.IComandoActuadorRepository;
 import es.iesjandula.reaktor.automations_server.repository.IComandoRepository;
 import es.iesjandula.reaktor.automations_server.repository.IValidacionRepository;
-import es.iesjandula.reaktor.automations_server.utils.Constants;
 
 /**
  * Servicio encargado de procesar una orden recibida por el sistema.
@@ -27,9 +28,9 @@ import es.iesjandula.reaktor.automations_server.utils.Constants;
  * Se genera una acción para el actuador
  */
 @Service
-public class ProcesadorOrdenService
-{
-	// Repositorio para acceder a los comandos configurados en los actuadores
+public class ProcesadorOrdenService {
+
+    // Repositorio para acceder a los comandos configurados en los actuadores
     @Autowired
     private IComandoActuadorRepository comandoActuadorRepository;
 
@@ -45,15 +46,32 @@ public class ProcesadorOrdenService
     @Autowired
     private IAccionRepository accionRepository;
 
+    // Repositorio para obtener información de los actuadores
     @Autowired
-    private IAccionRepository accionRepository;
+    private IActuadorRepository actuadorRepository;
 
-    public void procesarOrden(OrdenSimple orden)
-    {
-        Set<String> tokensUsuario = limpiar(orden.getFrase());
+    /**
+     * Variable que define el porcentaje mínimo de coincidencia
+     * para aceptar una orden.
+     * 
+     * Se lee directamente desde el application.yml
+     */
+    @Value("${reaktor.score_minimo_validacion}")
+    private Double scoreMinimoValidacion;
 
-        if (tokensUsuario.isEmpty())
+    /**
+     * Método principal que procesa una orden del usuario.
+     */
+    public void procesarOrden(OrdenSimple orden) {
+
+        // Se ejecuta la consulta SQL que calcula el mejor comando posible
+        // comparando la frase del usuario con las keywords configuradas
+        List<Object[]> resultado = comandoActuadorRepository.buscarMejorComando(orden.getFrase().toLowerCase());
+
+        // Si no hay coincidencias posibles
+        if(resultado.isEmpty())
         {
+            // Guardamos validación rechazada
             guardarValidacion(orden, 0.0, "Rechazado", "No se ha entendido la orden");
             return;
         }
@@ -67,52 +85,25 @@ public class ProcesadorOrdenService
         String textoOk = (String) fila[2]; // texto de respuesta
         Double score = ((Number) fila[4]).doubleValue(); // porcentaje coincidencia
 
-        for (ComandoActuador comando : comandos)
-        {
-            Set<String> tokensKeyword = limpiar(comando.getComandoActuadorId().getKeyword());
+        // ----------------------------------------------------
+        // VALIDACIÓN DE LA ORDEN
+        // ----------------------------------------------------
 
-            if (tokensKeyword.isEmpty())
-            {
-                continue;
-            }
+        // Si el porcentaje de coincidencia supera el mínimo configurado
+        if(score >= scoreMinimoValidacion) 
+        {
+            // Guardamos validación aceptada
+            guardarValidacion(orden, score, "Aceptado", textoOk);
+
+            // ------------------------------------------------
+            // GUARDAR COMANDO EJECUTADO
+            // ------------------------------------------------
 
             // Creamos la clave compuesta del comando
             ComandoActuadorId comandoActuadorId = new ComandoActuadorId(mac, keyword);
 
-            if (interseccion.isEmpty())
-            {
-                continue;
-            }
-
-            double score = (double) interseccion.size() / tokensKeyword.size();
-
-            if (score > mejorScore)
-            {
-                mejorScore = score;
-                mejorComando = comando;
-            }
-        }
-
-        if (mejorComando == null)
-        {
-            guardarValidacion(orden, 0.0, "Rechazado", "No se ha entendido la orden");
-            return;
-        }
-
-        if (mejorScore >= 0.6)
-        {
-            guardarValidacion(
-                    orden,
-                    mejorScore,
-                    "Aceptado",
-                    mejorComando.getTextoOk()
-            );
-
-            ComandoId comandoId =
-                    new ComandoId(
-                            mejorComando.getComandoActuadorId(),
-                            orden.getId()
-                    );
+            // Creamos la clave del comando ejecutado
+            ComandoId comandoId = new ComandoId(comandoActuadorId, orden.getId());
 
             // Creamos el objeto comando
             Comando comando = new Comando();
@@ -127,40 +118,42 @@ public class ProcesadorOrdenService
             // CREAR ACCIÓN PARA EL ACTUADOR
             // ------------------------------------------------
 
-            // Crear ACCION pendiente para que luego la consuma el ESP
-            Accion accion = new Accion();
-            accion.setActuador(mejorComando.getActuador());
-            accion.setOrden(orden);
-            accion.setEstado(Constants.ESTADO_ACCION_PENDIENTE);
-            accion.setResultado(mejorComando.getTextoOk());
+            // Buscamos el actuador por su MAC
+            Actuador actuador = actuadorRepository.findById(mac).orElse(null);
 
-            accionRepository.save(accion);
-        }
-        else
+            // Si el actuador existe
+            if(actuador != null)
+            {
+                // Creamos una nueva acción
+                Accion accion = new Accion();
+
+                // Estado inicial de la acción
+                accion.setResultado("PENDIENTE");
+
+                // Asociamos el actuador
+                accion.setActuador(actuador);
+
+                // Asociamos la orden que originó la acción
+                accion.setOrden(orden);
+
+                // Guardamos la acción
+                accionRepository.save(accion);
+            }
+        } 
+        else 
         {
-            guardarValidacion(
-                    orden,
-                    mejorScore,
-                    "Rechazado",
-                    "No se ha entendido la orden"
-            );
-
-            // Si quieres registrar también la acción fallida de validación
-            Accion accion = new Accion();
-            accion.setActuador(mejorComando.getActuador());
-            accion.setOrden(orden);
-            accion.setEstado(Constants.ESTADO_ACCION_ERROR_VALIDACION);
-            accion.setResultado("No se ha entendido la orden");
-
-            accionRepository.save(accion);
+            // Si el score es menor al mínimo requerido
+            // guardamos validación rechazada
+            guardarValidacion(orden, score, "Rechazado", textoOk = "No se entendio la orden");
         }
     }
 
-    private void guardarValidacion(OrdenSimple orden,
-                                   Double score,
-                                   String resultado,
-                                   String textoRespuesta)
+    /**
+     * Método auxiliar que guarda una validación en la base de datos.
+     */
+    private void guardarValidacion(OrdenSimple orden, Double score, String resultado, String textoRespuesta)
     {
+        // Creamos objeto validación
         Validacion validacion = new Validacion();
 
         // Asociamos la orden
@@ -177,31 +170,5 @@ public class ProcesadorOrdenService
 
         // Persistimos en base de datos
         validacionRepository.save(validacion);
-    }
-
-    private Set<String> limpiar(String frase)
-    {
-        frase = frase.toLowerCase()
-                .replaceAll("[^a-z0-9. ]", "");
-
-        String[] partes = frase.split("\\s+");
-
-        Set<String> resultado = new HashSet<>();
-
-        for (int i = 0; i < partes.length; i++)
-        {
-            if (i < partes.length - 1 &&
-                partes[i].matches("\\d+") &&
-                partes[i + 1].matches("\\d+"))
-            {
-                resultado.add(partes[i] + "." + partes[i + 1]);
-                i++;
-                continue;
-            }
-
-            resultado.add(partes[i]);
-        }
-
-        return resultado;
     }
 }
