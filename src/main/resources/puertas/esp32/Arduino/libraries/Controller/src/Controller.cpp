@@ -299,48 +299,6 @@ bool beginWithRetry(HTTPClient& http, const String& url, int maxRetries) {
   return false;
 }
 
-// -------------------- Parsear acción pendiente --------------------
-AccionPendiente parsearAccionPendiente(const String& json) {
-  AccionPendiente accion;
-  accion.accionId = 0;
-  accion.estado = "";
-  accion.resultado = "";
-  accion.mac = "";
-  accion.ordenId = 0;
-  accion.hayAccion = false;
-
-  if (json.length() == 0) {
-    return accion;
-  }
-
-  DynamicJsonDocument doc(1024);
-  DeserializationError error = deserializeJson(doc, json);
-
-  if (error) {
-    Serial.print("❌ Error parseando JSON: ");
-    Serial.println(error.c_str());
-    return accion;
-  }
-
-  if (!doc["accionId"].isNull()) {
-    accion.accionId = doc["accionId"].as<long>();
-  }
-
-  accion.estado = doc["estado"] | "";
-  accion.resultado = doc["resultado"] | "";
-  accion.mac = doc["mac"] | "";
-
-  if (!doc["ordenId"].isNull()) {
-    accion.ordenId = doc["ordenId"].as<long>();
-  }
-
-  if (accion.accionId > 0) {
-    accion.hayAccion = true;
-  }
-
-  return accion;
-}
-
 // -------------------- Relé puerta --------------------
 void accionarRelePuerta(unsigned long tiempoMs) {
   Serial.println("🚪 Abriendo puerta...");
@@ -394,14 +352,11 @@ String updateAccionEstado(
 }
 
 // -------------------- Update estado SIMPLE (solo MAC) --------------------
-String updateActuatorStateSimple(
-  const String& url,
-  const String& token,
-  const String& targetMac) {
-
+String updateActuatorStateSimple(const String& url, const String& token, const String& targetMac)
+{
   HTTPClient httpActualizarActuador;
   httpActualizarActuador.setTimeout(20000);
-  String httpResponseData = "";
+  String accionId = "" ;
 
   if (!beginWithRetry(httpActualizarActuador, url)) {
     return "";
@@ -417,10 +372,10 @@ String updateActuatorStateSimple(
     Serial.println("- HTTP Response Code:");
     Serial.println(String(httpResponseCode));
 
-    httpResponseData = httpActualizarActuador.getString();
-    if (httpResponseData.length() > 0) {
-      Serial.println("- Server Response:");
-      Serial.println(String(httpResponseData));
+    accionId = httpActualizarActuador.getString();
+    if (accionId.length() > 0) {
+      Serial.println("- Server Response (accionId):");
+      Serial.println(String(accionId));
     } else {
       Serial.println("WARNING: Received an empty response from the server.");
     }
@@ -430,7 +385,7 @@ String updateActuatorStateSimple(
   }
 
   httpActualizarActuador.end();
-  return httpResponseData;
+  return accionId;
 }
 
 // -------------------- Stubs --------------------

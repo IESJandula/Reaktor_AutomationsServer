@@ -52,16 +52,6 @@ extern String wifiConfigMetadataFilePath;
 extern bool littleFSInitialized;
 extern bool sdCardInitialized;
 
-// Estructura para la acción pendiente
-struct AccionPendiente {
-  long accionId;
-  String estado;
-  String resultado;
-  String mac;
-  long ordenId;
-  bool hayAccion;
-};
-
 // FS
 bool initializeLittleFS();
 bool initializeSDCard();
@@ -98,15 +88,6 @@ String updateActuatorStateSimple(
 
 String getActuadoresJson(const String& url, const String& token);
 
-// Acciones
-AccionPendiente parsearAccionPendiente(const String& json);
+String updateAccionEstado(const String& url, const String& token, long accionId, const String& estado, const String& resultado);
 
-String updateAccionEstado(
-  const String& url,
-  const String& token,
-  long accionId,
-  const String& estado,
-  const String& resultado
-);
-
-void accionarRelePuerta(unsigned long tiempoMs = 1000);
+void accionarRelePuerta(unsigned long tiempoMs = 4000);

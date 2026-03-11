@@ -1,5 +1,6 @@
 #include <Controller.h>
 #include <ArduinoJson.h>
+#include <stdlib.h>
 
 // Pin del relé de la puerta
 #define relePuertaPin 12
@@ -9,7 +10,8 @@ String token;
 String miMac;
 
 // Función para accionar el relé
-void accionarRelePuerta(int tiempoMs) {
+void accionarRelePuerta(int tiempoMs)
+{
   Serial.println("Activando relé puerta");
 
   digitalWrite(relePuertaPin, HIGH);   // activar relé
@@ -89,76 +91,24 @@ void loop() {
   Serial.println(miMac);
 
   // Preguntar al backend si hay acción
-  String resp = updateActuatorStateSimple(actuadorEstadoUrl, token, miMac);
+  String accionId = updateActuatorStateSimple(actuadorEstadoUrl, token, miMac);
 
-  Serial.println("Respuesta servidor:");
-  Serial.println(resp);
+  Serial.println("Respuesta servidor (accionId):");
+  Serial.println(accionId);
 
-  // Parsear JSON recibido
-  AccionPendiente accion = parsearAccionPendiente(resp);
+  if (accionId != "" && accionId != "null")
+  {
+    Serial.print("Ejecutando acción...");
+    Serial.println(accionId);
 
-  if (accion.hayAccion) {
+    // Abrir puerta con relé
+    accionarRelePuerta(4000);
 
-    Serial.println("✅ Acción recibida");
-
-    Serial.print("Accion ID: ");
-    Serial.println(accion.accionId);
-
-    Serial.print("Estado: ");
-    Serial.println(accion.estado);
-
-    Serial.print("Resultado: ");
-    Serial.println(accion.resultado);
-
-    Serial.print("Orden ID: ");
-    Serial.println(accion.ordenId);
-
-    bool ok = false;
-    String resultadoFinal = "";
-
-    if (accion.estado == "en_ejecucion") {
-
-      Serial.println("Ejecutando acción...");
-
-      // Abrir puerta con relé
-      accionarRelePuerta(800);
-
-      ok = true;
-      resultadoFinal = "Puerta abierta correctamente";
-
-    } else {
-
-      Serial.println("Estado no válido para ejecutar acción");
-      resultadoFinal = "Estado incorrecto para ejecución";
-    }
+    // Convierto el string accionId a long
+    long accionIdLong = strtol(accionId.c_str(), NULL, 10);
 
     // Notificar resultado al backend
-    if (ok) {
-
-      updateAccionEstado(
-        accionEstadoUrl,
-        token,
-        accion.accionId,
-        "finalizado_ok",
-        resultadoFinal
-      );
-
-    } else {
-
-      updateAccionEstado(
-        accionEstadoUrl,
-        token,
-        accion.accionId,
-        "finalizado_error",
-        resultadoFinal
-      );
-
-    }
-
-  } else {
-
-    Serial.println("ℹ️ No hay acción pendiente.");
-
+    updateAccionEstado(accionEstadoUrl, token, accionIdLong, "finalizado_ok", "Puerta abierta correctamente");
   }
 
   // Espera antes del siguiente heartbeat
