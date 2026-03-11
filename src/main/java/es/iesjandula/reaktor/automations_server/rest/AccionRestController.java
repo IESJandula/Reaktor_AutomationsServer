@@ -60,6 +60,7 @@ public class AccionRestController
 			}
 			Accion accion = new Accion();
 			accion.setResultado(accionRequestDto.getResultado());
+			accion.setEstado(Constants.ESTADO_ACCION_PENDIENTE);
 			accion.setActuador(actuadorOpt.get());
 			accion.setOrden(ordenOpt.get());
 			Accion nuevaAccion = this.accionRepository.saveAndFlush(accion);
