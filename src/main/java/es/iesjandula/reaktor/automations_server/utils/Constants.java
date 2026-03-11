@@ -53,5 +53,12 @@ public class Constants
     public static final String ERR_ORDEN_NO_EXISTE = "La orden no existe en el sistema.";
     
     /** Aplicabilidad para los dispositivos */
-    public static final List<String> APLICABILIDAD = Arrays.asList(new String[] {"Puerta", "Proyector"});    
+    public static final List<String> APLICABILIDAD = Arrays.asList(new String[] {"Puerta", "Proyector"});  
+    
+    // ---------------- ESTADOS ACCION ----------------
+    public static final String ESTADO_ACCION_PENDIENTE = "pendiente";
+    public static final String ESTADO_ACCION_ERROR_VALIDACION = "error_validacion";
+    public static final String ESTADO_ACCION_EN_EJECUCION = "en_ejecucion";
+    public static final String ESTADO_ACCION_FINALIZADO_OK = "finalizado_ok";
+    public static final String ESTADO_ACCION_FINALIZADO_ERROR = "finalizado_error";
 }

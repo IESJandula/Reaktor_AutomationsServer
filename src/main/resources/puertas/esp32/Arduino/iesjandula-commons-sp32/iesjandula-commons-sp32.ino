@@ -1,11 +1,27 @@
 #include <Controller.h>
 #include <ArduinoJson.h>
 
-// Variables globales (se rellenan en setup y se usan en loop)
+// Pin del relé de la puerta
+#define relePuertaPin 12
+
+// Variables globales
 String token;
 String miMac;
 
+// Función para accionar el relé
+void accionarRelePuerta(int tiempoMs) {
+  Serial.println("Activando relé puerta");
+
+  digitalWrite(relePuertaPin, HIGH);   // activar relé
+  delay(tiempoMs);
+
+  digitalWrite(relePuertaPin, LOW);    // apagar relé
+
+  Serial.println("Relé desactivado");
+}
+
 void setup() {
+
   Serial.begin(115200);
   delay(200);
 
@@ -14,44 +30,47 @@ void setup() {
   pinMode(sdFSLed, OUTPUT);
   pinMode(littleFSLed, OUTPUT);
 
+  // CONFIGURAR RELÉ
+  pinMode(relePuertaPin, OUTPUT);
+  digitalWrite(relePuertaPin, LOW); // relé apagado
+
   digitalWrite(offlinePin, LOW);
   digitalWrite(onlinePin, LOW);
   digitalWrite(sdFSLed, LOW);
   digitalWrite(littleFSLed, LOW);
 
-  // 1) Inicializar SD
   Serial.println("Inicializando SD...");
+
   if (!initializeSDCard()) {
     Serial.println("❌ No se pudo inicializar la SD. Abortando.");
     digitalWrite(offlinePin, HIGH);
     return;
   }
+
   Serial.println("✅ SD inicializada.");
 
-  // 2) Leer config desde /configuraciones.txt (raíz SD)
   if (!loadConfigFromSD("/configuraciones.txt")) {
     Serial.println("❌ Config inválida/incompleta. Abortando.");
     digitalWrite(offlinePin, HIGH);
     return;
   }
 
-  // 3) Conectar a WiFi con lo leído
   connectToWifi();
+
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("❌ No hay WiFi, no se puede continuar.");
     return;
   }
 
-  // 4) Configure device RTC block (needs network)
   syncTimeToNtpServer();
 
-  // 5 Guardar MAC
   miMac = WiFi.macAddress();
+
   Serial.print("MAC guardada: ");
   Serial.println(miMac);
 
-  // 6) Pedir token
   Serial.println("\nPidiendo token a Firebase...\n");
+
   token = getFirebaseToken(firebaseUrl, xClientId);
 
   Serial.print("Token guardado: ");
@@ -64,15 +83,84 @@ void setup() {
 }
 
 void loop() {
+
   Serial.println("\nHeartbeat (ON)...");
   Serial.print("MAC: ");
   Serial.println(miMac);
 
-  // Enviar MAC al servidor cada 10 segundos
+  // Preguntar al backend si hay acción
   String resp = updateActuatorStateSimple(actuadorEstadoUrl, token, miMac);
 
   Serial.println("Respuesta servidor:");
   Serial.println(resp);
 
+  // Parsear JSON recibido
+  AccionPendiente accion = parsearAccionPendiente(resp);
+
+  if (accion.hayAccion) {
+
+    Serial.println("✅ Acción recibida");
+
+    Serial.print("Accion ID: ");
+    Serial.println(accion.accionId);
+
+    Serial.print("Estado: ");
+    Serial.println(accion.estado);
+
+    Serial.print("Resultado: ");
+    Serial.println(accion.resultado);
+
+    Serial.print("Orden ID: ");
+    Serial.println(accion.ordenId);
+
+    bool ok = false;
+    String resultadoFinal = "";
+
+    if (accion.estado == "en_ejecucion") {
+
+      Serial.println("Ejecutando acción...");
+
+      // Abrir puerta con relé
+      accionarRelePuerta(800);
+
+      ok = true;
+      resultadoFinal = "Puerta abierta correctamente";
+
+    } else {
+
+      Serial.println("Estado no válido para ejecutar acción");
+      resultadoFinal = "Estado incorrecto para ejecución";
+    }
+
+    // Notificar resultado al backend
+    if (ok) {
+
+      updateAccionEstado(
+        accionEstadoUrl,
+        token,
+        accion.accionId,
+        "finalizado_ok",
+        resultadoFinal
+      );
+
+    } else {
+
+      updateAccionEstado(
+        accionEstadoUrl,
+        token,
+        accion.accionId,
+        "finalizado_error",
+        resultadoFinal
+      );
+
+    }
+
+  } else {
+
+    Serial.println("ℹ️ No hay acción pendiente.");
+
+  }
+
+  // Espera antes del siguiente heartbeat
   delay(30000);
 }

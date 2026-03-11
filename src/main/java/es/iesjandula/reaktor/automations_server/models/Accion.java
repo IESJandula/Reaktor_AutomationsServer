@@ -32,6 +32,10 @@ public class Accion
     /** Resultado de la acción ejecutada. Columna limitada a 50 caracteres. */
     @Column(length = 50)
     private String resultado;
+    
+    /** Estado de la acción. */
+    @Column(name = "estado")
+    private String estado;
 
     /**
      * Relación Muchos a Uno con la entidad Actuador.

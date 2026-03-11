@@ -16,11 +16,14 @@
 // ---------------------------------------------
 #define TZ_INFO "CET-1CEST,M3.5.0/02,M10.5.0/03"
 
-// LEDs (ajusta si quieres)
+// LEDs
 #define offlinePin 4
 #define onlinePin 0
 #define littleFSLed 2
 #define sdFSLed 15
+
+// RELÉ PUERTA
+#define relePuertaPin 16   // cambia este GPIO si usas otro
 
 // Debug
 #define DEBUG 1
@@ -39,6 +42,7 @@ extern String WifiPassword;
 // Config desde SD
 extern String firebaseUrl;
 extern String actuadorEstadoUrl;
+extern String accionEstadoUrl;
 extern String xClientId;
 
 // Rutas
@@ -48,12 +52,22 @@ extern String wifiConfigMetadataFilePath;
 extern bool littleFSInitialized;
 extern bool sdCardInitialized;
 
+// Estructura para la acción pendiente
+struct AccionPendiente {
+  long accionId;
+  String estado;
+  String resultado;
+  String mac;
+  long ordenId;
+  bool hayAccion;
+};
+
 // FS
 bool initializeLittleFS();
 bool initializeSDCard();
 void compareAndCopy(String filePath, String metadataFilePath, String fileName);
 
-// ✅ Leer config directo desde SD
+// Leer config directo desde SD
 bool loadConfigFromSD(const String& configPath);
 
 // WiFi
@@ -62,13 +76,13 @@ void syncTimeToNtpServer();
 
 void printInterfaceSentence(String sentence);
 
-// Prueba de llamadas http/https
+// HTTP
 bool beginWithRetry(HTTPClient& http, const String& url, int maxRetries = 5);
 
-// Token desde FirebaseServer
+// Token
 String getFirebaseToken(const String& urlFirebase, const String& xClientId);
 
-// Update estado (si lo usas)
+// Poll actuador
 String updateActuatorState(
   const String& url,
   const String& token,
@@ -76,7 +90,6 @@ String updateActuatorState(
   const String& estado
 );
 
-// ✅ Enviar SOLO MAC
 String updateActuatorStateSimple(
   const String& url,
   const String& token,
@@ -84,3 +97,16 @@ String updateActuatorStateSimple(
 );
 
 String getActuadoresJson(const String& url, const String& token);
+
+// Acciones
+AccionPendiente parsearAccionPendiente(const String& json);
+
+String updateAccionEstado(
+  const String& url,
+  const String& token,
+  long accionId,
+  const String& estado,
+  const String& resultado
+);
+
+void accionarRelePuerta(unsigned long tiempoMs = 1000);
