@@ -270,7 +270,7 @@ public class ActualizacionesDispositivosRestController
 				Date fechaEnvioOrden = accion.getOrden().getFecha();
 
 				// Si ha pasado más del tiempo de expiración ...
-				if (fechaEnvioOrden.getTime() > System.currentTimeMillis() - tiempoExpiracion)
+				if (fechaEnvioOrden.getTime() < System.currentTimeMillis() - tiempoExpiracion)
 				{
 					// ... cambio el estado de la acción a en ejecución
 					accion.setEstado(Constants.ESTADO_ACCION_EXPIRADA);
@@ -345,7 +345,7 @@ public class ActualizacionesDispositivosRestController
 	    catch (Exception exception)
 	    {
 	        AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_ACCION_CODE, Constants.ERR_CODE);
-			
+
 	        log.error("Excepción genérica al actualizar estado de acción", exception);
 	        return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
 	    }
