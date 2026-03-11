@@ -16,6 +16,7 @@ import es.iesjandula.reaktor.automations_server.repository.IActuadorRepository;
 import es.iesjandula.reaktor.automations_server.repository.IComandoActuadorRepository;
 import es.iesjandula.reaktor.automations_server.repository.IComandoRepository;
 import es.iesjandula.reaktor.automations_server.repository.IValidacionRepository;
+import es.iesjandula.reaktor.automations_server.utils.Constants;
 
 /**
  * Servicio encargado de procesar una orden recibida por el sistema.
@@ -127,8 +128,11 @@ public class ProcesadorOrdenService {
                 // Creamos una nueva acción
                 Accion accion = new Accion();
 
+                // Le asignamos el estado pendiente
+                accion.setEstado(Constants.ESTADO_ACCION_PENDIENTE);
+
                 // Estado inicial de la acción
-                accion.setResultado("PENDIENTE");
+                accion.setResultado(null);
 
                 // Asociamos el actuador
                 accion.setActuador(actuador);
