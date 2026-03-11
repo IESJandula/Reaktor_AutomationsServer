@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import es.iesjandula.reaktor.automations_server.dtos.AccionResponseDto;
 import es.iesjandula.reaktor.automations_server.models.Accion;
+import es.iesjandula.reaktor.automations_server.models.Actuador;
 
 /**
  * Repositorio JPA para la entidad Accion.
@@ -23,5 +24,16 @@ public interface IAccionRepository extends JpaRepository<Accion, Long>
 		       "FROM Accion a")
 		List<AccionResponseDto> buscarAcciones();
 	
-	Optional<Accion> findTopByActuador_MacAndEstadoOrderByIdDesc(String mac, String estado);
+	/**
+	 * Busca las últimas acciones pendientes a realizar para un actuador.
+	 * @param actuador Actuador para el cual se buscan las acciones pendientes.
+	 * @return Lista de acciones pendientes a realizar para el actuador.
+	 */
+	@Query("""
+			SELECT a 
+			FROM Accion a 
+			WHERE a.actuador = :actuador AND 
+				  a.estado = es.iesjandula.reaktor.automations_server.utils.Constants.ESTADO_ACCION_PENDIENTE
+		   """)
+	Optional<List<Accion>> buscarUltimasAccionesPendientes(Actuador actuador);
 }

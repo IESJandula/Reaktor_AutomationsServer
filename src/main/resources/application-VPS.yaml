@@ -27,3 +27,5 @@ reaktor:
   clientId: ${CLIENT_ID}
   http_connection_timeout: 30000
   comprobadorEstadoDispositivos: 30000
+  score_minimo_validacion: 80
+  tiempoExpiracion: 60000

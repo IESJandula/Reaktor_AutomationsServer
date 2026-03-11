@@ -55,10 +55,48 @@ public class Constants
     /** Aplicabilidad para los dispositivos */
     public static final List<String> APLICABILIDAD = Arrays.asList(new String[] {"Puerta", "Proyector"});  
     
-    // ---------------- ESTADOS ACCION ----------------
-    public static final String ESTADO_ACCION_PENDIENTE = "pendiente";
-    public static final String ESTADO_ACCION_ERROR_VALIDACION = "error_validacion";
-    public static final String ESTADO_ACCION_EN_EJECUCION = "en_ejecucion";
-    public static final String ESTADO_ACCION_FINALIZADO_OK = "finalizado_ok";
-    public static final String ESTADO_ACCION_FINALIZADO_ERROR = "finalizado_error";
+    /*************************************************/
+    /***************** ESTADOS ACCION  ***************/
+    /*************************************************/
+
+    /** Estado de la acción cuando está pendiente */
+    public static final String ESTADO_ACCION_PENDIENTE           = "pendiente";
+    
+    /** Estado de la acción cuando hay error de validación */
+    public static final String ESTADO_ACCION_ERROR_VALIDACION    = "error_validacion";
+    
+    /** Estado de la acción cuando está en ejecución */
+    public static final String ESTADO_ACCION_EN_EJECUCION        = "en_ejecucion";
+    
+    /** Estado de la acción cuando está finalizada correctamente */
+    public static final String ESTADO_ACCION_FINALIZADO_OK       = "finalizado_ok";
+    
+    /** Estado de la acción cuando está finalizada con error */
+    public static final String ESTADO_ACCION_FINALIZADO_ERROR    = "finalizado_error";
+    
+    /** Estado de la acción cuando ha expirado */
+    public static final String ESTADO_ACCION_EXPIRADA            = "expirada" ;
+
+    /** Estado de la acción cuando está duplicada */
+    public static final String ESTADO_ACCION_DUPLICADA           = "duplicada" ;
+
+    /*************************************************/
+    /*************** ESTADOS ACTUADOR  ***************/
+    /*************************************************/
+
+    /** Estado del actuador cuando está encendido */
+    public static final String ESTADO_ACTUADOR_ON = "on";
+    
+    /** Estado del actuador cuando está apagado */
+    public static final String ESTADO_ACTUADOR_OFF = "off";
+
+    /*************************************************/
+    /*************** ESTADOS ACCION  ***************/
+    /*************************************************/
+
+    /** Error en los datos pasados por el actuador - el identificador de la acción no puede ser nulo ni vacío */
+    public static final String ERR_ACTUADOR_ACCION_ID_NULO_VACIO     = "El identificador de la acción no puede ser nulo ni vacío";
+    
+    /** Error en los datos pasados por el actuador - el estado de la acción no puede ser nulo ni vacío */
+    public static final String ERR_ACTUADOR_ACCION_ESTADO_NULO_VACIO = "El estado de la acción no puede ser nulo ni vacío";
 }

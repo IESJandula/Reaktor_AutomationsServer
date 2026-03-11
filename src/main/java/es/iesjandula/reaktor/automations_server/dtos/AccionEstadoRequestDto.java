@@ -11,7 +11,12 @@ import lombok.Setter;
 @AllArgsConstructor
 public class AccionEstadoRequestDto
 {
+    /** Identificador de la acción */
     private Long accionId;
+
+    /** Estado de la acción */
     private String estado;
+    
+    /** Resultado de la acción */
     private String resultado;
 }
