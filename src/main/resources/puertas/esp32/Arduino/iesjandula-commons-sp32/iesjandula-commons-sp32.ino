@@ -1,14 +1,12 @@
-#include <Jandula_Base.h>
-#include <Jandula_Actuadores.h>
+#include "Jandula_Base.h"
+//#include <Jandula_Actuadores.h>
 #include <ArduinoJson.h>
 #include <stdlib.h>
 
 // Pin del relé de la puerta
 #define relePuertaPin 12
 
-// Variables globales
-String token;
-String miMac;
+
 
 // Función para accionar el relé
 void accionarRelePuerta(int tiempoMs)
@@ -23,57 +21,65 @@ void accionarRelePuerta(int tiempoMs)
   Serial.println("Relé desactivado");
 }
 
-void setup() {
-
+/**
+ * Función para inicializar el ESP32
+ */
+void setup()
+{
+  // Inicializamos la comunicación serial
   Serial.begin(115200);
+
+  // Esperamos a que se estabilice la comunicación serial
   delay(200);
 
+  // Configuramos los pines de los LEDs
   pinMode(offlinePin, OUTPUT);
   pinMode(onlinePin, OUTPUT);
-  pinMode(sdFSLed, OUTPUT);
+  pinMode(sdCardLed, OUTPUT);
   pinMode(littleFSLed, OUTPUT);
 
-  // CONFIGURAR RELÉ
-  pinMode(relePuertaPin, OUTPUT);
-  digitalWrite(relePuertaPin, LOW); // relé apagado
-
-  digitalWrite(offlinePin, LOW);
-  digitalWrite(onlinePin, LOW);
-  digitalWrite(sdFSLed, LOW);
-  digitalWrite(littleFSLed, LOW);
-
-  Serial.println("Inicializando SD...");
-
-
+  // Inicializamos la biblioteca Jandula Base
+  setupJandulaBase();
 }
 
-void loop() {
-
-  Serial.println("\nHeartbeat (ON)...");
-  Serial.print("MAC: ");
-  Serial.println(miMac);
-
-  // Preguntar al backend si hay acción
-  String accionId = updateActuatorStateSimple(actuadorEstadoUrl, token, miMac);
-
-  Serial.println("Respuesta servidor (accionId):");
-  Serial.println(accionId);
-
-  if (accionId != "" && accionId != "null")
+/**
+ * Función para ejecutar el bucle principal
+ */
+void loop()
+{
+  // Si hay ningún error general se hace un delay de 60 segundos
+  if (errorGeneralJandulaBase != "")
   {
-    Serial.print("Ejecutando acción...");
+    delay(60000);
+  }
+  else
+  {/*
+    Serial.println("\nHeartbeat (ON)...");
+    Serial.print("MAC: ");
+    Serial.println(miMac);
+
+    // Preguntar al backend si hay acción
+    String accionId = updateActuatorStateSimple(actuadorEstadoUrl, token, miMac);
+
+    Serial.println("Respuesta servidor (accionId):");
     Serial.println(accionId);
 
-    // Abrir puerta con relé
-    accionarRelePuerta(4000);
+    if (accionId != "" && accionId != "null")
+    {
+      Serial.print("Ejecutando acción...");
+      Serial.println(accionId);
 
-    // Convierto el string accionId a long
-    long accionIdLong = strtol(accionId.c_str(), NULL, 10);
+      // Abrir puerta con relé
+      accionarRelePuerta(4000);
 
-    // Notificar resultado al backend
-    updateAccionEstado(accionEstadoUrl, token, accionIdLong, "finalizado_ok", "Puerta abierta correctamente");
+      // Convierto el string accionId a long
+      long accionIdLong = strtol(accionId.c_str(), NULL, 10);
+
+      // Notificar resultado al backend
+      updateAccionEstado(accionEstadoUrl, token, accionIdLong, "finalizado_ok", "Puerta abierta correctamente");
+    }
+*/
+    // Espera antes del siguiente heartbeat
+    delay(30000);
   }
-
-  // Espera antes del siguiente heartbeat
-  delay(30000);
 }

@@ -73,11 +73,11 @@
 // Online: pin para indicar que el ESP32 está online
 #define onlinePin 0
 
+// sdCardLed: pin para indicar que el ESP32 tiene la tarjeta SD
+#define sdCardLed 15
+
 // littleFSLed: pin para indicar que el ESP32 tiene el sistema de archivos LittleFS
 #define littleFSLed 2
-
-// sdFSLed: pin para indicar que el ESP32 tiene la tarjeta SD
-#define sdFSLed 15
 
 /************************************/
 /**** Pines para la tarjeta SD ******/
@@ -95,31 +95,78 @@
 // sdCardChipSelect: pin para el chip select de la tarjeta SD
 #define sdCardChipSelect 5
 
+/*****************************************************/
+/**** Propiedades del fichero de configuración *******/
+/*****************************************************/
+
+// RUTA_FICHERO_CONFIGURACION: ruta del fichero de configuración
+#define RUTA_FICHERO_CONFIGURACION "/configuraciones.txt"
+
+// PROPIEDAD_WIFI_SSID: propiedad del SSID
+#define PROPIEDAD_WIFI_SSID "WIFI_SSID"
+
+// PROPIEDAD_WIFI_PASSWORD: propiedad de la contraseña
+#define PROPIEDAD_WIFI_PASSWORD "WIFI_PASSWORD"
+
+// PROPIEDAD_URL_FIREBASE: propiedad de la URL de Firebase
+#define PROPIEDAD_URL_FIREBASE "URL_FIREBASE"
+
+// PROPIEDAD_CLIENT_ID: propiedad del ID del cliente de Firebase
+#define PROPIEDAD_CLIENT_ID "CLIENT_ID"
+
+// PROPIEDAD_WIFI_SSID_LENGTH: longitud de la propiedad del SSID
+#define PROPIEDAD_WIFI_SSID_LENGTH strlen(PROPIEDAD_WIFI_SSID)
+
+// PROPIEDAD_WIFI_PASSWORD_LENGTH: longitud de la propiedad de la contraseña
+#define PROPIEDAD_WIFI_PASSWORD_LENGTH strlen(PROPIEDAD_WIFI_PASSWORD)
+
+// PROPIEDAD_URL_FIREBASE_LENGTH: longitud de la propiedad de la URL de Firebase
+#define PROPIEDAD_URL_FIREBASE_LENGTH strlen(PROPIEDAD_URL_FIREBASE)
+
+// PROPIEDAD_CLIENT_ID_LENGTH: longitud de la propiedad del ID del cliente de Firebase
+#define PROPIEDAD_CLIENT_ID_LENGTH strlen(PROPIEDAD_CLIENT_ID)
+
 /************************************************/
 /***************** Variables ********************/
 /************************************************/
 
-// WifiSSID: sirve para almacenar el SSID de la red WiFi
-extern String WifiSSID;
+// wifiSSID: sirve para almacenar el SSID de la red WiFi
+extern String wifiSSID;
 
-// WifiPassword: sirve para almacenar la contraseña de la red WiFi
-extern String WifiPassword;
+// wifiPassword: sirve para almacenar la contraseña de la red WiFi
+extern String wifiPassword;
 
-// firebaseUrl: sirve para almacenar la URL de Firebase
-extern String firebaseUrl;
+// urlFirebase: sirve para almacenar la URL de Firebase
+extern String urlFirebase;
 
-// xClientId: sirve para almacenar el ID del cliente de Firebase
-extern String xClientId;
+// clientId: sirve para almacenar el ID del cliente de Firebase
+extern String clientId;
 
-// sistemaArchivosLittleFSInicializado: sirve para indicar si el sistema de archivos LittleFS está inicializado
-extern bool sistemaArchivosLittleFSInicializado;
+// sistemaArchivosLittleFSAccesible: sirve para indicar si el sistema de archivos LittleFS es accesible
+extern bool sistemaArchivosLittleFSAccesible;
 
-// tarjetaSDInicializada: sirve para indicar si la tarjeta SD está inicializada
-extern bool tarjetaSDInicializada;
+// tarjetaSDAccesible: sirve para indicar si la tarjeta SD es accesible
+extern bool tarjetaSDAccesible;
+
+// tokenJWT: sirve para almacenar el token JWT de Firebase
+extern String tokenJWT;
+
+// expiracionTokenJWT: sirve para almacenar la fecha de expiración del token JWT
+extern unsigned long expiracionTokenJWT;
+
+// macAddress: sirve para almacenar la dirección MAC del ESP32
+extern String macAddress;
+
+// errorGeneralJandulaBase: sirve para almacenar el error general de la librería Jandula Base
+extern String errorGeneralJandulaBase;
 
 /************************************************/
 /**************** Funciones *********************/
 /************************************************/
+
+/***************************************************************************/
+/*** Funciones relacionadas con la inicialización de los componentes base **/
+/***************************************************************************/
 
 /**
  * Realiza la inicialización de los diferentes componentes de la biblioteca
@@ -129,19 +176,26 @@ extern bool tarjetaSDInicializada;
 void setupJandulaBase();
 
 /**
- * Inicializa la tarjeta SD
+ * Valida si la tarjeta SD es accesible
  * 
- * @return true si la tarjeta SD está inicializada, false en caso contrario
+ * @return void
  */
-bool inicializarSDCard();
+void validarSiSDCardEsAccesible();
+
+/**
+ * Valida si la conexión a LittleFS es accesible
+ * 
+ * @return void
+ */
+void validarSiConexionLittleFSEsAccesible();
 
 /**
  * Compara y copia un archivo del sistema de archivos LittleFS a la tarjeta SD
  * 
- * @param filePath: ruta del archivo a copiar
+ * @param rutaFichero: ruta del archivo a copiar
  * @return void
  */
-void compararYCopiar(String filePath);
+void compararYCopiarFicherosSDyLittleFS(const String& rutaFichero);
 
 /**
  * Valida si el archivo existe en el sistema de archivos LittleFS
@@ -167,7 +221,7 @@ bool validarExistenciaFicheroSD(const String& rutaFichero);
  * @param estampaTiempoFicheroSD: timestamp de modificación del fichero en la tarjeta SD
  * @return void
  */
-void compararYCopiarAmbosFicherosExisten(const String& rutaFichero, unsigned long estampaTiempoLocalFicheroLittleFS, unsigned long estampaTiempoFicheroSD);
+void compararTimeStampsYcopiarSiFicherosSDyLittleFSSonDiferentes(const String& rutaFichero, unsigned long estampaTiempoLocalFicheroLittleFS, unsigned long estampaTiempoFicheroSD);
 
 /**
  * Copia un fichero de la tarjeta SD al sistema de archivos LittleFS
@@ -175,7 +229,7 @@ void compararYCopiarAmbosFicherosExisten(const String& rutaFichero, unsigned lon
  * @param rutaFichero: ruta del fichero
  * @return void
  */
-void copiarArchivoDeSDALittleFS(const String& rutaFichero);
+void copiarFicheroDeSDaLittleFS(const String& rutaFichero);
 
 /**
  * Escribe el timestamp de modificación de un fichero en el sistema de archivos LittleFS
@@ -184,7 +238,7 @@ void copiarArchivoDeSDALittleFS(const String& rutaFichero);
  * @param rutaFichero: ruta del fichero
  * @return void
  */
-void writeTimestampToFile(unsigned long timestamp, const String& rutaFichero);
+void sobreescribirEstampaTiempoEnFichero(unsigned long timestamp, const String& rutaFichero);
 
 /**
  * Obtiene el timestamp de modificación de un fichero en el sistema de archivos LittleFS
@@ -192,7 +246,7 @@ void writeTimestampToFile(unsigned long timestamp, const String& rutaFichero);
  * @param rutaFichero: ruta del fichero
  * @return timestamp: timestamp del fichero
  */
-unsigned long obtenerTimestampDesdeArchivo(const String& rutaFichero);
+unsigned long obtenerTimestampDesdeFichero(const String& rutaFichero);
 
 /**
  * Obtiene la fecha y hora formateada desde un timestamp
@@ -201,21 +255,6 @@ unsigned long obtenerTimestampDesdeArchivo(const String& rutaFichero);
  * @return fechaYHoraFormateada: fecha y hora formateada
  */
 String obtenerFechaYHoraDesdeTimestamp(unsigned long timestamp);
-
-/**
- * Inicializa el sistema de archivos LittleFS
- * 
- * @return true si el sistema de archivos LittleFS está inicializado, false en caso contrario
- */
-bool inicializarLittleFS();
-
-/**
- * Carga la configuración desde un fichero en la tarjeta SD
- * 
- * @param rutaFichero: ruta del fichero de configuración
- * @return true si la configuración se ha cargado correctamente, false en caso contrario
- */
-bool loadConfigFromSD(const String& rutaFichero);
 
 /**
  * Conecta el ESP32 a la red WiFi
@@ -234,11 +273,9 @@ void sincronizarHoraConServidorNTP();
 /**
  * Obtiene el token JWT válido de Firebase
  * 
- * @param urlFirebase: URL de Firebase
- * @param xClientId: ID del cliente de Firebase
- * @return token JWT válido de Firebase
+ * @return void
  */
-String obtenerTokenJWTValido(const String& urlFirebase, const String& xClientId);
+void obtenerTokenJWT();
 
 /**
  * Verifica si el token JWT de Firebase ha expirado
@@ -246,16 +283,14 @@ String obtenerTokenJWTValido(const String& urlFirebase, const String& xClientId)
  * @param token: token JWT de Firebase
  * @return true si el token ha expirado, false en caso contrario
  */
- bool tokenExpirado(String token);
+ bool tokenJWTExpirado();
 
  /**
   * Obtiene el token JWT de Firebase
   * 
-  * @param urlFirebase: URL de Firebase
-  * @param xClientId: ID del cliente de Firebase
-  * @return token JWT de Firebase
+  * @return void
   */
- String getFirebaseToken(const String& urlFirebase, const String& xClientId);
+ void obtenerTokenJWTInternal();
  
  /**
   * Inicia una conexión HTTP con reintentos
@@ -269,11 +304,30 @@ String obtenerTokenJWTValido(const String& urlFirebase, const String& xClientId)
 /**
  * Obtiene la expiración del token JWT de Firebase
  * 
- * @param token: token JWT de Firebase
- * @return expiración del token JWT de Firebase
+ * @return void
  */
-unsigned long obtenerExpiracionJWT(String token);
+void obtenerExpiracionJWT();
 
+/*******************************************************/
+/********* Parseo de fichero de configuración **********/
+/*******************************************************/
+
+/**
+ * Carga la configuración desde el archivo de configuración
+ * 
+ * @param rutaFicheroConfiguracion: ruta del archivo de configuración
+ * @return void
+ */
+void parseaFicheroConfiguracion(String rutaFicheroConfiguracion);
+
+/**
+ * Valida si todos los campos del fichero de configuración están rellenos
+ * 
+ * @return void
+ */
+void parseaFicheroConfiguracionValidarCamposRellenos();
+
+/**
 /*********************************************************************/
 /******** Funciones relacionadas con la conexión online **************/
 /*********************************************************************/
@@ -297,15 +351,33 @@ void conexionOnlineIncorrecta();
 /*********************************************************************/
 
 /**
- * Indica que la tarjeta SD está conectada.
+ * Indica que la tarjeta SD es accesible.
  * 
  * @return void
  */
-void tarjetaSDConectada();
+void tarjetaSDAccesibleFuncion();
 
 /**
- * Indica que la tarjeta SD está desconectada.
+ * Indica que la tarjeta SD es inaccesible.
  * 
  * @return void
  */
-void tarjetaSDDesconectada();
+void tarjetaSDInaccesibleFuncion();
+
+/*********************************************************************/
+/******** Funciones relacionadas con la conexión a LitlleFS **********/
+/*********************************************************************/
+
+/**
+ * Indica que la conexión a LittleFS es accesible.
+ * 
+ * @return void
+ */
+void conexionLittleFSAccesibleFuncion();
+
+/**
+ * Indica que la conexión a LittleFS es inaccesible.
+ * 
+ * @return void
+ */
+void conexionLittleFSInaccesibleFuncion();
