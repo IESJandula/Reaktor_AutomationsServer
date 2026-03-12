@@ -1,4 +1,5 @@
-#include <Controller.h>
+#include <Jandula_Base.h>
+#include <Jandula_Actuadores.h>
 #include <ArduinoJson.h>
 #include <stdlib.h>
 
@@ -43,45 +44,7 @@ void setup() {
 
   Serial.println("Inicializando SD...");
 
-  if (!initializeSDCard()) {
-    Serial.println("❌ No se pudo inicializar la SD. Abortando.");
-    digitalWrite(offlinePin, HIGH);
-    return;
-  }
 
-  Serial.println("✅ SD inicializada.");
-
-  if (!loadConfigFromSD("/configuraciones.txt")) {
-    Serial.println("❌ Config inválida/incompleta. Abortando.");
-    digitalWrite(offlinePin, HIGH);
-    return;
-  }
-
-  connectToWifi();
-
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("❌ No hay WiFi, no se puede continuar.");
-    return;
-  }
-
-  syncTimeToNtpServer();
-
-  miMac = WiFi.macAddress();
-
-  Serial.print("MAC guardada: ");
-  Serial.println(miMac);
-
-  Serial.println("\nPidiendo token a Firebase...\n");
-
-  token = getFirebaseToken(firebaseUrl, xClientId);
-
-  Serial.print("Token guardado: ");
-  Serial.println(token);
-
-  if (token.length() == 0) {
-    Serial.println("❌ Token vacío. Abortando.");
-    return;
-  }
 }
 
 void loop() {
