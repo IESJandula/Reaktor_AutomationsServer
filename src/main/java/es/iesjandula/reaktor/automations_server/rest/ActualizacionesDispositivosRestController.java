@@ -16,8 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import es.iesjandula.reaktor.automations_server.dtos.AccionEstadoRequestDto;
+import es.iesjandula.reaktor.automations_server.dtos.ActuadorAccionesPendientesResponse;
 import es.iesjandula.reaktor.automations_server.models.Accion;
 import es.iesjandula.reaktor.automations_server.models.Actuador;
+import es.iesjandula.reaktor.automations_server.models.Comando;
+import es.iesjandula.reaktor.automations_server.models.ComandoActuador;
 import es.iesjandula.reaktor.automations_server.models.SensorBooleano;
 import es.iesjandula.reaktor.automations_server.models.SensorNumerico;
 import es.iesjandula.reaktor.automations_server.repository.IAccionRepository;
@@ -168,7 +171,7 @@ public class ActualizacionesDispositivosRestController
 	{
 		try
 		{
-			Long accionId = null;
+			ActuadorAccionesPendientesResponse actuadorAccionesPendientesResponse = new ActuadorAccionesPendientesResponse();
 
 			// Validamos las validaciones previas
 			Actuador actuador = this.actuadorEstadoValidarYActualizar(mac) ;
@@ -185,11 +188,20 @@ public class ActualizacionesDispositivosRestController
 				// ... guardo la acción actualizada
 				this.accionRepository.saveAndFlush(accion);
 
-				// Creo una nueva respuesta con la acción actualizada
-				accionId = accion.getId();
+				// Asociado el identificador de la acción pendiente de realizar
+				actuadorAccionesPendientesResponse.setAccionId(accion.getId());
+
+				// Obtengo el comando de la orden
+				Comando comando = accion.getOrden().getComandos().get(0);
+
+				// Obtengo el comando del comando actuador
+				ComandoActuador comandoActuador = comando.getComandoActuador();
+
+				// Asociado el comando de la orden
+				actuadorAccionesPendientesResponse.setOrden(comandoActuador.getComandos());
 			}
 
-			return ResponseEntity.ok(accionId);
+			return ResponseEntity.ok(actuadorAccionesPendientesResponse);
 		}
 		catch (AutomationsServerException automationsServerException)
 		{

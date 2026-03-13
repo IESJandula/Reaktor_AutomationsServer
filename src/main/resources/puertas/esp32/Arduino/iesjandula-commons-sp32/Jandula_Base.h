@@ -50,6 +50,9 @@
 // Zona horaria: sirve para configurar la zona horaria del ESP32
 #define TZ_INFO "CET-1CEST,M3.5.0/02,M10.5.0/03"
 
+// Tiempo de espera para las peticiones HTTP en milisegundos
+#define TIME_PETICIONES_HTTP 20000
+
 // Intentos delay: sirve para configurar el delay entre intentos
 #define INTENTOS_DELAY 1000
 
@@ -58,26 +61,6 @@
 
 // Ruta del archivo de configuración dentro de la tarjeta SD
 #define pathFicheroConfiguracion "/configuraciones.txt"
-
-/************************************************/
-/**************** Pines y LEDs ******************/
-/************************************************/
-
-/************************************/
-/*** Pines para LEDs informativos ***/
-/************************************/
-
-// Offline: pin para indicar que el ESP32 está offline
-#define offlinePin 4
-
-// Online: pin para indicar que el ESP32 está online
-#define onlinePin 0
-
-// sdCardLed: pin para indicar que el ESP32 tiene la tarjeta SD
-#define sdCardLed 15
-
-// littleFSLed: pin para indicar que el ESP32 tiene el sistema de archivos LittleFS
-#define littleFSLed 2
 
 /************************************/
 /**** Pines para la tarjeta SD ******/
@@ -313,71 +296,16 @@ void obtenerExpiracionJWT();
 /*******************************************************/
 
 /**
- * Carga la configuración desde el archivo de configuración
+ * Carga la configuración de la biblioteca Jandula Base desde el archivo de configuración
  * 
  * @param rutaFicheroConfiguracion: ruta del archivo de configuración
  * @return void
  */
-void parseaFicheroConfiguracion(String rutaFicheroConfiguracion);
+void parseaFicheroConfiguracionJandulaBase(String rutaFicheroConfiguracion);
 
 /**
- * Valida si todos los campos del fichero de configuración están rellenos
+ * Valida si todos los campos del fichero de configuración de la biblioteca Jandula Base están rellenos
  * 
  * @return void
  */
-void parseaFicheroConfiguracionValidarCamposRellenos();
-
-/**
-/*********************************************************************/
-/******** Funciones relacionadas con la conexión online **************/
-/*********************************************************************/
-
-/**
- * Enciende el LED de online.
- * 
- * @return void
- */
-void conexionOnlineCorrecta();
-
-/**
- * Apaga el LED de online.
- * 
- * @return void
- */
-void conexionOnlineIncorrecta();
-
-/*********************************************************************/
-/******** Funciones relacionadas con la conexión a la SD *************/
-/*********************************************************************/
-
-/**
- * Indica que la tarjeta SD es accesible.
- * 
- * @return void
- */
-void tarjetaSDAccesibleFuncion();
-
-/**
- * Indica que la tarjeta SD es inaccesible.
- * 
- * @return void
- */
-void tarjetaSDInaccesibleFuncion();
-
-/*********************************************************************/
-/******** Funciones relacionadas con la conexión a LitlleFS **********/
-/*********************************************************************/
-
-/**
- * Indica que la conexión a LittleFS es accesible.
- * 
- * @return void
- */
-void conexionLittleFSAccesibleFuncion();
-
-/**
- * Indica que la conexión a LittleFS es inaccesible.
- * 
- * @return void
- */
-void conexionLittleFSInaccesibleFuncion();
+void parseaFicheroConfiguracionJandulaBaseValidarCamposRellenos();

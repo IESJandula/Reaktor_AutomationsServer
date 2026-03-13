@@ -75,7 +75,7 @@ void setupJandulaBase()
   if (errorGeneralJandulaBase == "")
   {
     // Cargamos la configuración desde el archivo de configuración
-    parseaFicheroConfiguracion(RUTA_FICHERO_CONFIGURACION);
+    parseaFicheroConfiguracionJandulaBase(RUTA_FICHERO_CONFIGURACION);
   }
 
   // Si no hay ningún error general mientras se cargó la configuración ...
@@ -134,17 +134,11 @@ void validarSiConexionLittleFSEsAccesible()
 
       // Mostramos un mensaje de error
       Serial.println(errorGeneralJandulaBase);
-
-      // Indica que la conexión a LittleFS es inaccesible
-      conexionLittleFSInaccesibleFuncion();
     }
     else
     {
       // Mostramos un mensaje de información
       Serial.println("INFO: El sistema de archivos LittleFS se ha formateado y montado correctamente");
-
-      // Indica que la conexión a LittleFS es accesible
-      conexionLittleFSAccesibleFuncion();
     }
   }
 }
@@ -174,9 +168,6 @@ void validarSiConexionLittleFSEsAccesible()
    {
      // Mostramos un mensaje de advertencia
      Serial.println("WARNING: No se ha detectado ninguna tarjeta SD");
-
-     // Indica que la tarjeta SD es inaccesible
-     tarjetaSDInaccesibleFuncion();
    }
    else
    {
@@ -200,9 +191,6 @@ void validarSiConexionLittleFSEsAccesible()
      
        // Desmontamos la tarjeta SD
        SD.end();
-
-       // Indica que la tarjeta SD es inaccesible
-       tarjetaSDInaccesibleFuncion();
      }
      else
      {
@@ -211,9 +199,6 @@ void validarSiConexionLittleFSEsAccesible()
  
        // Cerramos el fichero de prueba
        testFile.close();
- 
-       // Indica que la tarjeta SD es accesible
-       tarjetaSDAccesibleFuncion();
      }
    }
  }
@@ -525,7 +510,7 @@ String obtenerFechaYHoraDesdeTimestamp(unsigned long timestamp)
  * @param configFilePath: ruta del archivo de configuración
  * @return void
  */
-void parseaFicheroConfiguracion(String rutaFicheroConfiguracion) 
+void parseaFicheroConfiguracionJandulaBase(String rutaFicheroConfiguracion) 
 {
   // Abrimos el fichero de configuración en modo lectura de LittleFS
    File ficheroConfiguracion = LittleFS.open(rutaFicheroConfiguracion, "r");
@@ -570,11 +555,6 @@ void parseaFicheroConfiguracion(String rutaFicheroConfiguracion)
         clientId = linea.substring(PROPIEDAD_CLIENT_ID_LENGTH + 1);
         clientId.trim();
       }
-      else
-      {
-        // Mostramos un mensaje de advertencia
-        Serial.println("WARNING: La línea del fichero de configuración no es válida: " + linea);
-      }
     }
 
     // Cerramos el fichero de configuración
@@ -584,7 +564,7 @@ void parseaFicheroConfiguracion(String rutaFicheroConfiguracion)
   // Si no hay un error general, validamos si todos los campos están rellenos
   if (errorGeneralJandulaBase == "")
   {
-    parseaFicheroConfiguracionValidarCamposRellenos();
+    parseaFicheroConfiguracionJandulaBaseValidarCamposRellenos();
   }
 }
 
@@ -593,7 +573,7 @@ void parseaFicheroConfiguracion(String rutaFicheroConfiguracion)
  * 
  * @return void
  */
-void parseaFicheroConfiguracionValidarCamposRellenos()
+void parseaFicheroConfiguracionJandulaBaseValidarCamposRellenos()
 {
   // Validamos si el SSID está relleno
   if (wifiSSID.length() == 0)
@@ -640,7 +620,7 @@ void parseaFicheroConfiguracionValidarCamposRellenos()
   */
 void conectarWiFi()
 {
-  // Si el SSID o la contraseña no están configurados, se muestra un mensaje de error y se apagan los LEDs de online y offline
+  // Si el SSID o la contraseña no están configurados, se muestra un mensaje de error
   if (wifiSSID.length() == 0 || wifiPassword.length() == 0)
   {
     // Mostramos un mensaje de error
@@ -648,9 +628,6 @@ void conectarWiFi()
 
     // Mostramos un mensaje de error
     Serial.println(errorGeneralJandulaBase);
-
-    // Mostramos un mensaje de conexión incorrecta a tráves de los leds
-    conexionOnlineIncorrecta();
   }
   else
   {
@@ -677,7 +654,7 @@ void conectarWiFi()
       delay(INTENTOS_DELAY);
     }
 
-    // Si no se conecta a la red WiFi, se muestra un mensaje de error y se apagan los LEDs de online y offline
+    // Si no se conecta a la red WiFi, se muestra un mensaje de error
     if (WiFi.status() != WL_CONNECTED)
     {
       // Mostramos un mensaje de error
@@ -685,9 +662,6 @@ void conectarWiFi()
 
       // Mostramos un mensaje de error
       Serial.println(errorGeneralJandulaBase);
-
-      // Mostramos un mensaje de conexión incorrecta a tráves de los leds
-      conexionOnlineIncorrecta();
     }
     else
     {
@@ -697,9 +671,6 @@ void conectarWiFi()
       // Mostramos la IP de la red WiFi
       Serial.print("IP: ");
       Serial.println(WiFi.localIP());
-
-      // Mostramos un mensaje de conexión correcta a tráves de los leds
-      conexionOnlineCorrecta();
     }
   }
 }
@@ -714,7 +685,7 @@ void conectarWiFi()
  * @return void
  * 
  * @note Si la sincronización se realiza correctamente, se muestra un mensaje de sincronización correcta.
- * @note Si la sincronización no se realiza correctamente, se muestra un mensaje de error y se apagan los LEDs de online y offline.
+ * @note Si la sincronización no se realiza correctamente, se muestra un mensaje de error
  */
 void sincronizarHoraConServidorNTP()
 {
@@ -770,7 +741,7 @@ void sincronizarHoraConServidorNTP()
   }
 
   // Si finalmente no se ha podido obtener la fecha y hora del servidor NTP,
-  // se muestra un mensaje de error y se apagan los LEDs de online y offline
+  // se muestra un mensaje de error
   if (!sincronizacionRealizada)
   {
     // Mostramos un mensaje de error
@@ -778,9 +749,6 @@ void sincronizarHoraConServidorNTP()
 
     // Mostramos un mensaje de error
     Serial.println(errorGeneralJandulaBase);
-
-    // Mostramos un mensaje de sincronización incorrecta a tráves de los leds
-    conexionOnlineIncorrecta();
   }
 }
 
@@ -808,9 +776,6 @@ void obtenerTokenJWT()
   {
     // Mostramos un mensaje de advertencia
     Serial.println("WARNING: JWT inexistente o expirado. Solicitando nuevo token...");
-
-    // Mostramos un mensaje de sincronización incorrecta a tráves de los leds
-    conexionOnlineIncorrecta();
 
     // Obtenemos el token de Firebase
     obtenerTokenJWTInternal();
@@ -858,7 +823,7 @@ bool tokenJWTExpirado()
  * 
  * @return void
  * 
- * @note Si el token no se obtiene correctamente, se muestra un mensaje de error y se apagan los LEDs de online y offline.
+ * @note Si el token no se obtiene correctamente, se muestra un mensaje de error
 */
 void obtenerTokenJWTInternal()
 {
@@ -870,13 +835,13 @@ void obtenerTokenJWTInternal()
 
   // Iniciamos la conexión HTTP
   HTTPClient httpJwt;
-  httpJwt.setTimeout(20000);
+  httpJwt.setTimeout(TIME_PETICIONES_HTTP);
 
   // Inicializamos el dato de respuesta HTTP
   String httpResponseData = "";
 
   // Mostramos los detalles de la petición
-  Serial.println("INFO: Detalles de la petición: ");
+  Serial.println("INFO: Detalles de la petición para obtener el token JWT: ");
   Serial.print("-- Dirección del servidor: ");
   Serial.println(urlFirebase);
   Serial.print("-- X-CLIENT-ID: ");
@@ -989,7 +954,7 @@ bool iniciarConexionHTTPConReintentos(HTTPClient& http, const String& url)
 void obtenerExpiracionJWT()
 {
   // Inicializamos la variable de expiración del token
-  long expiracionTokenJWT = 0;
+  expiracionTokenJWT = 0;
 
   // Mostramos un mensaje de inicio de obtención de la expiración del token
   Serial.println("INFO: Iniciando obtención de la expiración del token...");
@@ -1006,9 +971,6 @@ void obtenerExpiracionJWT()
 
     // Mostramos un mensaje de error
     Serial.println(errorGeneralJandulaBase);
-
-    // Mostramos un mensaje de error a tráves de los leds
-    conexionOnlineIncorrecta();
   }
   else
   {
@@ -1049,93 +1011,6 @@ void obtenerExpiracionJWT()
 
     // Mostramos la expiración del token JWT
     Serial.println("INFO: El token JWT expira en:");
-    Serial.println(String(expiracionTokenJWT));
-
-    // Mostramos un mensaje de sincronización correcta a tráves de los leds
-    conexionOnlineCorrecta();
+    Serial.println(obtenerFechaYHoraDesdeTimestamp(expiracionTokenJWT));
   }
-}
-
-/*********************************************************************/
-/**************** Funciones relacionadas con los LEDs ****************/
-/*********************************************************************/
-
-/**
- * Enciende el LED de online.
- * 
- * @return void
- */
-void conexionOnlineCorrecta()
-{
-  // Encendemos el LED de online
-  digitalWrite(onlinePin, HIGH);
-
-  // Apagamos el LED de offline
-  digitalWrite(offlinePin, LOW);
-}
-
-/**
- * Apaga el LED de online.
- * 
- * @return void
- */
-void conexionOnlineIncorrecta()
-{
-  // Apagamos el LED de online
-  digitalWrite(onlinePin, LOW);
-
-  // Encendemos el LED de offline
-  digitalWrite(offlinePin, HIGH);
-}
-
-/*********************************************************************/
-/******** Funciones relacionadas con la conexión a la SD *************/
-/*********************************************************************/
-
-/**
- * Indica que la tarjeta SD es accesible.
- * 
- * @return void
- */
-void tarjetaSDAccesibleFuncion()
-{
-  // Encendemos el LED de la tarjeta SD
-  digitalWrite(sdCardLed, HIGH);
-}
-
-/**
- * Indica que la tarjeta SD es inaccesible.
- * 
- * @return void
- */
-void tarjetaSDInaccesibleFuncion()
-{
-  // Apagamos el LED de la tarjeta SD
-  digitalWrite(sdCardLed, LOW);
-}
-
-/*********************************************************************/
-/******** Funciones relacionadas con la conexión a LitlleFS **********/
-/*********************************************************************/
-
-/**
- * Indica que la conexión a LittleFS es accesible.  
- * 
- * @return void
- */
-void conexionLittleFSAccesibleFuncion()
-{
-  // Encendemos el LED de la conexión a LittleFS
-  digitalWrite(littleFSLed, HIGH);
-}
-
-/**
- * Indica que la conexión a LittleFS es inaccesible.
- * 
- * @return void
- */
-void conexionLittleFSInaccesibleFuncion()
-{
-  // Apagamos el LED de la conexión a LittleFS
-  digitalWrite(littleFSLed, LOW);
 }

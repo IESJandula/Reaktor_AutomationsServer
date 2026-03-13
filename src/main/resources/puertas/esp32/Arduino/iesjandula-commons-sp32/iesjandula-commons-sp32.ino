@@ -1,25 +1,7 @@
 #include "Jandula_Base.h"
-//#include <Jandula_Actuadores.h>
+#include "Jandula_Actuador_Puerta.h"
 #include <ArduinoJson.h>
 #include <stdlib.h>
-
-// Pin del relé de la puerta
-#define relePuertaPin 12
-
-
-
-// Función para accionar el relé
-void accionarRelePuerta(int tiempoMs)
-{
-  Serial.println("Activando relé puerta");
-
-  digitalWrite(relePuertaPin, HIGH);   // activar relé
-  delay(tiempoMs);
-
-  digitalWrite(relePuertaPin, LOW);    // apagar relé
-
-  Serial.println("Relé desactivado");
-}
 
 /**
  * Función para inicializar el ESP32
@@ -32,14 +14,11 @@ void setup()
   // Esperamos a que se estabilice la comunicación serial
   delay(200);
 
-  // Configuramos los pines de los LEDs
-  pinMode(offlinePin, OUTPUT);
-  pinMode(onlinePin, OUTPUT);
-  pinMode(sdCardLed, OUTPUT);
-  pinMode(littleFSLed, OUTPUT);
-
   // Inicializamos la biblioteca Jandula Base
   setupJandulaBase();
+
+  // Inicializamos la biblioteca Jandula Actuador Puerta
+  setupJandulaActuadorPuerta();
 }
 
 /**
@@ -53,33 +32,14 @@ void loop()
     delay(60000);
   }
   else
-  {/*
-    Serial.println("\nHeartbeat (ON)...");
-    Serial.print("MAC: ");
-    Serial.println(miMac);
+  {
+    // Validamos si hay acción pendiente
+    AccionPendiente accionPendiente = validarSiHayAccionPendiente();
 
-    // Preguntar al backend si hay acción
-    String accionId = updateActuatorStateSimple(actuadorEstadoUrl, token, miMac);
+    // Gestionamos la apertura de la puerta si hay una acción pendiente
+    gestionarAperturaPuerta(accionPendiente);
 
-    Serial.println("Respuesta servidor (accionId):");
-    Serial.println(accionId);
-
-    if (accionId != "" && accionId != "null")
-    {
-      Serial.print("Ejecutando acción...");
-      Serial.println(accionId);
-
-      // Abrir puerta con relé
-      accionarRelePuerta(4000);
-
-      // Convierto el string accionId a long
-      long accionIdLong = strtol(accionId.c_str(), NULL, 10);
-
-      // Notificar resultado al backend
-      updateAccionEstado(accionEstadoUrl, token, accionIdLong, "finalizado_ok", "Puerta abierta correctamente");
-    }
-*/
-    // Espera antes del siguiente heartbeat
+    // Esperamos 30 segundos antes de volver a validar si hay acción pendiente
     delay(30000);
   }
 }
