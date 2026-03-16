@@ -3,7 +3,10 @@ package es.iesjandula.reaktor.automations_server.services;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+
+import es.iesjandula.reaktor.automations_server.dtos.WebSocketResponseDto;
 import es.iesjandula.reaktor.automations_server.models.Accion;
 import es.iesjandula.reaktor.automations_server.models.Actuador;
 import es.iesjandula.reaktor.automations_server.models.Comando;
@@ -49,6 +52,9 @@ public class ProcesadorOrdenService {
     // Repositorio para obtener información de los actuadores
     @Autowired
     private IActuadorRepository actuadorRepository;
+    
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     /**
      * Variable que define el porcentaje mínimo de coincidencia
@@ -170,5 +176,9 @@ public class ProcesadorOrdenService {
 
         // Persistimos en base de datos
         validacionRepository.save(validacion);
+        
+        // Enviamos la respuesta al frontend por websocket
+        WebSocketResponseDto respuesta = new WebSocketResponseDto(orden.getFrase(), textoRespuesta, resultado);
+        messagingTemplate.convertAndSend("/topic/respuestas", respuesta);
     }
 }

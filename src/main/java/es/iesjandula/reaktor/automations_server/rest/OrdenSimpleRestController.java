@@ -20,9 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import es.iesjandula.reaktor.automations_server.dtos.OrdenTextoRequest;
 import es.iesjandula.reaktor.automations_server.models.OrdenSimple;
-import es.iesjandula.reaktor.automations_server.models.Validacion;
 import es.iesjandula.reaktor.automations_server.repository.IOrdenSimpleRepository;
-import es.iesjandula.reaktor.automations_server.repository.IValidacionRepository;
 import es.iesjandula.reaktor.automations_server.services.ProcesadorOrdenService;
 import es.iesjandula.reaktor.automations_server.services.SpeechService;
 import es.iesjandula.reaktor.automations_server.utils.AutomationsServerException;
@@ -44,9 +42,6 @@ public class OrdenSimpleRestController
 
 	@Autowired
 	private ProcesadorOrdenService procesadorOrdenService;
-
-	@Autowired
-	private IValidacionRepository validacionRepository;
 
 	@PostMapping(value = "/texto", consumes = "application/json")
 	public ResponseEntity<?> crearOrdenSimpleTexto(@AuthenticationPrincipal DtoUsuarioExtended usuario,
@@ -83,13 +78,9 @@ public class OrdenSimpleRestController
 
 			procesadorOrdenService.procesarOrden(nuevaOrden);
 
-			// obtenemos la validación que se acaba de crear
-			Validacion validacion = validacionRepository.findTopByOrdenOrderByIdDesc(nuevaOrden);
-
 			// construimos respuesta para el frontend
 			Map<String, Object> respuesta = new HashMap<>();
 			respuesta.put("frase", nuevaOrden.getFrase());
-			respuesta.put("textoRespuesta", validacion.getTextoRespuesta());
 
 			return ResponseEntity.ok(respuesta);
 			
