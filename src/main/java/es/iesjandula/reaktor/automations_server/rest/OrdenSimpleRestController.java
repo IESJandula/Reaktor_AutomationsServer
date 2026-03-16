@@ -99,59 +99,40 @@ public class OrdenSimpleRestController
 		}
 	}
 
+	// Endpoint que recibe un audio desde el frontend en formato multipart/form-data
+	// Este endpoint únicamente se encarga de transcribir el audio a texto.
+	// No guarda nada en base de datos ni ejecuta ninguna orden.
 	@PostMapping(value = "/audio", consumes = "multipart/form-data")
-	public ResponseEntity<?> crearOrdenSimpleAudio(@AuthenticationPrincipal DtoUsuarioExtended usuario,
-			@RequestParam("file") MultipartFile file)
+	public ResponseEntity<?> crearOrdenSimpleAudio(@AuthenticationPrincipal DtoUsuarioExtended usuario, @RequestParam("file") MultipartFile file)
 	{
-		try
-		{
-			if (file == null || file.isEmpty())
-			{
-				throw new AutomationsServerException("Audio vacío", "AUDIO_EMPTY");
-			}
+	    try
+	    {
+	        // Comprobación básica para evitar procesar audios vacíos
+	        if (file == null || file.isEmpty())
+	        {
+	            throw new AutomationsServerException("Audio vacío", "AUDIO_EMPTY");
+	        }
+	        
+	        log.info("Archivo recibido: " + file.getOriginalFilename());
+	        log.info("Tamaño: " + file.getSize());
+	        
+	        // Se envía el audio al servicio de reconocimiento de voz (Vosk)
+	        // Este servicio transforma el audio en una frase de texto
+	        String frase = this.speechService.transcribe(file.getInputStream());
+	        log.info("Texto reconocido: " + frase);
 
-			log.info("Archivo recibido: " + file.getOriginalFilename());
-			log.info("Tamaño: " + file.getSize());
+	        // Se crea un mapa para construir la respuesta que se enviará al frontend
+	        Map<String, Object> respuesta = new HashMap<>();
 
-			String frase = this.speechService.transcribe(file.getInputStream());
+	        respuesta.put("frase", frase);
+	        return ResponseEntity.ok(respuesta);
 
-			log.info("Texto reconocido: " + frase);
-
-			OrdenSimple ordenSimple = new OrdenSimple();
-			ordenSimple.setFecha(new Date());
-			ordenSimple.setFrase(frase);
-
-			// 👇 SOLO si hay usuario autenticado
-			if (usuario != null)
-			{
-				ordenSimple.setEmail(usuario.getEmail());
-				ordenSimple.setNombre(usuario.getNombre());
-				ordenSimple.setApellidos(usuario.getApellidos());
-			} else
-			{
-				// Para pruebas sin JWT
-				ordenSimple.setEmail("anonimo@local");
-				ordenSimple.setNombre("Anonimo");
-				ordenSimple.setApellidos("SinLogin");
-			}
-
-			OrdenSimple nuevaOrden = this.ordenSimpleRepository.saveAndFlush(ordenSimple);
-
-			procesadorOrdenService.procesarOrden(nuevaOrden);
-
-			Validacion validacion = validacionRepository.findTopByOrdenOrderByIdDesc(nuevaOrden);
-
-			Map<String, Object> respuesta = new HashMap<>();
-			respuesta.put("frase", nuevaOrden.getFrase());
-			respuesta.put("textoRespuesta", validacion.getTextoRespuesta());
-
-			return ResponseEntity.ok(respuesta);
-			
-		} catch (Exception e)
-		{
-			log.error("Error procesando audio", e);
-			return ResponseEntity.badRequest().body("Error procesando audio");
-		}
+	    } 
+	    catch (Exception e)
+	    {
+	        log.error("Error procesando audio", e);
+	        return ResponseEntity.badRequest().body("Error procesando audio");
+	    }
 	}
 
 	@GetMapping(value = "/")
