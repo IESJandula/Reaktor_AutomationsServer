@@ -14,7 +14,12 @@ import lombok.Setter;
  */
 public class WebSocketResponseDto
 {
+	// Pregunta enviada
 	private String pregunta;
-    private String respuesta;
-    private String estado;
+
+	// Respuesta generada
+	private String respuesta;
+
+	// Estado de la respuesta
+	private String estado;
 }
