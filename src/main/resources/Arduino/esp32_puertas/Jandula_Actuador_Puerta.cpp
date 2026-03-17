@@ -169,11 +169,11 @@ AccionPendiente validarSiHayAccionPendiente()
         // Si la respuesta no está en el rango del 200 al 299, es incorrecta
         if (httpResponseCode < 200 || httpResponseCode >= 300)
         {
-            // Almacenamos el error en la variable global errorGeneralJandulaBase
-            errorGeneralJandulaBase = "ERROR: La petición HTTP para validar si hay una acción pendiente ha fallado. Código: " + String(httpResponseCode) ;
+            // Almacenamos el error en la variable local errorString
+            String errorString = "ERROR: La petición HTTP para validar si hay una acción pendiente ha fallado. Código: " + String(httpResponseCode) ;
 
             // Mostramos un mensaje de error
-            Serial.println(errorGeneralJandulaBase);
+            Serial.println(errorString);
         }
         else
         {
@@ -183,11 +183,11 @@ AccionPendiente validarSiHayAccionPendiente()
             // Si el dato de respuesta HTTP es válido, se muestra el dato de respuesta HTTP
             if (bodyResponse.length() == 0)
             {
-                // Almacenamos el error en la variable global errorGeneralJandulaBase
-                errorGeneralJandulaBase = "ERROR: La respuesta de la API de validación de acción pendiente es vacía";
+                // Almacenamos el error en la variable local errorString
+                String errorString = "ERROR: La respuesta de la API de validación de acción pendiente es vacía";
 
                 // Mostramos un mensaje de error
-                Serial.println(errorGeneralJandulaBase);
+                Serial.println(errorString);
             }
             else
             {
@@ -229,11 +229,11 @@ AccionPendiente validarSiHayAccionPendienteParsearRespuesta(const String& bodyRe
     // Si hay un error al parsear el JSON, se muestra el error y se devuelve la estructura de datos AccionPendiente
     if (error) 
     {
-      // Almacenamos el error en la variable global errorGeneralJandulaBase
-      errorGeneralJandulaBase = "ERROR: Error parseando JSON: " + String(error.c_str());
+      // Almacenamos el error en la variable local errorString
+      String errorString = "ERROR: Error parseando JSON: " + String(error.c_str());
 
       // Mostramos un mensaje de error
-      Serial.println(errorGeneralJandulaBase);
+      Serial.println(errorString);
     }
     else
     {
@@ -344,20 +344,33 @@ void gestionarAperturaPuertaRealizadaAvisoServidor(const long accionId)
         // Añadimos el header de autorización
         httpAvisoServidorAperturaPuerta.addHeader("Authorization", "Bearer " + tokenJWT);
 
-        // Añadimos el header de MAC
-        httpAvisoServidorAperturaPuerta.addHeader("mac", macAddress);
+        // Creamos un objeto JSON para el cuerpo de la petición
+        DynamicJsonDocument doc(1024);
+        doc["accionId"] = accionId;
+        doc["estado"] = "finalizado_ok";
+        doc["resultado"] = "Puerta abierta correctamente";
+
+        String body;
+        serializeJson(doc, body);
+
+        // Mostramos el cuerpo de la petición
+        Serial.println("INFO: Cuerpo de la petición para avisar al servidor de la apertura de la puerta realizada: ");
+        Serial.println(body);
+
+        // Añadimos el header de contenido
+        httpAvisoServidorAperturaPuerta.addHeader("Content-Type", "application/json");
 
         // Realizamos la petición POST
-        int httpResponseCode = httpAvisoServidorAperturaPuerta.POST("");
+        int httpResponseCode = httpAvisoServidorAperturaPuerta.POST(body);
 
         // Si la respuesta no está en el rango del 200 al 299, es incorrecta
         if (httpResponseCode < 200 || httpResponseCode >= 300)
         {
-            // Almacenamos el error en la variable global errorGeneralJandulaBase
-            errorGeneralJandulaBase = "ERROR: La petición HTTP para avisar al servidor de la apertura de la puerta realizada ha fallado. Código: " + String(httpResponseCode) ;
+            // Almacenamos el error en la variable local errorString
+            String errorString = "ERROR: La petición HTTP para avisar al servidor de la apertura de la puerta realizada ha fallado. Código: " + String(httpResponseCode) ;
 
             // Mostramos un mensaje de error
-            Serial.println(errorGeneralJandulaBase);
+            Serial.println(errorString);
         }
     }
 

@@ -48,7 +48,7 @@ struct AccionPendiente
 /************************************************/
 
 // Pin del relé de la puerta
-#define RELE_PUERTA_PIN 12
+#define RELE_PUERTA_PIN 13
 
 /************************************************/
 /************ Variables globales ****************/

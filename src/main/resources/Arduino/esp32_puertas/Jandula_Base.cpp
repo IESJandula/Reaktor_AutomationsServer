@@ -632,7 +632,10 @@ void conectarWiFi()
   else
   {
     // Mostramos un mensaje de inicio de conexión
-    Serial.println("INFO: Iniciando conexión a la red WiFi");
+    Serial.print("INFO: Iniciando conexión a la red WiFi SSID: ");
+    Serial.print(wifiSSID.c_str());
+    Serial.print(" Contraseña: ");
+    Serial.print(wifiPassword.c_str());
 
     // Conectamos a la red WiFi
     WiFi.mode(WIFI_STA);
@@ -802,8 +805,13 @@ bool tokenJWTExpirado()
 {
   bool expirado = false;
 
-  // Se obtiene el tiempo actual en segundos
-  unsigned long now = millis() / 1000;
+  time_t now;
+  time(&now);
+
+  Serial.print("NOW: ");
+  Serial.print(now);
+  Serial.print(" expiración: ");
+  Serial.println(expiracionTokenJWT);
 
   // Se valida si el token ha expirado
   expirado = (expiracionTokenJWT == 0) || (now >= expiracionTokenJWT);
