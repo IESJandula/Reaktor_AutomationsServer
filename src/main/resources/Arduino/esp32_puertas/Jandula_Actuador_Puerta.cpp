@@ -8,8 +8,8 @@
 // urlValidacionAccionPendiente: URL de validación de acción pendiente
 String urlValidacionAccionPendiente = "";
 
-// urlAvisoServidorAperturaPuerta: URL de aviso al servidor de la apertura de la puerta
-String urlAvisoServidorAperturaPuerta = "";
+// urlAvisoServidorAccionEstado: URL de aviso al servidor de la acción establecida
+String urlAvisoServidorAccionEstado = "";
 
 /***************************************************************************/
 /****** Inicialización de los componentes del actuador de la puerta ********/
@@ -68,12 +68,12 @@ void setupJandulaActuadorPuerta()
                 urlValidacionAccionPendiente = linea.substring(PROPIEDAD_URL_VALIDAR_ACCION_PENDIENTE_LENGTH + 1);
                 urlValidacionAccionPendiente.trim();
             }
-            // Si la línea comienza con la propiedad de la URL de aviso al servidor de la apertura de la puerta, se procesa
-            else if (linea.startsWith(PROPIEDAD_URL_AVISO_SERVIDOR_APERTURA_PUERTA))
+            // Si la línea comienza con la propiedad de la URL de aviso al servidor de la acción establecida, se procesa
+            else if (linea.startsWith(PROPIEDAD_URL_AVISO_SERVIDOR_ACCION_ESTADO))
             {
-                // Se asigna a la variable urlAvisoServidorAperturaPuerta
-                urlAvisoServidorAperturaPuerta = linea.substring(PROPIEDAD_URL_AVISO_SERVIDOR_APERTURA_PUERTA_LENGTH + 1);
-                urlAvisoServidorAperturaPuerta.trim();
+                // Se asigna a la variable urlAvisoServidorAccionEstado
+                urlAvisoServidorAccionEstado = linea.substring(PROPIEDAD_URL_AVISO_SERVIDOR_ACCION_ESTADO_LENGTH + 1);
+                urlAvisoServidorAccionEstado.trim();
             }
         }
 
@@ -101,11 +101,11 @@ void parseaFicheroConfiguracionJandulaActuadorPuertaValidarCamposRellenos()
      // Almacenamos el error en la variable global errorGeneralJandulaBase
      errorGeneralJandulaBase = "ERROR: URL de validación de acción pendiente vacía";
    }
-   // Validamos si la URL de aviso al servidor de la apertura de la puerta está rellena
-   else if (urlAvisoServidorAperturaPuerta.length() == 0)
+   // Validamos si la URL de aviso al servidor de la acción establecida está rellena
+   else if (urlAvisoServidorAccionEstado.length() == 0)
    {
      // Almacenamos el error en la variable global errorGeneralJandulaBase
-     errorGeneralJandulaBase = "ERROR: URL de aviso al servidor de la apertura de la puerta vacía";
+     errorGeneralJandulaBase = "ERROR: URL de aviso al servidor del estado de la acción vacía";
    }
  
    if (errorGeneralJandulaBase != "")
@@ -278,14 +278,14 @@ AccionPendiente validarSiHayAccionPendienteParsearRespuesta(const String& bodyRe
 void gestionarAperturaPuerta(AccionPendiente accionPendiente)
 {
     // Si hay una acción pendiente, se gestiona la apertura de la puerta y 
-    // se avisa al servidor de la apertura de la puerta realizada
+    // se avisa al servidor del estado de la acción establecida
     if (accionPendiente.hayAccion)
     {
         // Gestionamos el relé de la puerta
         gestionarAperturaPuertaRele();
 
-        // Avisa al servidor de la apertura de la puerta realizada
-        gestionarAperturaPuertaRealizadaAvisoServidor(accionPendiente.accionId);
+        // Avisa al servidor del estado de la acción
+        gestionarAccionEstadoRealizadaAvisoServidor(accionPendiente.accionId);
     }
 }
 
@@ -319,7 +319,7 @@ void gestionarAperturaPuertaRele()
  * @param accionId: ID de la acción pendiente
  * @return void
  */
-void gestionarAperturaPuertaRealizadaAvisoServidor(const long accionId)
+void gestionarAccionEstadoRealizadaAvisoServidor(const long accionId)
 {
     // Mostramos un mensaje de información
     Serial.println("INFO: Iniciando envío de la petición para avisar al servidor de la apertura de la puerta");
@@ -328,21 +328,21 @@ void gestionarAperturaPuertaRealizadaAvisoServidor(const long accionId)
     obtenerTokenJWT();
 
     // Inicializamos el cliente HTTP
-    HTTPClient httpAvisoServidorAperturaPuerta;
-    httpAvisoServidorAperturaPuerta.setTimeout(TIME_PETICIONES_HTTP);
+    HTTPClient httpAvisoServidorAccionEstado;
+    httpAvisoServidorAccionEstado.setTimeout(TIME_PETICIONES_HTTP);
 
     // Mostramos los detalles de la petición
     Serial.println("INFO: Detalles de la petición para avisar al servidor de la apertura de la puerta realizada: ");
     Serial.print("-- Dirección del servidor: ");
-    Serial.println(urlAvisoServidorAperturaPuerta);
+    Serial.println(urlAvisoServidorAccionEstado);
     Serial.print("-- Accion ID: ");
     Serial.println(accionId);
 
     // Si se puede iniciar la conexión HTTP, se obtiene el token
-    if (iniciarConexionHTTPConReintentos(httpAvisoServidorAperturaPuerta, urlAvisoServidorAperturaPuerta))
+    if (iniciarConexionHTTPConReintentos(httpAvisoServidorAccionEstado, urlAvisoServidorAccionEstado))
     {
         // Añadimos el header de autorización
-        httpAvisoServidorAperturaPuerta.addHeader("Authorization", "Bearer " + tokenJWT);
+        httpAvisoServidorAccionEstado.addHeader("Authorization", "Bearer " + tokenJWT);
 
         // Creamos un objeto JSON para el cuerpo de la petición
         DynamicJsonDocument doc(1024);
@@ -358,10 +358,10 @@ void gestionarAperturaPuertaRealizadaAvisoServidor(const long accionId)
         Serial.println(body);
 
         // Añadimos el header de contenido
-        httpAvisoServidorAperturaPuerta.addHeader("Content-Type", "application/json");
+        httpAvisoServidorAccionEstado.addHeader("Content-Type", "application/json");
 
         // Realizamos la petición POST
-        int httpResponseCode = httpAvisoServidorAperturaPuerta.POST(body);
+        int httpResponseCode = httpAvisoServidorAccionEstado.POST(body);
 
         // Si la respuesta no está en el rango del 200 al 299, es incorrecta
         if (httpResponseCode < 200 || httpResponseCode >= 300)
@@ -375,7 +375,7 @@ void gestionarAperturaPuertaRealizadaAvisoServidor(const long accionId)
     }
 
     // Liberamos la memoria del cliente HTTP
-    httpAvisoServidorAperturaPuerta.end();
+    httpAvisoServidorAccionEstado.end();
 
     // Mostramos un mensaje de información
     Serial.println("INFO: Petición para avisar al servidor de la apertura de la puerta realizada enviada correctamente");

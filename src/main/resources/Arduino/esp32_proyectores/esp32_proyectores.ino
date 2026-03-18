@@ -1,5 +1,5 @@
 #include "Jandula_Base.h"
-#include "Jandula_Actuador_Puerta.h"
+#include "Jandula_Actuador_Proyector.h"
 #include <stdlib.h>
 
 /**
@@ -13,30 +13,14 @@ void setup()
   // Esperamos a que se estabilice la comunicación serial
   delay(200);
 
-  // Test de los relés
-  testReles();
-
   // Inicializamos la biblioteca Jandula Base
   setupJandulaBase();
 
+  // Inicializamos el puerto serie del proyector
+  MySerial.begin(RS232BaudRate, SERIAL_8N1, rxRS232Port, txRS232Port);  // baudrate, config, RX pin, TX pin
+
   // Inicializamos la biblioteca Jandula Actuador Puerta
   setupJandulaActuadorPuerta();
-}
-
-/**
- * Función para testear los relés
- */
-void testReles()
-{
-  // Pines de los relés
-  const int reles[] = {12, 13};
-
-  // Inicializamos los pines de los relés como salidas y los apagamos
-  for (int i = 0; i < 2; i++)
-  {
-    pinMode(reles[i], OUTPUT);
-    digitalWrite(reles[i], LOW);
-  }
 }
 
 /**
@@ -56,8 +40,8 @@ void loop()
     // Validamos si hay acción pendiente
     AccionPendiente accionPendiente = validarSiHayAccionPendiente();
 
-    // Gestionamos la apertura de la puerta si hay una acción pendiente
-    gestionarAperturaPuerta(accionPendiente);
+    // Gestionamos la acción sobre el proyector si hay una acción pendiente
+    gestionarAccionProyector(accionPendiente);
 
     // Esperamos 15 segundos antes de volver a validar si hay acción pendiente
     delay(15000);
