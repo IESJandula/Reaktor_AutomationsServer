@@ -7,9 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,6 +31,7 @@ import es.iesjandula.reaktor.automations_server.models.SensorBooleano;
 import es.iesjandula.reaktor.automations_server.models.SensorNumerico;
 import es.iesjandula.reaktor.automations_server.models.ids.ComandoActuadorId;
 import es.iesjandula.reaktor.automations_server.models.ids.ComandoId;
+import es.iesjandula.reaktor.automations_server.repository.IAccionRepository;
 import es.iesjandula.reaktor.automations_server.repository.IActuadorRepository;
 import es.iesjandula.reaktor.automations_server.repository.IComandoActuadorRepository;
 import es.iesjandula.reaktor.automations_server.repository.IComandoRepository;
@@ -70,6 +71,9 @@ public class AdminRestController
 
 	@Autowired
 	private IComandoActuadorRepository comandoActuadorRepository;
+	
+	@Autowired
+	private IAccionRepository accionRepository;
 
 	// ----------------------------------------------------------------------------------
 	// --- ENDPOINTS PARA SENSOR BOOLEANO ---
@@ -196,8 +200,8 @@ public class AdminRestController
 	 * @return ResponseEntity con código 200 (OK) o 400 si el sensor no existe.
 	 */
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
-	@DeleteMapping("/sensor/booleano/{mac}")
-	public ResponseEntity<?> eliminarSensorBooleano(@PathVariable String mac)
+	@DeleteMapping("/sensor/booleano")
+	public ResponseEntity<?> eliminarSensorBooleano(@RequestHeader("mac") String mac)
 	{
 		try
 		{
@@ -344,8 +348,8 @@ public class AdminRestController
 	 * @return ResponseEntity con código 200 (OK) o 400 si el sensor no existe.
 	 */
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
-	@DeleteMapping("/sensor/numerico/{mac}")
-	public ResponseEntity<?> eliminarSensorNumerico(@PathVariable String mac)
+	@DeleteMapping("/sensor/numerico")
+	public ResponseEntity<?> eliminarSensorNumerico(@RequestHeader("mac") String mac)
 	{
 		try
 		{
@@ -405,9 +409,8 @@ public class AdminRestController
 
 				Actuador actuador = new Actuador();
 				actuador.setEstado(actuadorRequestDto.getEstado());
-				actuador.setTipo(actuador.getTipo());
+				actuador.setTipo(actuadorRequestDto.getTipo());
 				actuador.setNombreUbicacion(actuadorRequestDto.getNombreUbicacion());
-				;
 			}
 
 			String mac = actuadorRequestDto.getMac();
@@ -505,8 +508,8 @@ public class AdminRestController
 	 * @return ResponseEntity con código 200 (OK) o 400 si el actuador no existe.
 	 */
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
-	@DeleteMapping(value = "/actuador/{mac}")
-	public ResponseEntity<?> eliminarActuador(@PathVariable String mac)
+	@DeleteMapping(value = "/actuador")
+	public ResponseEntity<?> eliminarActuador(@RequestHeader("mac") String mac)
 	{
 		try
 		{
@@ -601,15 +604,15 @@ public class AdminRestController
 
 			return ResponseEntity.ok().build();
 		}
-		catch (AutomationsServerException ex)
+		catch (AutomationsServerException automationsException)
 		{
-			return ResponseEntity.badRequest().body(ex);
+			return ResponseEntity.badRequest().body(automationsException);
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
-			log.error("Excepción genérica al crear comando", ex);
-			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			log.error("Excepción genérica al crear comando", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
 	}
 
@@ -628,21 +631,21 @@ public class AdminRestController
 
 			return ResponseEntity.ok(lista);
 		}
-		catch (AutomationsServerException ex)
+		catch (AutomationsServerException automationsException)
 		{
-			return ResponseEntity.badRequest().body(ex);
+			return ResponseEntity.badRequest().body(automationsException);
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
-			log.error("Excepción genérica al obtener comandos", ex);
-			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			log.error("Excepción genérica al obtener comandos", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
 	}
 
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
-	@GetMapping(value = "/comando/orden/{ordenId}")
-	public ResponseEntity<?> obtenerComandosPorOrden(@PathVariable Long ordenId)
+	@GetMapping(value = "/comando/orden")
+	public ResponseEntity<?> obtenerComandosPorOrden(@RequestHeader("ordenId") Long ordenId)
 	{
 		try
 		{
@@ -660,21 +663,21 @@ public class AdminRestController
 
 			return ResponseEntity.ok(lista);
 		}
-		catch (AutomationsServerException ex)
+		catch (AutomationsServerException automationsException)
 		{
-			return ResponseEntity.badRequest().body(ex);
+			return ResponseEntity.badRequest().body(automationsException);
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
-			log.error("Excepción genérica al obtener comandos por orden", ex);
-			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			log.error("Excepción genérica al obtener comandos por orden", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
 	}
 
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
-	@GetMapping(value = "/comando/mac/{mac}")
-	public ResponseEntity<?> obtenerComandosPorMac(@PathVariable String mac)
+	@GetMapping(value = "/comando/mac")
+	public ResponseEntity<?> obtenerComandosPorMac(@RequestHeader("mac") String mac)
 	{
 		try
 		{
@@ -692,21 +695,21 @@ public class AdminRestController
 
 			return ResponseEntity.ok(lista);
 		}
-		catch (AutomationsServerException ex)
+		catch (AutomationsServerException automationsException)
 		{
-			return ResponseEntity.badRequest().body(ex);
+			return ResponseEntity.badRequest().body(automationsException);
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
-			log.error("Excepción genérica al obtener comandos por mac", ex);
-			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			log.error("Excepción genérica al obtener comandos por mac", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
 	}
 
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
-	@DeleteMapping(value = "/comando/{ordenId}/{mac}/{keyword}")
-	public ResponseEntity<?> eliminarComando(@PathVariable Long ordenId, @PathVariable String mac, @PathVariable String keyword)
+	@DeleteMapping(value = "/comando")
+	public ResponseEntity<?> eliminarComando(@RequestHeader("ordenId") Long ordenId, @RequestHeader("mac") String mac, @RequestHeader("keyword") String keyword)
 	{
 		try
 		{
@@ -726,15 +729,15 @@ public class AdminRestController
 			this.comandoRepository.deleteById(comandoId);
 			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
 		}
-		catch (AutomationsServerException ex)
+		catch (AutomationsServerException automationsException)
 		{
-			return ResponseEntity.badRequest().body(ex);
+			return ResponseEntity.badRequest().body(automationsException);
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
-			log.error("Excepción genérica al eliminar comando", ex);
-			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			log.error("Excepción genérica al eliminar comando", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
 	}
 
@@ -764,8 +767,6 @@ public class AdminRestController
 				throw new AutomationsServerException("Información de respuesta correcta vacío o nulo", "ERR_COMANDO_ACTUADOR");
 			}
 
-			// ✅ CAMBIO NECESARIO: con tu modelo ComandoActuador (@ManyToOne @MapsId("mac"))
-			// necesitas setear el actuador para que Hibernate pueda persistir bien el FK/PK.
 			if (!this.actuadorRepository.existsById(comandoActuadorRequestDto.getMac()))
 			{
 				throw new AutomationsServerException("No existe actuador con esa MAC", "ERR_COMANDO_ACTUADOR");
@@ -788,15 +789,15 @@ public class AdminRestController
 
 			return ResponseEntity.ok().build();
 		}
-		catch (AutomationsServerException ex)
+		catch (AutomationsServerException automationsException)
 		{
-			return ResponseEntity.badRequest().body(ex);
+			return ResponseEntity.badRequest().body(automationsException);
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO_ACTUADOR", Constants.ERR_CODE);
-			log.error("Excepción genérica al crear comando_actuador", ex);
-			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO_ACTUADOR", Constants.ERR_CODE);
+			log.error("Excepción genérica al crear comando_actuador", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
 	}
 
@@ -813,14 +814,14 @@ public class AdminRestController
 	    }
 	    catch (Exception exception)
 	    {
-	        AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO_ACTUADOR", Constants.ERR_CODE);
-	        log.error("Excepción genérica al obtener comandos_actuador", ex);
-	        return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+	        AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO_ACTUADOR", Constants.ERR_CODE);
+	        log.error("Excepción genérica al obtener comandos_actuador", automationsException);
+	        return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 	    }
 	}
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
-	@DeleteMapping(value = "/comando/actuador/{mac}/{keyword}")
-	public ResponseEntity<?> eliminarComandoActuador(@PathVariable String mac, @PathVariable String keyword)
+	@DeleteMapping(value = "/comando/actuador")
+	public ResponseEntity<?> eliminarComandoActuador(@RequestHeader("mac") String mac, @RequestHeader("keyword") String keyword)
 	{
 		try
 		{
@@ -840,15 +841,52 @@ public class AdminRestController
 
 			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
 		}
-		catch (AutomationsServerException ex)
+		catch (AutomationsServerException automationsException)
 		{
-			return ResponseEntity.badRequest().body(ex);
+			return ResponseEntity.badRequest().body(automationsException);
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException ex = new AutomationsServerException("ERR_COMANDO_ACTUADOR", Constants.ERR_CODE);
-			log.error("Excepción genérica al eliminar comando_actuador", ex);
-			return ResponseEntity.status(500).body(ex.getBodyExceptionMessage());
+			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO_ACTUADOR", Constants.ERR_CODE);
+			log.error("Excepción genérica al eliminar comando_actuador", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+		}
+	}
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/accion")
+	public ResponseEntity<?> obtenerAcciones()
+	{
+		try
+		{
+			return ResponseEntity.ok(this.accionRepository.buscarAcciones());
+		}	
+	    catch (Exception exception)
+	    {
+	        AutomationsServerException automationsException = new AutomationsServerException("ERR_ACCION", Constants.ERR_CODE);
+	        log.error("Excepción genérica al obtener la accion", automationsException);
+	        return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+	    }
+		
+	}
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@DeleteMapping(value = "/accion")
+	public ResponseEntity<?> eliminarAccion(@RequestHeader("idAccion") Long idAccion)
+	{
+		try
+		{
+			if (!this.accionRepository.existsById(idAccion))
+			{
+				log.error(Constants.ERR_ACCION_NO_EXISTE);
+				throw new AutomationsServerException(Constants.ERR_ACCION_CODE, Constants.ERR_ACCION_NO_EXISTE);
+			}
+			this.accionRepository.deleteById(idAccion);
+			log.info(Constants.ELEMENTO_ELIMINADO);
+			return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
+		} 
+		catch (AutomationsServerException automationsException)
+		{
+			log.error(automationsException.getMessage());
+			return ResponseEntity.badRequest().body(automationsException);
 		}
 	}
 }
