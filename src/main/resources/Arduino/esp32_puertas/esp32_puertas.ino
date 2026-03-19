@@ -16,11 +16,8 @@ void setup()
   // Test de los relés
   testReles();
 
-  // Inicializamos la biblioteca Jandula Base
-  setupJandulaBase();
-
-  // Inicializamos la biblioteca Jandula Actuador Puerta
-  setupJandulaActuadorPuerta();
+  // Setup del sistema
+  setupSistema();
 }
 
 /**
@@ -47,9 +44,16 @@ void loop()
   // Si hay ningún error general se hace un delay de 60 segundos
   if (errorGeneralJandulaBase != "")
   {
+    // Pintamos el error por pantalla
     Serial.print("Error general: ");
-    Serial.println(errorGeneralJandulaBase);
+    Serial.print(errorGeneralJandulaBase);
+    Serial.println(" . Esperamos 60 segundos antes de volver a hacer setup");
+
+    // Esperamos 60 segundos
     delay(60000);
+    
+    // Volvemos a hacer setup
+    setupSistema();
   }
   else
   {
@@ -59,7 +63,19 @@ void loop()
     // Gestionamos la apertura de la puerta si hay una acción pendiente
     gestionarAperturaPuerta(accionPendiente);
 
-    // Esperamos 15 segundos antes de volver a validar si hay acción pendiente
-    delay(15000);
+    // Esperamos 10 segundos antes de volver a validar si hay acción pendiente
+    delay(10000);
   }
+}
+
+/**
+ * Función que realiza el setup del sistema
+ */
+void setupSistema()
+{
+  // Inicializamos la biblioteca Jandula Base
+  setupJandulaBase();
+
+  // Inicializamos la biblioteca Jandula Actuador Puerta
+  setupJandulaActuadorPuerta();
 }
