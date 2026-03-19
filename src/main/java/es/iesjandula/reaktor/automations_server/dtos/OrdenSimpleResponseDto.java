@@ -18,10 +18,17 @@ public class OrdenSimpleResponseDto
 {
     // ID de la orden simple
     private Long id;
-    
+
+    // Nombre del usuario
+    private String nombre;
+
+    // Apellidos del usuario
+    private String apellidos;
+
     // Fecha de creación de la orden
     private Date fecha;
-    
+
     // Frase o acción que se ejecutará
     private String frase;
 }
+
