@@ -2,6 +2,8 @@ package es.iesjandula.reaktor.automations_server.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -30,6 +32,21 @@ public interface ISensorNumericoRpository extends JpaRepository<SensorNumerico, 
 			    FROM SensorNumerico s
 			""")
 	List<SensorNumericoResponseDto> buscarSensoresNumericos();
+	
+	@Query("""
+		    SELECT new es.iesjandula.reaktor.automations_server.dtos.SensorNumericoResponseDto(
+		        s.mac,
+		        s.estado,
+		        s.valorActual,
+		        s.umbralMinimo,
+		        s.umbralMaximo,
+		        s.ultimaActualizacion,
+		        s.nombreUbicacion,
+		        s.tipo
+		    )
+		    FROM SensorNumerico s
+		""")
+		Page<SensorNumericoResponseDto> buscarSensoresNumericosPagina(Pageable pageable);
 
 
 

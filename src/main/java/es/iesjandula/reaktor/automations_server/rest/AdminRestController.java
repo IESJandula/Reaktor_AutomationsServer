@@ -3,6 +3,8 @@ package es.iesjandula.reaktor.automations_server.rest;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,12 +13,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import es.iesjandula.reaktor.automations_server.dtos.ActuadorRequestDto;
 import es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto;
 import es.iesjandula.reaktor.automations_server.dtos.ComandoActuadorRequestDto;
-import es.iesjandula.reaktor.automations_server.dtos.ComandoActuadorResponseDto;
 import es.iesjandula.reaktor.automations_server.dtos.ComandoRequestDto;
 import es.iesjandula.reaktor.automations_server.dtos.ComandoResponseDto;
 import es.iesjandula.reaktor.automations_server.dtos.SensorBooleanoRequestDto;
@@ -471,12 +473,14 @@ public class AdminRestController
 				// MAC no puede ser nula o vacía
 				if (a.getMac() == null || a.getMac().isEmpty())
 				{
+					log.error("Existe un actuador sin dirección MAC");
 					throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE,
 							"Existe un actuador sin dirección MAC");
 				}
 				// Ubicación no puede ser nula o vacía
 				if (a.getNombreUbicacion() == null || a.getNombreUbicacion().isEmpty())
 				{
+					log.error("Existe un actuador sin ubicación asignada");
 					throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE,
 							"Existe un actuador sin ubicación asignada");
 				}
@@ -573,19 +577,25 @@ public class AdminRestController
 		{
 			if (comandoRequestdto.getKeyword() == null || comandoRequestdto.getKeyword().isEmpty())
 			{
+				log.error("Keyword vacía o nula");
 				throw new AutomationsServerException("Keyword vacía o nula", "ERR_COMANDO");
 			}
 			if (comandoRequestdto.getMac() == null || comandoRequestdto.getMac().isEmpty())
 			{
+				log.error("MAC vacía o nula");
 				throw new AutomationsServerException("MAC vacía o nula", "ERR_COMANDO");
 			}
 			if (comandoRequestdto.getOrdenId() == null)
 			{
+				log.error("OrdenId nulo");
 				throw new AutomationsServerException("OrdenId nulo", "ERR_COMANDO");
 			}
 
 			Orden orden = this.ordenRepository.findById(comandoRequestdto.getOrdenId())
-					.orElseThrow(() -> new AutomationsServerException("No existe esa orden", "ERR_COMANDO"));
+					.orElseThrow(() -> {
+						log.error("No existe esa orden");
+						return new AutomationsServerException("No existe esa orden", "ERR_COMANDO");
+					});
 
 			Comando comando = new Comando();
 
@@ -601,6 +611,7 @@ public class AdminRestController
 			comando.setOrden(orden);
 
 			this.comandoRepository.saveAndFlush(comando);
+			log.info(Constants.ELEMENTO_AGREGADO);
 
 			return ResponseEntity.ok().build();
 		}
@@ -626,6 +637,7 @@ public class AdminRestController
 
 			if (lista.isEmpty())
 			{
+				log.error("No se encontraron comandos");
 				throw new AutomationsServerException("ERR_COMANDO", "No se encontraron comandos");
 			}
 
@@ -651,6 +663,7 @@ public class AdminRestController
 		{
 			if (ordenId == null)
 			{
+				log.error("OrdenId nulo");
 				throw new AutomationsServerException("OrdenId nulo", "ERR_COMANDO");
 			}
 
@@ -658,6 +671,7 @@ public class AdminRestController
 
 			if (lista.isEmpty())
 			{
+				log.error("No hay comandos para esa orden");
 				throw new AutomationsServerException("ERR_COMANDO", "No hay comandos para esa orden");
 			}
 
@@ -683,6 +697,7 @@ public class AdminRestController
 		{
 			if (mac == null || mac.isEmpty())
 			{
+				log.error("MAC vacía o nula");
 				throw new AutomationsServerException("MAC vacía o nula", "ERR_COMANDO");
 			}
 
@@ -690,6 +705,7 @@ public class AdminRestController
 
 			if (lista.isEmpty())
 			{
+				log.error("No hay comandos para esa MAC");
 				throw new AutomationsServerException("ERR_COMANDO", "No hay comandos para esa MAC");
 			}
 
@@ -715,6 +731,7 @@ public class AdminRestController
 		{
 			if (ordenId == null || mac == null || mac.isEmpty() || keyword == null || keyword.isEmpty())
 			{
+				log.error("Parámetros inválidos");
 				throw new AutomationsServerException("ERR_COMANDO", "Parámetros inválidos");
 			}
 
@@ -723,10 +740,12 @@ public class AdminRestController
 
 			if (!this.comandoRepository.existsById(comandoId))
 			{
+				log.error("No existe comando con esa clave");
 				throw new AutomationsServerException("ERR_COMANDO", "No existe comando con esa clave");
 			}
 
 			this.comandoRepository.deleteById(comandoId);
+			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
 		}
 		catch (AutomationsServerException automationsException)
@@ -753,22 +772,25 @@ public class AdminRestController
 		{
 			if (comandoActuadorRequestDto.getKeyword() == null || comandoActuadorRequestDto.getKeyword().isEmpty())
 			{
-				// TODO poner logs
+				log.error("Keyword vacía o nula");
 				throw new AutomationsServerException("Keyword vacía o nula", "ERR_COMANDO_ACTUADOR");
 			}
 
 			if (comandoActuadorRequestDto.getMac() == null || comandoActuadorRequestDto.getMac().isEmpty())
 			{
+				log.error("MAC vacía o nula");
 				throw new AutomationsServerException("MAC vacía o nula", "ERR_COMANDO_ACTUADOR");
 			}
 			
 			if (comandoActuadorRequestDto.getTextoOk() == null || comandoActuadorRequestDto.getTextoOk().isEmpty())
 			{
+				log.error("Información de respuesta correcta vacío o nulo");
 				throw new AutomationsServerException("Información de respuesta correcta vacío o nulo", "ERR_COMANDO_ACTUADOR");
 			}
 
 			if (!this.actuadorRepository.existsById(comandoActuadorRequestDto.getMac()))
 			{
+				log.error("No existe actuador con esa MAC");
 				throw new AutomationsServerException("No existe actuador con esa MAC", "ERR_COMANDO_ACTUADOR");
 			}
 
@@ -786,6 +808,7 @@ public class AdminRestController
 			comandoActuador.setActuador(actuador);
 
 			this.comandoActuadorRepository.saveAndFlush(comandoActuador);
+			log.info(Constants.ELEMENTO_AGREGADO);
 
 			return ResponseEntity.ok().build();
 		}
@@ -803,13 +826,12 @@ public class AdminRestController
 
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
 	@GetMapping(value = "/comando/actuador")
-	public ResponseEntity<?> obtenerComandosActuador()
+	public ResponseEntity<?> obtenerComandosActuador(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size)
 	{
 	    try
 	    {
-	        List<ComandoActuadorResponseDto> lista = this.comandoActuadorRepository.buscarComandosActuador();
-
-	        return ResponseEntity.ok(lista);
+	        Pageable pageable = PageRequest.of(page, size);
+	        return ResponseEntity.ok(this.comandoActuadorRepository.buscarComandosActuadorPagina(pageable));
 	   
 	    }
 	    catch (Exception exception)
@@ -819,6 +841,7 @@ public class AdminRestController
 	        return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 	    }
 	}
+
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
 	@DeleteMapping(value = "/comando/actuador")
 	public ResponseEntity<?> eliminarComandoActuador(@RequestHeader("mac") String mac, @RequestHeader("keyword") String keyword)
@@ -827,6 +850,7 @@ public class AdminRestController
 		{
 			if (mac == null || mac.isEmpty() || keyword == null || keyword.isEmpty())
 			{
+				log.error("Parámetros inválidos");
 				throw new AutomationsServerException("Parámetros inválidos", "ERR_COMANDO_ACTUADOR");
 			}
 
@@ -834,10 +858,12 @@ public class AdminRestController
 
 			if (!this.comandoActuadorRepository.existsById(comandoActuadorId))
 			{
+				log.error("No existe comando_actuador con esa clave");
 				throw new AutomationsServerException("No existe comando_actuador con esa clave", "ERR_COMANDO_ACTUADOR");
 			}
 
 			this.comandoActuadorRepository.deleteById(comandoActuadorId);
+			log.info(Constants.ELEMENTO_ELIMINADO);
 
 			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
 		}
@@ -852,13 +878,15 @@ public class AdminRestController
 			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
 	}
+
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
 	@GetMapping(value = "/accion")
-	public ResponseEntity<?> obtenerAcciones()
+	public ResponseEntity<?> obtenerAcciones(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size)
 	{
 		try
 		{
-			return ResponseEntity.ok(this.accionRepository.buscarAcciones());
+			 Pageable pageable = PageRequest.of(page, size);
+		     return ResponseEntity.ok(this.accionRepository.buscarAccionesPagina(pageable));
 		}	
 	    catch (Exception exception)
 	    {
@@ -868,6 +896,7 @@ public class AdminRestController
 	    }
 		
 	}
+
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
 	@DeleteMapping(value = "/accion")
 	public ResponseEntity<?> eliminarAccion(@RequestHeader("idAccion") Long idAccion)
@@ -888,5 +917,56 @@ public class AdminRestController
 			log.error(automationsException.getMessage());
 			return ResponseEntity.badRequest().body(automationsException);
 		}
+	}
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/actuador/paginacion")
+	public ResponseEntity<?> obtenerActuadorPaginacion(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size)
+	{
+		try
+		{
+			 Pageable pageable = PageRequest.of(page, size);
+		     return ResponseEntity.ok(this.actuadorRepository.buscarActuadoresPagina(pageable));
+		}	
+	    catch (Exception exception)
+	    {
+	        AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+	        log.error("Excepción genérica al obtener actuadores", automationsException);
+	        return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+	    }
+	}
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/sensor/booleano/paginacion")
+	public ResponseEntity<?> obtenerSensoresBooleanosPaginacion(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size)
+	{
+		try
+		{
+			 Pageable pageable = PageRequest.of(page, size);
+		     return ResponseEntity.ok(this.sensorBooleanoRepo.buscarSensoresBooleanosPagina(pageable));
+		}	
+	    catch (Exception exception)
+	    {
+	        AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+	        log.error("Excepción genérica al obtener sensores booleanos", automationsException);
+	        return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+	    }
+	}
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/sensor/numerico/paginacion")
+	public ResponseEntity<?> obtenerSensoresNumericosPaginacion(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size)
+	{
+		try
+		{
+			 Pageable pageable = PageRequest.of(page, size);
+		     return ResponseEntity.ok(this.sensorNumericoRepo.buscarSensoresNumericosPagina(pageable));
+		}	
+	    catch (Exception exception)
+	    {
+	        AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+	        log.error("Excepción genérica al obtener sensores numéricos", automationsException);
+	        return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+	    }
 	}
 }

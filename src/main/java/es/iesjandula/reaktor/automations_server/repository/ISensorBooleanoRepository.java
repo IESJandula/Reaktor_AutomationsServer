@@ -2,6 +2,8 @@ package es.iesjandula.reaktor.automations_server.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -31,6 +33,21 @@ public interface ISensorBooleanoRepository extends JpaRepository<SensorBooleano,
 			    FROM SensorBooleano s
 			""")
 	List<SensorBooleanoResponseDto> buscarSensoresBooleanos();
+	
+	@Query("""
+		    SELECT new es.iesjandula.reaktor.automations_server.dtos.SensorBooleanoResponseDto(
+		        s.mac,
+		        s.estado,
+		        s.valorActual,
+		        s.ultimaActualizacion,
+		        s.nombreUbicacion,
+		        s.umbralMinimo,
+		        s.umbralMaximo,
+		        s.tipo
+		    )
+		    FROM SensorBooleano s
+		""")
+		Page<SensorBooleanoResponseDto> buscarSensoresBooleanosPagina(Pageable pageable);
 
 
 

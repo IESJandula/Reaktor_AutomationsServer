@@ -3,6 +3,8 @@ package es.iesjandula.reaktor.automations_server.repository;
 import java.util.Date;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -29,6 +31,17 @@ public interface IActuadorRepository extends JpaRepository<Actuador, String> {
 	List<ActuadorResponseDto> buscarActuadores();
 
 	List<Actuador> findByEstadoAndUltimaActualizacionBefore(String estado, Date fecha);
+	
+	@Query("""
+		    SELECT new es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto(
+		        a.mac,
+		        a.estado,
+		        a.nombreUbicacion,
+		        a.tipo
+		    )
+		    FROM Actuador a
+		""")
+		Page<ActuadorResponseDto> buscarActuadoresPagina(Pageable pageable);
 	
 
 }
