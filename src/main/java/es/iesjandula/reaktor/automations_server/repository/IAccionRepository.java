@@ -23,7 +23,7 @@ public interface IAccionRepository extends JpaRepository<Accion, Long>
      */
 	@Query("SELECT new es.iesjandula.reaktor.automations_server.dtos.AccionResponseDto(" +
 		       "a.id, a.estado, a.resultado, a.actuador.mac, a.orden.id) " +
-		       "FROM Accion a")
+		       "FROM Accion a ORDER BY a.id DESC")
 		List<AccionResponseDto> buscarAcciones();
 	
 	/**
@@ -43,8 +43,8 @@ public interface IAccionRepository extends JpaRepository<Accion, Long>
      * Obtiene una lista de acciones usando un DTO,
      * evitando devolver la entidad completa por paginas.
      */
-    @Query("SELECT new es.iesjandula.reaktor.automations_server.dtos.AccionResponseDto(" +
-            "a.id, a.estado, a.resultado, a.actuador.mac, a.orden.id) " +
-            "FROM Accion a")
-     Page<AccionResponseDto> buscarAccionesPagina(Pageable pageable);
+	@Query("SELECT new es.iesjandula.reaktor.automations_server.dtos.AccionResponseDto(" +
+		       "a.id, a.estado, a.resultado, a.actuador.mac, a.orden.id) " +
+		       "FROM Accion a ORDER BY a.id DESC")
+		Page<AccionResponseDto> buscarAccionesPagina(Pageable pageable);
 }
