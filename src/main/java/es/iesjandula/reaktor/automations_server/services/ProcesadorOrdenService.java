@@ -1,12 +1,11 @@
 package es.iesjandula.reaktor.automations_server.services;
 
 import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import es.iesjandula.reaktor.automations_server.dtos.WebSocketResponseDto;
 import es.iesjandula.reaktor.automations_server.models.Accion;
 import es.iesjandula.reaktor.automations_server.models.Actuador;
 import es.iesjandula.reaktor.automations_server.models.Comando;
@@ -51,9 +50,6 @@ public class ProcesadorOrdenService
 	// Repositorio para obtener información de los actuadores
 	@Autowired
 	private IActuadorRepository actuadorRepository;
-
-	@Autowired
-	private SimpMessagingTemplate messagingTemplate;
 
 	/**
 	 * Variable que define el porcentaje mínimo de coincidencia para aceptar una
@@ -141,6 +137,51 @@ public class ProcesadorOrdenService
 			guardarValidacion(orden, score, "Rechazado", "No se ha entendido la orden");
 		}
 	}
+	
+	/**
+     * MÉTODO NUEVO PARA WEBSOCKET (AÑADIDO)
+     */
+    public String procesarOrdenDesdeWebSocket(String frase)
+    {
+        List<Object[]> resultado = comandoActuadorRepository.buscarMejorComando(frase.toLowerCase());
+
+        if (resultado.isEmpty())
+        {
+            return "No se ha entendido la orden";
+        }
+
+        Object[] fila = resultado.get(0);
+
+        String keyword = (String) fila[0];
+        String mac = (String) fila[1];
+        String textoOk = (String) fila[2];
+        Double score = ((Number) fila[4]).doubleValue();
+
+        if (score >= scoreMinimoValidacion)
+        {
+            Actuador actuador = actuadorRepository.findById(mac).orElse(null);
+
+            if (actuador != null)
+            {
+                if ("on".equalsIgnoreCase(actuador.getEstado()))
+                {
+                    return textoOk;
+                } 
+                else
+                {
+                    return "El dispositivo no se encuentra disponible en este momento";
+                }
+            } 
+            else
+            {
+                return "No se ha encontrado el dispositivo";
+            }
+        } 
+        else
+        {
+            return "No se ha entendido la orden";
+        }
+    }
 
 	/**
 	 * Método auxiliar que guarda una validación en la base de datos.
@@ -164,9 +205,5 @@ public class ProcesadorOrdenService
 
 		// Persistimos en base de datos
 		validacionRepository.save(validacion);
-
-		// Enviamos la respuesta al frontend por websocket
-		WebSocketResponseDto respuesta = new WebSocketResponseDto(orden.getFrase(), textoRespuesta, resultado);
-		messagingTemplate.convertAndSend("/topic/respuestas", respuesta);
 	}
 }
