@@ -10,9 +10,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,8 +44,7 @@ public class OrdenSimpleRestController
 	private ProcesadorOrdenService procesadorOrdenService;
 
 	@PostMapping(value = "/texto", consumes = "application/json")
-	public ResponseEntity<?> crearOrdenSimpleTexto(@AuthenticationPrincipal DtoUsuarioExtended usuario,
-			@RequestBody OrdenTextoRequest request)
+	public ResponseEntity<?> crearOrdenSimpleTexto(@AuthenticationPrincipal DtoUsuarioExtended usuario, @RequestBody OrdenTextoRequest request)
 	{
 		try
 		{
@@ -84,9 +83,18 @@ public class OrdenSimpleRestController
 
 			return ResponseEntity.ok(respuesta);
 			
-		} catch (AutomationsServerException exception)
+		} 
+		catch (AutomationsServerException automationsServerException)
 		{
-			return ResponseEntity.badRequest().body(exception.getMessage());
+		    log.error(automationsServerException.getMessage());
+		    return ResponseEntity.badRequest().body(automationsServerException.getBodyExceptionMessage());
+		}
+		catch (Exception exception)
+		{
+		    AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_CODE);
+
+		    log.error("Error inesperado", automationsServerException);
+		    return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
 		}
 	}
 
@@ -119,10 +127,17 @@ public class OrdenSimpleRestController
 	        return ResponseEntity.ok(respuesta);
 
 	    } 
-	    catch (Exception e)
+	    catch (AutomationsServerException automationsServerException)
 	    {
-	        log.error("Error procesando audio", e);
-	        return ResponseEntity.badRequest().body("Error procesando audio");
+	        log.error(automationsServerException.getMessage());
+	        return ResponseEntity.badRequest().body(automationsServerException.getBodyExceptionMessage());
+	    }
+	    catch (Exception exception)
+	    {
+	        AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_CODE);
+
+	        log.error("Error inesperado", automationsServerException);
+	        return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
 	    }
 	}
 
@@ -132,8 +147,8 @@ public class OrdenSimpleRestController
 		return ResponseEntity.ok(this.ordenSimpleRepository.buscarOrdenesSimples());
 	}
 
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> eliminarOrdenSimple(@PathVariable Long id)
+	@DeleteMapping(value = "/")
+	public ResponseEntity<?> eliminarOrdenSimple(@RequestHeader("id") Long id)
 	{
 		try
 		{
@@ -145,10 +160,18 @@ public class OrdenSimpleRestController
 			this.ordenSimpleRepository.deleteById(id);
 			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
-		} catch (AutomationsServerException exception)
+		}
+		catch (AutomationsServerException automationsServerException)
 		{
-			log.error(exception.getMessage());
-			return ResponseEntity.badRequest().body(exception);
+		    log.error(automationsServerException.getMessage());
+		    return ResponseEntity.badRequest().body(automationsServerException.getBodyExceptionMessage());
+		}
+		catch (Exception exception)
+		{
+		    AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_CODE);
+
+		    log.error("Error inesperado", automationsServerException);
+		    return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
 		}
 	}
 }
