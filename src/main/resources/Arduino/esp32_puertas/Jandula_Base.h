@@ -62,6 +62,24 @@
 // Ruta del archivo de configuración dentro de la tarjeta SD
 #define pathFicheroConfiguracion "/configuraciones.txt"
 
+// Ruta del directorio de logs en la tarjeta SD
+#define RUTA_DIRECTORIO_LOGS "/logs"
+
+// Ruta del fichero de log actual en la tarjeta SD
+#define RUTA_FICHERO_LOG_ACTUAL "/logs/jandula.log"
+
+// Prefijo de los ficheros de log en la tarjeta SD
+#define PREFIJO_FICHEROS_LOG "/logs/jandula_"
+
+// Sufijo de los ficheros de log en la tarjeta SD
+#define SUFIJO_FICHEROS_LOG ".log"
+
+// Tamaño máximo de los ficheros de log en la tarjeta SD (total: 100 MB)
+#define TAMANIO_MAXIMO_FICHERO_LOG (100 * 1024 * 1024)
+
+// Máximo de ficheros de log en la tarjeta SD
+#define MAXIMO_FICHEROS_ROLLOVER 10
+
 /************************************/
 /**** Pines para la tarjeta SD ******/
 /************************************/
@@ -140,12 +158,54 @@ extern unsigned long expiracionTokenJWT;
 // macAddress: sirve para almacenar la dirección MAC del ESP32
 extern String macAddress;
 
-// errorGeneralJandulaBase: sirve para almacenar el error general de la librería Jandula Base
-extern String errorGeneralJandulaBase;
+// errorGeneral: sirve para almacenar el error general
+extern String errorGeneral;
 
 /************************************************/
 /**************** Funciones *********************/
 /************************************************/
+
+/*******************************************************/
+/********* Funciones relacionadas con los logs *********/
+/*******************************************************/
+
+/**
+ * Registra una línea de log en Serial y en SD con rollover
+ *
+ * @param nivel: nivel del log (INFO, WARNING, ERROR)
+ * @param mensaje: mensaje del log
+ * @return void
+ */
+void registrarLog(const String& nivel, const String& mensaje);
+ 
+ /**
+  * Obtiene la marca temporal del log
+  * 
+  * @return String: marca temporal del log
+  */
+String obtenerMarcaTemporalLog();
+ 
+ /**
+  * Escribe una línea de log en la tarjeta SD
+  * 
+  * @param lineaLog: línea de log a escribir
+  * @return void
+  */
+void escribirLogEnSD(const String& lineaLog);
+ 
+ /**
+  * Asegura el directorio de logs
+  * 
+  * @return void
+  */
+void asegurarDirectorioLogs();
+ 
+ /**
+  * Aplica el rollover de logs si procede
+  * 
+  * @return void
+  */
+void aplicarRolloverLogsSiProcede();
 
 /***************************************************************************/
 /*** Funciones relacionadas con la inicialización de los componentes base **/
@@ -159,11 +219,11 @@ extern String errorGeneralJandulaBase;
 void setupJandulaBase();
 
 /**
- * Valida si la tarjeta SD es accesible
+ * Valida si la tarjeta SD es accesible junto con un fichero de configuración accesible
  * 
  * @return void
  */
-void validarSiSDCardEsAccesible();
+void validarSiSDCardYFicheroConfiguracionAccesible();
 
 /**
  * Valida si la conexión a LittleFS es accesible
@@ -175,61 +235,40 @@ void validarSiConexionLittleFSEsAccesible();
 /**
  * Compara y copia un archivo del sistema de archivos LittleFS a la tarjeta SD
  * 
- * @param rutaFichero: ruta del archivo a copiar
  * @return void
  */
-void compararYCopiarFicherosSDyLittleFS(const String& rutaFichero);
-
-/**
- * Valida si el archivo existe en el sistema de archivos LittleFS
- * 
- * @param filePath: ruta del archivo
- * @return true si el archivo existe en el sistema de archivos LittleFS, false en caso contrario
- */
-bool validarExistenciaFicheroLittleFS(const String& rutaFichero);
-
-/**
- * Valida si el archivo existe en la tarjeta SD
- * 
- * @param rutaFichero: ruta del fichero
- * @return true si el fichero existe en la tarjeta SD, false en caso contrario
- */
-bool validarExistenciaFicheroSD(const String& rutaFichero);
+void compararYCopiarFicherosSDyLittleFS();
 
 /**
  * Compara y copia un fichero del sistema de archivos LittleFS a la tarjeta SD
  * 
- * @param rutaFichero: ruta del fichero
  * @param estampaTiempoLocalFicheroLittleFS: timestamp de modificación del fichero en el sistema de archivos LittleFS
  * @param estampaTiempoFicheroSD: timestamp de modificación del fichero en la tarjeta SD
  * @return void
  */
-void compararTimeStampsYcopiarSiFicherosSDyLittleFSSonDiferentes(const String& rutaFichero, unsigned long estampaTiempoLocalFicheroLittleFS, unsigned long estampaTiempoFicheroSD);
+void compararTimeStampsYcopiarSiFicherosSDyLittleFSSonDiferentes(unsigned long estampaTiempoLocalFicheroLittleFS, unsigned long estampaTiempoFicheroSD);
 
 /**
  * Copia un fichero de la tarjeta SD al sistema de archivos LittleFS
  * 
- * @param rutaFichero: ruta del fichero
  * @return void
  */
-void copiarFicheroDeSDaLittleFS(const String& rutaFichero);
+void copiarFicheroDeSDaLittleFS();
 
 /**
- * Escribe el timestamp de modificación de un fichero en el sistema de archivos LittleFS
+ * Escribe el timestamp de modificación de un fichero de configuración en el sistema de archivos LittleFS
  * 
- * @param timestamp: timestamp de modificación del fichero
- * @param rutaFichero: ruta del fichero
+ * @param timestamp: timestamp de modificación del fichero de configuración
  * @return void
  */
-void sobreescribirEstampaTiempoEnFichero(unsigned long timestamp, const String& rutaFichero);
+void sobreescribirEstampaTiempoEnFichero(unsigned long timestamp);
 
 /**
- * Obtiene el timestamp de modificación de un fichero en el sistema de archivos LittleFS
+ * Obtiene el timestamp de modificación de un fichero de configuración en el sistema de archivos LittleFS
  * 
- * @param rutaFichero: ruta del fichero
- * @return timestamp: timestamp del fichero
+ * @return timestamp: timestamp de modificación del fichero de configuración
  */
-unsigned long obtenerTimestampDesdeFichero(const String& rutaFichero);
+unsigned long obtenerTimestampFicheroConfiguracionLittleFS();
 
 /**
  * Obtiene la fecha y hora formateada desde un timestamp
@@ -297,11 +336,10 @@ void obtenerExpiracionJWT();
 
 /**
  * Carga la configuración de la biblioteca Jandula Base desde el archivo de configuración
- * 
- * @param rutaFicheroConfiguracion: ruta del archivo de configuración
+ *
  * @return void
  */
-void parseaFicheroConfiguracionJandulaBase(String rutaFicheroConfiguracion);
+void parseaFicheroConfiguracionJandulaBase();
 
 /**
  * Valida si todos los campos del fichero de configuración de la biblioteca Jandula Base están rellenos

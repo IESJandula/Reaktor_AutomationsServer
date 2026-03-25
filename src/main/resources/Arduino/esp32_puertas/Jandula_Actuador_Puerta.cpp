@@ -23,7 +23,7 @@ String urlAvisoServidorAccionEstado = "";
 void setupJandulaActuadorPuerta()
 {
     // Cargamos la configuración desde el fichero de configuración del actuador de la puerta
-    parseaFicheroConfiguracionJandulaActuadorPuerta(RUTA_FICHERO_CONFIGURACION);
+    parseaFicheroConfiguracionJandulaActuadorPuerta();
 }
 
 /*******************************************************/
@@ -36,56 +36,41 @@ void setupJandulaActuadorPuerta()
  * @param configFilePath: ruta del archivo de configuración
  * @return void
  */
- void parseaFicheroConfiguracionJandulaActuadorPuerta(String rutaFicheroConfiguracion) 
+ void parseaFicheroConfiguracionJandulaActuadorPuerta() 
  {
     // Abrimos el fichero de configuración en modo lectura de LittleFS
-    File ficheroConfiguracion = LittleFS.open(rutaFicheroConfiguracion, "r");
+    File ficheroConfiguracion = LittleFS.open(RUTA_FICHERO_CONFIGURACION, "r");
   
-    // Si no se puede abrir el fichero de configuración ...
-    if (!ficheroConfiguracion)
+    // Leemos el fichero de configuración línea por línea
+    while (ficheroConfiguracion.available())
     {
-      // Almacenamos el error en la variable global errorGeneralJandulaBase
-      errorGeneralJandulaBase = "ERROR: No se pudo abrir el fichero de configuración: " + rutaFicheroConfiguracion;
- 
-      // Mostramos un mensaje de error
-      Serial.println(errorGeneralJandulaBase);
-    }  
-    else
-    {
-        // Leemos el fichero de configuración línea por línea
-        while (ficheroConfiguracion.available())
+        // Leemos la línea del fichero de configuración y la procesamos
+        String linea = ficheroConfiguracion.readStringUntil('\n');
+
+        // Eliminamos los espacios en blanco al principio y al final de la línea
+        linea.trim();
+
+        // Si la línea comienza con la propiedad de la URL de actualización de estado de un actuador, se procesa
+        if (linea.startsWith(PROPIEDAD_URL_VALIDAR_ACCION_PENDIENTE))
         {
-            // Leemos la línea del fichero de configuración y la procesamos
-            String linea = ficheroConfiguracion.readStringUntil('\n');
-
-            // Eliminamos los espacios en blanco al principio y al final de la línea
-            linea.trim();
-
-            // Si la línea comienza con la propiedad de la URL de actualización de estado de un actuador, se procesa
-            if (linea.startsWith(PROPIEDAD_URL_VALIDAR_ACCION_PENDIENTE))
-            {
-                // Se asigna a la variable urlValidacionAccionPendiente
-                urlValidacionAccionPendiente = linea.substring(PROPIEDAD_URL_VALIDAR_ACCION_PENDIENTE_LENGTH + 1);
-                urlValidacionAccionPendiente.trim();
-            }
-            // Si la línea comienza con la propiedad de la URL de aviso al servidor de la acción establecida, se procesa
-            else if (linea.startsWith(PROPIEDAD_URL_AVISO_SERVIDOR_ACCION_ESTADO))
-            {
-                // Se asigna a la variable urlAvisoServidorAccionEstado
-                urlAvisoServidorAccionEstado = linea.substring(PROPIEDAD_URL_AVISO_SERVIDOR_ACCION_ESTADO_LENGTH + 1);
-                urlAvisoServidorAccionEstado.trim();
-            }
+            // Se asigna a la variable urlValidacionAccionPendiente
+            urlValidacionAccionPendiente = linea.substring(PROPIEDAD_URL_VALIDAR_ACCION_PENDIENTE_LENGTH + 1);
+            urlValidacionAccionPendiente.trim();
         }
+        // Si la línea comienza con la propiedad de la URL de aviso al servidor de la acción establecida, se procesa
+        else if (linea.startsWith(PROPIEDAD_URL_AVISO_SERVIDOR_ACCION_ESTADO))
+        {
+            // Se asigna a la variable urlAvisoServidorAccionEstado
+            urlAvisoServidorAccionEstado = linea.substring(PROPIEDAD_URL_AVISO_SERVIDOR_ACCION_ESTADO_LENGTH + 1);
+            urlAvisoServidorAccionEstado.trim();
+        }
+    }
 
-        // Cerramos el fichero de configuración
-        ficheroConfiguracion.close();
-    }
+    // Cerramos el fichero de configuración en el sistema de archivos LittleFS
+    ficheroConfiguracion.close();
  
-    // Si no hay un error general, validamos si todos los campos están rellenos
-    if (errorGeneralJandulaBase == "")
-    {
-        parseaFicheroConfiguracionJandulaActuadorPuertaValidarCamposRellenos();
-    }
+    // Validamos si todos los campos del fichero de configuración en el sistema de archivos LittleFS están rellenos
+    parseaFicheroConfiguracionJandulaActuadorPuertaValidarCamposRellenos();
 }
  
  /**
@@ -98,25 +83,25 @@ void parseaFicheroConfiguracionJandulaActuadorPuertaValidarCamposRellenos()
    // Validamos si la URL de validación de acción pendiente está rellena
    if (urlValidacionAccionPendiente.length() == 0)
    {
-     // Almacenamos el error en la variable global errorGeneralJandulaBase
-     errorGeneralJandulaBase = "ERROR: URL de validación de acción pendiente vacía";
+     // Almacenamos el error en la variable global errorGeneral
+     errorGeneral = "URL de validación de acción pendiente vacía";
    }
    // Validamos si la URL de aviso al servidor de la acción establecida está rellena
    else if (urlAvisoServidorAccionEstado.length() == 0)
    {
-     // Almacenamos el error en la variable global errorGeneralJandulaBase
-     errorGeneralJandulaBase = "ERROR: URL de aviso al servidor del estado de la acción vacía";
+     // Almacenamos el error en la variable global errorGeneral
+     errorGeneral = "URL de aviso al servidor del estado de la acción vacía";
    }
  
-   if (errorGeneralJandulaBase != "")
+   if (errorGeneral.length() != 0)
    {
-     // Mostramos un mensaje de error
-     Serial.println(errorGeneralJandulaBase);
+     // Gestionamos el mensaje de error
+     registrarLog("FATAL", errorGeneral);
    }
    else
    {
-     // Mostramos un mensaje de información
-     Serial.println("INFO: Todos los campos del fichero de configuración del actuador de la puerta están rellenos");
+     // Gestionamos el mensaje de información
+     registrarLog("INFO", "Todos los campos del fichero de configuración del actuador de la puerta están rellenos");
    }
  }
 
@@ -148,11 +133,9 @@ AccionPendiente validarSiHayAccionPendiente()
     String httpResponseData = "";
 
     // Mostramos los detalles de la petición
-    Serial.println("INFO: Detalles de la petición para validar si hay una acción pendiente: ");
-    Serial.print("-- Dirección del servidor: ");
-    Serial.println(urlValidacionAccionPendiente);
-    Serial.print("-- MAC: ");
-    Serial.println(macAddress);
+    registrarLog("INFO", "Detalles de la petición para validar si hay una acción pendiente: ");
+    registrarLog("INFO", "-- Dirección del servidor: " + urlValidacionAccionPendiente);
+    registrarLog("INFO", "-- MAC: " + macAddress);
 
     // Si se puede iniciar la conexión HTTP, se actualiza el estado del actuador
     if (iniciarConexionHTTPConReintentos(httpValidacionAccionPendiente, urlValidacionAccionPendiente))
@@ -169,11 +152,8 @@ AccionPendiente validarSiHayAccionPendiente()
         // Si la respuesta no está en el rango del 200 al 299, es incorrecta
         if (httpResponseCode < 200 || httpResponseCode >= 300)
         {
-            // Almacenamos el error en la variable local errorString
-            String errorString = "ERROR: La petición HTTP para validar si hay una acción pendiente ha fallado. Código: " + String(httpResponseCode) ;
-
-            // Mostramos un mensaje de error
-            Serial.println(errorString);
+            // Gestionamos el mensaje de error
+            registrarLog("ERROR", "La petición HTTP para validar si hay una acción pendiente ha fallado. Código: " + String(httpResponseCode));
         }
         else
         {
@@ -183,17 +163,14 @@ AccionPendiente validarSiHayAccionPendiente()
             // Si el dato de respuesta HTTP es válido, se muestra el dato de respuesta HTTP
             if (bodyResponse.length() == 0)
             {
-                // Almacenamos el error en la variable local errorString
-                String errorString = "ERROR: La respuesta de la API de validación de acción pendiente es vacía";
-
-                // Mostramos un mensaje de error
-                Serial.println(errorString);
+                // Gestionamos el mensaje de error
+                registrarLog("ERROR", "La respuesta de la API de validación de acción pendiente es vacía");
             }
             else
             {
                 // Mostramos el dato de respuesta HTTP
-                Serial.println("INFO: Respuesta recibida de la API de validación de acción pendiente:");
-                Serial.println(bodyResponse);
+                registrarLog("INFO", "Respuesta recibida de la API de validación de acción pendiente:");
+                registrarLog("INFO", bodyResponse);
 
                 // Ahora parsearemos el JSON de la respuesta
                 accionPendiente = validarSiHayAccionPendienteParsearRespuesta(bodyResponse);
@@ -229,11 +206,8 @@ AccionPendiente validarSiHayAccionPendienteParsearRespuesta(const String& bodyRe
     // Si hay un error al parsear el JSON, se muestra el error y se devuelve la estructura de datos AccionPendiente
     if (error) 
     {
-      // Almacenamos el error en la variable local errorString
-      String errorString = "ERROR: Error parseando JSON: " + String(error.c_str());
-
-      // Mostramos un mensaje de error
-      Serial.println(errorString);
+      // Gestionamos el mensaje de error
+      registrarLog("ERROR", "Error parseando JSON: " + String(error.c_str()));
     }
     else
     {
@@ -256,13 +230,10 @@ AccionPendiente validarSiHayAccionPendienteParsearRespuesta(const String& bodyRe
         }
 
         // Mostramos la estructura de datos AccionPendiente
-        Serial.println("INFO: Estructura de datos AccionPendiente:");
-        Serial.print("-- Accion ID: ");
-        Serial.println(accionPendiente.accionId);
-        Serial.print("-- Orden: ");
-        Serial.println(accionPendiente.orden);
-        Serial.print("-- Hay acción: ");
-        Serial.println(accionPendiente.hayAccion);
+        registrarLog("INFO", "Estructura de datos AccionPendiente:");
+        registrarLog("INFO", "-- Accion ID: " + String(accionPendiente.accionId));
+        registrarLog("INFO", "-- Orden: " + accionPendiente.orden);
+        registrarLog("INFO", "-- Hay acción: " + String(accionPendiente.hayAccion));
     }
 
     // Devolvemos la estructura de datos AccionPendiente
@@ -297,8 +268,8 @@ void gestionarAperturaPuerta(AccionPendiente accionPendiente)
  */
 void gestionarAperturaPuertaRele()
 {
-    // Mostramos un mensaje de información
-    Serial.println("INFO: Activando relé de la puerta");
+    // Gestionamos el mensaje de información
+    registrarLog("INFO", "Activando relé de la puerta");
 
     // Activamos el relé
     digitalWrite(RELE_PUERTA_PIN, HIGH);
@@ -309,8 +280,8 @@ void gestionarAperturaPuertaRele()
     // Desactivamos el relé
     digitalWrite(RELE_PUERTA_PIN, LOW);
 
-    // Mostramos un mensaje de información
-    Serial.println("INFO: Relé de la puerta desactivado");
+    // Gestionamos el mensaje de información
+    registrarLog("INFO", "Relé de la puerta desactivado");
 }
 
 /**
@@ -321,8 +292,8 @@ void gestionarAperturaPuertaRele()
  */
 void gestionarAccionEstadoRealizadaAvisoServidor(const long accionId)
 {
-    // Mostramos un mensaje de información
-    Serial.println("INFO: Iniciando envío de la petición para avisar al servidor de la apertura de la puerta");
+    // Gestionamos el mensaje de información
+    registrarLog("INFO", "Iniciando envío de la petición para avisar al servidor de la apertura de la puerta");
 
     // Antes de avisar al servidor de la apertura de la puerta, obtenemos el token JWT
     obtenerTokenJWT();
@@ -332,11 +303,9 @@ void gestionarAccionEstadoRealizadaAvisoServidor(const long accionId)
     httpAvisoServidorAccionEstado.setTimeout(TIME_PETICIONES_HTTP);
 
     // Mostramos los detalles de la petición
-    Serial.println("INFO: Detalles de la petición para avisar al servidor de la apertura de la puerta realizada: ");
-    Serial.print("-- Dirección del servidor: ");
-    Serial.println(urlAvisoServidorAccionEstado);
-    Serial.print("-- Accion ID: ");
-    Serial.println(accionId);
+    registrarLog("INFO", "Detalles de la petición para avisar al servidor de la apertura de la puerta realizada: ");
+    registrarLog("INFO", "-- Dirección del servidor: " + urlAvisoServidorAccionEstado);
+    registrarLog("INFO", "-- Accion ID: " + String(accionId));
 
     // Si se puede iniciar la conexión HTTP, se obtiene el token
     if (iniciarConexionHTTPConReintentos(httpAvisoServidorAccionEstado, urlAvisoServidorAccionEstado))
@@ -354,8 +323,8 @@ void gestionarAccionEstadoRealizadaAvisoServidor(const long accionId)
         serializeJson(doc, body);
 
         // Mostramos el cuerpo de la petición
-        Serial.println("INFO: Cuerpo de la petición para avisar al servidor de la apertura de la puerta realizada: ");
-        Serial.println(body);
+        registrarLog("INFO", "Cuerpo de la petición para avisar al servidor de la apertura de la puerta realizada: ");
+        registrarLog("INFO", body);
 
         // Añadimos el header de contenido
         httpAvisoServidorAccionEstado.addHeader("Content-Type", "application/json");
@@ -366,17 +335,14 @@ void gestionarAccionEstadoRealizadaAvisoServidor(const long accionId)
         // Si la respuesta no está en el rango del 200 al 299, es incorrecta
         if (httpResponseCode < 200 || httpResponseCode >= 300)
         {
-            // Almacenamos el error en la variable local errorString
-            String errorString = "ERROR: La petición HTTP para avisar al servidor de la apertura de la puerta realizada ha fallado. Código: " + String(httpResponseCode) ;
-
-            // Mostramos un mensaje de error
-            Serial.println(errorString);
+            // Gestionamos el mensaje de error
+            registrarLog("ERROR", "La petición HTTP para avisar al servidor de la apertura de la puerta realizada ha fallado. Código: " + String(httpResponseCode));
         }
     }
 
     // Liberamos la memoria del cliente HTTP
     httpAvisoServidorAccionEstado.end();
 
-    // Mostramos un mensaje de información
-    Serial.println("INFO: Petición para avisar al servidor de la apertura de la puerta realizada enviada correctamente");
+    // Gestionamos el mensaje de información
+    registrarLog("INFO", "Petición para avisar al servidor de la apertura de la puerta realizada enviada correctamente");
 }

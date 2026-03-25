@@ -21,8 +21,8 @@ String clientId;
 // sistemaArchivosLittleFSInicializado: sirve para indicar si el sistema de archivos LittleFS está inicializado
 bool sistemaArchivosLittleFSAccesible = false;
 
-// tarjetaSDAccesible: sirve para indicar si la tarjeta SD es accesible
-bool tarjetaSDAccesible = false;
+// sdYFicheroConfiguracionAccesible: sirve para indicar si la tarjeta SD es accesible junto con el acceso al fichero de configuración
+bool sdYFicheroConfiguracionAccesible = false;
 
 // tokenJWT: sirve para almacenar el token JWT de Firebase
 String tokenJWT = "";
@@ -30,11 +30,189 @@ String tokenJWT = "";
 // expiracionTokenJWT: sirve para almacenar la fecha de expiración del token JWT
 unsigned long expiracionTokenJWT = 0;
 
-// errorGeneralJandulaBase: sirve para almacenar el error general de la librería Jandula Base
-String errorGeneralJandulaBase = "";
+// errorGeneral: sirve para almacenar el error general
+String errorGeneral = "";
 
 // macAddress: sirve para almacenar la dirección MAC de la tarjeta WiFi
 String macAddress = "";
+
+/*****************************************************/
+/******* Funciones relacionadas con el logging *******/
+/*****************************************************/
+
+/**
+ * Registra una línea de log en Serial y en SD con rollover
+ *
+ * @param nivel: nivel del log (INFO, WARNING, ERROR)
+ * @param mensaje: mensaje del log
+ * @return void
+ */
+void registrarLog(const String& nivel, const String& mensaje)
+{
+  // Si el nivel es FATAL ...
+  if (nivel == "FATAL")
+  {
+    // ... entonces almacenamos el mensaje en la variable global errorGeneral
+    errorGeneral = mensaje ;
+  }
+
+  // Creamos la línea de log
+  String lineaLog = obtenerMarcaTemporalLog() + " [" + nivel + "] " + mensaje;
+  
+  // Mostramos la línea de log en Serial
+  Serial.println(lineaLog);
+  
+  // Escribimos la línea de log en la tarjeta SD
+  escribirLogEnSD(lineaLog);
+}
+
+/**
+ * Obtiene la marca temporal del log
+ * 
+ * @return String: marca temporal del log
+ */
+String obtenerMarcaTemporalLog()
+{
+  // Obtenemos la marca temporal del log
+  time_t ahora = time(nullptr);
+ 
+  // Si la marca temporal es menor que 100000, devolvemos "1970-01-01 00:00:00"
+  if (ahora < 100000)
+  {
+    return "1970-01-01 00:00:00";
+  }
+ 
+  // Obtenemos la hora local
+  struct tm tiempoLocal;
+  localtime_r(&ahora, &tiempoLocal);
+
+  // Creamos el buffer para la marca temporal
+  char buffer[24];
+
+  // Formateamos la marca temporal
+  strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tiempoLocal);
+
+  // Devolvemos la marca temporal
+  return String(buffer);
+}
+
+/**
+ * Escribe una línea de log en la tarjeta SD
+ * 
+ * @param lineaLog: línea de log a escribir
+ * @return void
+ */
+void escribirLogEnSD(const String& lineaLog)
+ {
+  // Validamos en caliente por si la SD se ha retirado tras el arranque
+  validarSiSDCardYFicheroConfiguracionAccesible();
+
+  if (sdYFicheroConfiguracionAccesible)
+  {
+    // Aseguramos el directorio de logs
+    asegurarDirectorioLogs();
+
+    // Aplicamos el rollover de logs si procede
+    aplicarRolloverLogsSiProcede();
+  
+    // Abrimos el fichero de log actual en modo append
+    File ficheroLog = SD.open(RUTA_FICHERO_LOG_ACTUAL, FILE_APPEND);
+
+    // Si el fichero de log es accesible ...
+    if (ficheroLog)
+    {
+      // ... entonces escribimos la línea de log en el fichero de log
+      ficheroLog.println(lineaLog);
+
+      // ... y cerramos el fichero de log
+      ficheroLog.close();
+    }
+  }
+}
+
+/**
+ * Asegura el directorio de logs
+ * 
+ * @return void
+ */
+void asegurarDirectorioLogs()
+{
+  // Validamos si el directorio de logs existe
+  if (!SD.exists(RUTA_DIRECTORIO_LOGS))
+  {
+    // Creamos el directorio de logs
+    SD.mkdir(RUTA_DIRECTORIO_LOGS);
+
+    // Crear mensaje de información
+    registrarLog("INFO", "Carpeta de logs creada");
+  }
+}
+
+/**
+ * Aplica el rollover de logs si procede
+ * 
+ * @return void
+ */
+void aplicarRolloverLogsSiProcede()
+{
+  // Abrimos el fichero de log actual en modo lectura
+  File ficheroActual = SD.open(RUTA_FICHERO_LOG_ACTUAL, FILE_READ);
+
+  // Si el fichero de log actual es accesible ...
+  if (ficheroActual)
+  {
+    // ... obtenemos su tamaño
+    size_t tamanioActual = ficheroActual.size();
+
+    // ... y cerramos el fichero
+    ficheroActual.close();
+
+    // Si el tamaño del fichero de log actual es mayor o igual que el tamaño máximo permitido,
+    // procedemos a aplicar el rollover ...
+    if (tamanioActual >= TAMANIO_MAXIMO_FICHERO_LOG)
+    {
+      // ... creamos la ruta del fichero de log más antiguo
+      String rutaMasAntigua = String(PREFIJO_FICHEROS_LOG) + String(MAXIMO_FICHEROS_ROLLOVER) + SUFIJO_FICHEROS_LOG;
+
+      // Validamos si existe un fichero de log más antiguo
+      if (SD.exists(rutaMasAntigua))
+      {
+        // Si existe uno más antiguo, entonces lo eliminamos
+        SD.remove(rutaMasAntigua);
+      }
+
+      // Recorremos los ficheros de log históricos
+      for (int indice = MAXIMO_FICHEROS_ROLLOVER - 1; indice >= 1; --indice)
+      {
+        // ... creamos la ruta del fichero de log origen  
+        String rutaOrigen = String(PREFIJO_FICHEROS_LOG) + String(indice) + SUFIJO_FICHEROS_LOG;
+
+        // ... creamos la ruta del fichero de log destino
+        String rutaDestino = String(PREFIJO_FICHEROS_LOG) + String(indice + 1) + SUFIJO_FICHEROS_LOG;
+
+        // ... validamos si existe un fichero de log origen
+        if (SD.exists(rutaOrigen))
+        {
+          // Si existe, entonces lo renombramos al fichero de log destino
+          SD.rename(rutaOrigen, rutaDestino);
+        }
+      }
+    }
+
+    // Creamos la ruta del fichero de log más antiguo
+    String primerHistorico = String(PREFIJO_FICHEROS_LOG) + "1" + SUFIJO_FICHEROS_LOG;
+
+    // Si existe el fichero de log actual
+    if (SD.exists(RUTA_FICHERO_LOG_ACTUAL))
+    {
+      // ... entonces lo renombramos al fichero de log más antiguo
+      SD.rename(RUTA_FICHERO_LOG_ACTUAL, primerHistorico);
+    }
+  }
+
+  // ... y cerramos el fichero
+  ficheroActual.close();
+}
 
 /***************************************************************************/
 /*** Funciones relacionadas con la inicialización de los componentes base **/
@@ -51,56 +229,52 @@ void setupJandulaBase()
   validarSiConexionLittleFSEsAccesible();
 
   // Si no hay ningún error general mientras se validó la conexión a LittleFS
-  if (errorGeneralJandulaBase == "")
+  if (errorGeneral.length() == 0)
   {
-    // Validamos si la tarjeta SD es accesible
-    validarSiSDCardEsAccesible() ;
+    // Validamos si la tarjeta SD es accesible junto con un fichero de configuración accesible
+    validarSiSDCardYFicheroConfiguracionAccesible() ;
   }
 
   // Si no hay ningún error general mientras se validó la tarjeta SD
-  if (errorGeneralJandulaBase == "")
+  if (errorGeneral.length() == 0)
   {
-    // Si la tarjeta SD es accesible ...
-    if (tarjetaSDAccesible)
+    // Si la tarjeta SD y su fichero de configuración son accesibles ...
+    if (sdYFicheroConfiguracionAccesible)
     {
       // ... procedemos a la comparación y copia de los archivos
-      compararYCopiarFicherosSDyLittleFS(RUTA_FICHERO_CONFIGURACION);
-    
-      // Desmontamos la tarjeta SD después de procesar
-      SD.end();
+      compararYCopiarFicherosSDyLittleFS();
     }
   }
   
   // Si no hay ningún error general mientras se comparó y copió los archivos
-  if (errorGeneralJandulaBase == "")
+  if (errorGeneral.length() == 0)
   {
     // Cargamos la configuración desde el archivo de configuración
-    parseaFicheroConfiguracionJandulaBase(RUTA_FICHERO_CONFIGURACION);
+    parseaFicheroConfiguracionJandulaBase();
   }
 
   // Si no hay ningún error general mientras se cargó la configuración ...
-  if (errorGeneralJandulaBase == "")
+  if (errorGeneral.length() == 0)
   {
     // Conectamos a la red WiFi
     conectarWiFi();
   }
       
   // Si no hay ningún error general mientras se conectó a la red WiFi y la conexión a la red WiFi es correcta ...
-  if (errorGeneralJandulaBase == "" && WiFi.status() == WL_CONNECTED)
+  if (errorGeneral.length() == 0 && WiFi.status() == WL_CONNECTED)
   {
     // ... entonces sincronizamos la hora con el servidor NTP
     sincronizarHoraConServidorNTP();
   }
 
   // Si no hay ningún error general mientras se sincronizó la hora con el servidor NTP ...
-  if (errorGeneralJandulaBase == "")
+  if (errorGeneral.length() == 0)
   {
     // Obtenemos la dirección MAC de la tarjeta WiFi
     macAddress = WiFi.macAddress();
   
     // Mostramos la dirección MAC de la tarjeta WiFi
-    Serial.print("MAC guardada: ");
-    Serial.println(macAddress);
+    registrarLog("INFO", "MAC guardada: " + macAddress);
 
     // Obtenemos el token de Firebase
     obtenerTokenJWT();
@@ -129,11 +303,11 @@ void validarSiConexionLittleFSEsAccesible()
     // Si no es accesible el sistema de archivos LittleFS ...
     if (!sistemaArchivosLittleFSAccesible)
     {
-      // Almacenamos el error en la variable global errorGeneralJandulaBase
-      errorGeneralJandulaBase = "ERROR: No se ha podido formatear y montar el sistema de archivos LittleFS";
+      // Almacenamos el error en la variable global errorGeneral
+      errorGeneral = "FATAL: No se ha podido formatear y montar el sistema de archivos LittleFS";
 
       // Mostramos un mensaje de error
-      Serial.println(errorGeneralJandulaBase);
+      Serial.println(errorGeneral);
     }
     else
     {
@@ -148,197 +322,103 @@ void validarSiConexionLittleFSEsAccesible()
   * 
   * @return void
   */
- void validarSiSDCardEsAccesible()
- {
-   // Mostramos un mensaje de inicio de validación de la tarjeta SD
-   Serial.println("INFO: Comenzando la validación de la tarjeta SD");
-   
-   // Inicializamos la SPI que es la interfaz de comunicación con la tarjeta SD para validar si es accesible
-   // sdCardClock: pin para el reloj de la tarjeta SD
-   // sdCardMISO: pin para la entrada de datos de la tarjeta SD
-   // sdCardMOSI: pin para la salida de datos de la tarjeta SD
-   // sdCardChipSelect: pin para el chip select de la tarjeta SD
-   SPI.begin(sdCardClock, sdCardMISO, sdCardMOSI, sdCardChipSelect);
- 
-   // Validamos si la tarjeta SD es accesible
-   tarjetaSDAccesible = SD.begin(sdCardChipSelect);
- 
-   // Si la tarjeta SD no es accesible ...
-   if (!tarjetaSDAccesible)
-   {
-     // Mostramos un mensaje de advertencia
-     Serial.println("WARNING: No se ha detectado ninguna tarjeta SD");
-   }
-   else
-   {
-     // Mostramos un mensaje de información
-     Serial.println("INFO: La tarjeta SD es accesible");
- 
-     // Validamos si la tarjeta SD es accesible abriendo el directorio raíz
-     File testFile = SD.open("/");
- 
-     // Validamos si la tarjeta SD es accesible
-     tarjetaSDAccesible = testFile != NULL;
- 
-     // Si el fichero de prueba no es accesible ...
-     if (!tarjetaSDAccesible)
-     {
-       // Almacenamos el error en la variable global errorGeneralJandulaBase
-       errorGeneralJandulaBase = "ERROR: El directorio raíz de la tarjeta SD no es accesible";
+ void validarSiSDCardYFicheroConfiguracionAccesible()
+ {  
+  // Inicializamos la SPI que es la interfaz de comunicación con la tarjeta SD para validar si es accesible
+  // sdCardClock: pin para el reloj de la tarjeta SD
+  // sdCardMISO: pin para la entrada de datos de la tarjeta SD
+  // sdCardMOSI: pin para la salida de datos de la tarjeta SD
+  // sdCardChipSelect: pin para el chip select de la tarjeta SD
+  SPI.begin(sdCardClock, sdCardMISO, sdCardMOSI, sdCardChipSelect);
 
-       // Mostramos un mensaje de error
-       Serial.println(errorGeneralJandulaBase);
-     
-       // Desmontamos la tarjeta SD
-       SD.end();
-     }
-     else
-     {
-       // Mostramos un mensaje de información
-       Serial.println("INFO: La tarjeta SD es accesible");
- 
-       // Cerramos el fichero de prueba
-       testFile.close();
-     }
-   }
- }
- 
+  // Validamos si la tarjeta SD es accesible
+  sdYFicheroConfiguracionAccesible = SD.begin(sdCardChipSelect);
+
+  // Si la tarjeta SD no es accesible ...
+  if (sdYFicheroConfiguracionAccesible)
+  {
+    // Validamos si el fichero de configuración existe
+    sdYFicheroConfiguracionAccesible = SD.exists(RUTA_FICHERO_CONFIGURACION);
+
+    // Si el fichero de configuración no es accesible ...
+    if (!sdYFicheroConfiguracionAccesible)
+    {
+      // Almacenamos el error en la variable global errorGeneral
+      errorGeneral = "FATAL: El fichero de configuración de la tarjeta SD no es accesible";
+
+      // Mostramos un mensaje de error
+      Serial.println(errorGeneral);
+    }
+  }
+}
+
 /**
  * Compara y copia un fichero del sistema de archivos LittleFS a la tarjeta SD
  * 
- * @param rutaFichero: ruta del fichero a copiar
  * @return void
  */
-void compararYCopiarFicherosSDyLittleFS(const String& rutaFichero)
+void compararYCopiarFicherosSDyLittleFS()
 {
   // Validamos si el fichero existe en el sistema de archivos LittleFS
-  bool ficheroLocalLitleFSEncontrado = validarExistenciaFicheroLittleFS(rutaFichero);
+  bool ficheroLocalLitleFSEncontrado = LittleFS.exists(RUTA_FICHERO_CONFIGURACION);
   
-  // Validamos si el fichero existe en la tarjeta SD
-  bool ficheroSDEncontrado = validarExistenciaFicheroSD(rutaFichero);
+  // Mostramos si el fichero de configuración existe en el sistema de archivos LittleFS y en la tarjeta SD
+  String ficheroLittleYsdEncontrados = "fichero de configuración en LittleFS encontrado?: " + String(ficheroLocalLitleFSEncontrado) + ", fichero de configuración en la tarjeta SD encontrado?: " + String(sdYFicheroConfiguracionAccesible) ;
+  registrarLog("INFO", ficheroLittleYsdEncontrados);
 
   // Si el fichero local existe y el fichero en la tarjeta SD existe ...
-  if (ficheroLocalLitleFSEncontrado && ficheroSDEncontrado)
+  if (ficheroLocalLitleFSEncontrado && sdYFicheroConfiguracionAccesible)
   {
     // Abrimos ambos ficheros de la tarjeta SD para comparar los timestamps de modificación
-    File ficheroSD = SD.open(rutaFichero, "r");
+    File ficheroSD = SD.open(RUTA_FICHERO_CONFIGURACION, "r");
 
-    // Si no se puede abrir el archivo de la tarjeta SD ...
-    if (!ficheroSD)
-    {
-      // Almacenamos el error en la variable global errorGeneralJandulaBase
-      errorGeneralJandulaBase = "ERROR: No se pudo abrir el fichero de la tarjeta SD cuando se ha ido a copiar a LittleFS";
+    // Obtenemos los timestamps de modificación para ambos ficheros
+    unsigned long estampaTiempoLocalFicheroLittleFS = obtenerTimestampFicheroConfiguracionLittleFS();
+    unsigned long estampaTiempoFicheroSD            = ficheroSD.getLastWrite();
 
-      // Mostramos un mensaje de error
-      Serial.println(errorGeneralJandulaBase);
-    }
-    else
-    {
-      // Obtenemos los timestamps de modificación para ambos archivos
-      unsigned long estampaTiempoLocalFicheroLittleFS = obtenerTimestampDesdeFichero(rutaFichero);
-      unsigned long estampaTiempoFicheroSD            = ficheroSD.getLastWrite();
+    // Cerramos el fichero de configuración de la tarjeta SD
+    ficheroSD.close();
 
-      // Cerramos el fichero de la tarjeta SD
-      ficheroSD.close();
-
-      // Si los timestamps de modificación son diferentes, comparamos y copiamos el fichero de la tarjeta SD al sistema de archivos LittleFS
-      compararTimeStampsYcopiarSiFicherosSDyLittleFSSonDiferentes(rutaFichero, estampaTiempoLocalFicheroLittleFS, estampaTiempoFicheroSD);
-    }
+    // Si los timestamps de modificación son diferentes, comparamos y copiamos el fichero de configuración de la tarjeta SD al sistema de archivos LittleFS
+    compararTimeStampsYcopiarSiFicherosSDyLittleFSSonDiferentes(estampaTiempoLocalFicheroLittleFS, estampaTiempoFicheroSD);
   }
-  else if (ficheroSDEncontrado)
+  else if (sdYFicheroConfiguracionAccesible)
   {
-    // Si el fichero en la tarjeta SD existe, ...
-    // ... copiamos el fichero de la tarjeta SD al sistema de archivos LittleFS
-    copiarFicheroDeSDaLittleFS(rutaFichero);
+    // Si el fichero de configuración en la tarjeta SD existe, ...
+    // ... copiamos el fichero de configuración de la tarjeta SD al sistema de archivos LittleFS
+    copiarFicheroDeSDaLittleFS();
     
-    // Mostramos el timestamp de modificación del fichero en la tarjeta SD
-    Serial.println("INFO: Nueva estampa de tiempo del fichero en la tarjeta SD");
-  }
-  else
-  {
-    // Si el fichero local no existe y el fichero en la tarjeta SD no existe, almacenamos el error en la variable global errorGeneralJandulaBase y mostramos un mensaje de error
-    errorGeneralJandulaBase = "ERROR: No se encontró el fichero en el sistema de archivos LittleFS ni en la tarjeta SD";
-
-    // Mostramos un mensaje de error
-    Serial.println(errorGeneralJandulaBase);
+    // Mostramos el timestamp de modificación del fichero de configuración en la tarjeta SD
+    registrarLog("INFO", "Nueva estampa de tiempo del fichero de configuración en la tarjeta SD guardada");
   }
 }
 
 /**
- * Valida si el fichero existe en el sistema de archivos LittleFS
+ * Obtiene el timestamp de modificación de un fichero de configuración en el sistema de archivos LittleFS
  * 
- * @param rutaFichero: ruta del fichero
- * @return true si el fichero existe en el sistema de archivos LittleFS, false en caso contrario
+ * @return timestamp: timestamp de modificación del fichero de configuración
  */
-bool validarExistenciaFicheroLittleFS(const String& rutaFichero)
-{
-  // Validamos si el fichero existe en el sistema de archivos LittleFS
-  bool ficheroLocalLitleFSEncontrado = LittleFS.exists(rutaFichero);
-
-  // Mostramos si el fichero existe en el sistema de archivos LittleFS
-  Serial.print("INFO: Fichero local en LittleFS: ");
-  Serial.println(String(ficheroLocalLitleFSEncontrado));
-
-  // Devolvemos el resultado de la validación
-  return ficheroLocalLitleFSEncontrado;
-}
-
-/**
- * Valida si el archivo existe en la tarjeta SD
- * 
- * @param filePath: ruta del archivo
- * @return true si el archivo existe en la tarjeta SD, false en caso contrario
- */
-bool validarExistenciaFicheroSD(const String& filePath)
-{
-  // Validamos si el archivo existe en la tarjeta SD
-  bool ficheroSDEncontrado = SD.exists(filePath);
-
-  // Mostramos si el archivo existe en la tarjeta SD
-  Serial.print("INFO: Fichero en SD: ");
-  Serial.println(String(ficheroSDEncontrado));
-
-  // Devolvemos el resultado de la validación
-  return ficheroSDEncontrado;
-}
-
-/**
- * Obtiene el timestamp de modificación de un archivo en el sistema de archivos LittleFS
- * 
- * @param rutaFichero: ruta del archivo
- * @return timestamp: timestamp del archivo
- */
- unsigned long obtenerTimestampDesdeFichero(const String& rutaFichero)
+ unsigned long obtenerTimestampFicheroConfiguracionLittleFS()
  {
    // Valor por defecto para el timestamp (0 indica que no se encontró)
    unsigned long timestamp = 0;
  
-   // Abrimos el archivo en modo lectura
-   File ficheroLittleFS = LittleFS.open(rutaFichero, "r");
+   // Abrimos el fichero de configuración en modo lectura
+   File ficheroLittleFS = LittleFS.open(RUTA_FICHERO_CONFIGURACION, "r");
  
-   // Si no se puede abrir el archivo ...
-   if (!ficheroLittleFS)
-   {
-     // Almacenamos el error en la variable global errorGeneralJandulaBase
-     errorGeneralJandulaBase = "ERROR: No se pudo abrir el fichero en el sistema de archivos LittleFS: " + rutaFichero;
-
-     // Mostramos un mensaje de error
-     Serial.println(errorGeneralJandulaBase);
-   }
    // Si el archivo tiene contenido ...
-   else if (ficheroLittleFS.available())
+   if (ficheroLittleFS.available())
    {
-     // ... leemos el timestamp de modificación del archivo
+     // ... leemos el timestamp de modificación del fichero de configuración
      timestamp = ficheroLittleFS.parseInt();
  
-     // Cerramos el archivo
+     // Cerramos el fichero de configuración en el sistema de archivos LittleFS
      ficheroLittleFS.close();
    }
    else
    {
      // ... mostramos un mensaje de advertencia
-     Serial.print("WARNING: No se encontró timestamp en el archivo: ");
-     Serial.println(rutaFichero);
+     registrarLog("WARNING", "No se encontró timestamp en el fichero de configuración en el sistema de archivos LittleFS");
    }
  
    // Devolvemos el timestamp
@@ -348,134 +428,89 @@ bool validarExistenciaFicheroSD(const String& filePath)
 /**
  * Compara y copia un fichero del sistema de archivos LittleFS a la tarjeta SD
  * 
- * @param rutaFichero: ruta del fichero
  * @param estampaTiempoLocalFicheroLittleFS: timestamp de modificación del fichero en el sistema de archivos LittleFS
  * @param estampaTiempoFicheroSD: timestamp de modificación del fichero en la tarjeta SD
  * @return void
  */
-void compararTimeStampsYcopiarSiFicherosSDyLittleFSSonDiferentes(const String& rutaFichero, unsigned long estampaTiempoLocalFicheroLittleFS, unsigned long estampaTiempoFicheroSD)
+void compararTimeStampsYcopiarSiFicherosSDyLittleFSSonDiferentes(unsigned long estampaTiempoLocalFicheroLittleFS, unsigned long estampaTiempoFicheroSD)
 {
   // Mostramos el timestamp de modificación del fichero en el sistema de archivos LittleFS
-  Serial.print("INFO: Última modificación del fichero local: ");
-  Serial.println(obtenerFechaYHoraDesdeTimestamp(estampaTiempoLocalFicheroLittleFS));
+  registrarLog("INFO", "Última modificación del fichero de configuración local: " + obtenerFechaYHoraDesdeTimestamp(estampaTiempoLocalFicheroLittleFS));
 
   // Mostramos el timestamp de modificación del fichero en la tarjeta SD
-  Serial.print("INFO: Última modificación del fichero en la tarjeta SD: ");
-  Serial.println(obtenerFechaYHoraDesdeTimestamp(estampaTiempoFicheroSD));
+  registrarLog("INFO", "Última modificación del fichero de configuración en la tarjeta SD: " + obtenerFechaYHoraDesdeTimestamp(estampaTiempoFicheroSD));
 
   // Si la tarjeta SD tiene un timestamp de modificación más reciente que 
-  // el fichero en el sistema de archivos LittleFS, entonces ...
+  // el fichero de configuración en el sistema de archivos LittleFS, entonces ...
   if (estampaTiempoFicheroSD > estampaTiempoLocalFicheroLittleFS)
   {
-    // ... copiamos el archivo de la tarjeta SD al sistema de archivos LittleFS
-    copiarFicheroDeSDaLittleFS(rutaFichero);
+    // ... copiamos el fichero de configuración de la tarjeta SD al sistema de archivos LittleFS
+    copiarFicheroDeSDaLittleFS();
 
     // Mostramos un mensaje de resultado
-    Serial.print("INFO: Copiado el archivo de la tarjeta SD al sistema de archivos LittleFS");
+    registrarLog("INFO", "Copiado el fichero de configuración de la tarjeta SD al sistema de archivos LittleFS guardado");
   }
   else
   {
-    // Si el archivo en el sistema de archivos LittleFS tiene u
-    // un timestamp de modificación más reciente que el archivo en la tarjeta SD ó ...
+    // Si el fichero de configuración en el sistema de archivos LittleFS tiene
+    // un timestamp de modificación más reciente que el fichero de configuración en la tarjeta SD ó ...
     // ... si tiene ambos el mismo timestamp de modificación, entonces no hay que hacer nada
-    Serial.print("INFO: Los timestamps de modificación son iguales");
+    registrarLog("INFO", "Los timestamps de modificación del fichero de configuración son iguales");
   }
 }
 
 /**
- * Copia un archivo de la tarjeta SD al sistema de archivos LittleFS
+ * Copia un fichero de configuración de la tarjeta SD al sistema de archivos LittleFS
  * 
- * @param rutaFichero: ruta del archivo
  * @return void
  */
-void copiarFicheroDeSDaLittleFS(const String& rutaFichero)
+void copiarFicheroDeSDaLittleFS()
 {
-  // Abrimos el archivo de la tarjeta SD para lectura
-  File ficheroSD = SD.open(rutaFichero, "r");
+  // Abrimos el fichero de configuración de la tarjeta SD para lectura
+  File ficheroSD = SD.open(RUTA_FICHERO_CONFIGURACION, "r");
 
-  // Si no se puede abrir el archivo de la tarjeta SD ...
-  if (!ficheroSD)
+  // Abrimos el fichero de configuración en el sistema de archivos LittleFS para escritura
+  File ficheroLittleFS = LittleFS.open(RUTA_FICHERO_CONFIGURACION, "w");
+
+  // Copiamos el fichero de configuración de la tarjeta SD al sistema de archivos LittleFS
+  while (ficheroSD.available())
   {
-    // Almacenamos el error en la variable global errorGeneralJandulaBase
-    errorGeneralJandulaBase = "ERROR: No se pudo abrir el fichero en la tarjeta SD: " + rutaFichero;
-
-    // Mostramos un mensaje de error
-    Serial.println(errorGeneralJandulaBase);
+    // Copiamos el contenido del fichero de configuración de la tarjeta SD al sistema de archivos LittleFS
+    ficheroLittleFS.write(ficheroSD.read());
   }
-  else
-  {
-    // Abrimos el archivo en el sistema de archivos LittleFS para escritura
-    File ficheroLittleFS = LittleFS.open(rutaFichero, "w");
 
-    // Si no se puede abrir el fichero en el sistema de archivos LittleFS ...
-    if (!ficheroLittleFS)
-    {
-      // ... cerramos el fichero de la tarjeta SD
-      ficheroSD.close();
+  // Obtenemos la estampa de tiempo del fichero en la tarjeta SD
+  unsigned long estampaTiempoFicheroSD = ficheroSD.getLastWrite();
 
-      // Almacenamos el error en la variable global errorGeneralJandulaBase
-      errorGeneralJandulaBase = "ERROR: No se pudo abrir el fichero en el sistema de archivos LittleFS: " + rutaFichero;
+  // Sobrescribimos la estampa de tiempo en el fichero de configuración en el sistema de archivos LittleFS
+  sobreescribirEstampaTiempoEnFichero(estampaTiempoFicheroSD);
+  
+  // Cerramos el fichero de configuración en el sistema de archivos LittleFS
+  ficheroLittleFS.close();
 
-      // Mostramos un mensaje de error
-      Serial.println(errorGeneralJandulaBase);
-    }
-    else
-    {
-      // Copiamos el fichero de la tarjeta SD al sistema de archivos LittleFS
-      while (ficheroSD.available())
-      {
-        // Copiamos el contenido del fichero de la tarjeta SD al sistema de archivos LittleFS
-        ficheroLittleFS.write(ficheroSD.read());
-      }
-
-      // Obtenemos la estampa de tiempo del fichero en la tarjeta SD
-      unsigned long estampaTiempoFicheroSD = ficheroSD.getLastWrite();
-
-      // Sobrescribimos la estampa de tiempo en el fichero en el sistema de archivos LittleFS
-      sobreescribirEstampaTiempoEnFichero(estampaTiempoFicheroSD, rutaFichero);
-
-      // Cerramos el fichero de la tarjeta SD
-      ficheroSD.close();
-
-      // Cerramos el fichero en el sistema de archivos LittleFS
-      ficheroLittleFS.close();
-    }
-  }
+  // Cerramos el fichero de configuración de la tarjeta SD
+  ficheroSD.close();
 }
 
 /**
- * Escribe un timestamp en un archivo en el sistema de archivos LittleFS
+ * Escribe un timestamp en un fichero de configuración en el sistema de archivos LittleFS
  * 
  * @param timestamp: timestamp a escribir
- * @param rutaFichero: ruta del archivo
  * @return void
  */
-void sobreescribirEstampaTiempoEnFichero(unsigned long timestamp, const String& rutaFichero)
+void sobreescribirEstampaTiempoEnFichero(unsigned long timestamp)
 {
-  // Abrimos el archivo en modo escritura, que sobrescribirá cualquier contenido existente
-  File ficheroLittleFS = LittleFS.open(rutaFichero, "w");
+  // Abrimos el fichero de configuración en el sistema de archivos LittleFS en modo escritura, que sobrescribirá cualquier contenido existente
+  File ficheroLittleFS = LittleFS.open(RUTA_FICHERO_CONFIGURACION, "w");
 
-  // Si no se puede abrir el archivo ...
-  if (!ficheroLittleFS)
-  {
-    // Almacenamos el error en la variable global errorGeneralJandulaBase
-    errorGeneralJandulaBase = "ERROR: No se pudo abrir el fichero en el sistema de archivos LittleFS para sobreescribir la estampa de tiempo: " + rutaFichero;
+  // Escribimos el timestamp en el fichero de configuración en el sistema de archivos LittleFS
+  ficheroLittleFS.println(timestamp);
 
-    // Mostramos un mensaje de error
-    Serial.println(errorGeneralJandulaBase);
-  }
-  else
-  {
-    // Escribimos el timestamp en el archivo
-    ficheroLittleFS.println(timestamp);
+  // Cerramos el fichero de configuración en el sistema de archivos LittleFS
+  ficheroLittleFS.close();
 
-    // Cerramos el archivo
-    ficheroLittleFS.close();
-
-    // Mostramos un mensaje de resultado
-    Serial.print("INFO: Estampa de tiempo escrita correctamente en el fichero en el sistema de archivos LittleFS: ");
-    Serial.println(rutaFichero);
-  }
+  // Mostramos un mensaje de resultado
+  registrarLog("INFO", "Estampa de tiempo escrita correctamente en fichero de configuración LittleFS");
 }
 
 /**
@@ -507,69 +542,56 @@ String obtenerFechaYHoraDesdeTimestamp(unsigned long timestamp)
 /**
  * Carga la configuración desde el archivo de configuración
  * 
- * @param configFilePath: ruta del archivo de configuración
  * @return void
  */
-void parseaFicheroConfiguracionJandulaBase(String rutaFicheroConfiguracion) 
+void parseaFicheroConfiguracionJandulaBase() 
 {
   // Abrimos el fichero de configuración en modo lectura de LittleFS
-   File ficheroConfiguracion = LittleFS.open(rutaFicheroConfiguracion, "r");
- 
-   // Si no se puede abrir el fichero de configuración ...
-   if (!ficheroConfiguracion)
-   {
-     // Almacenamos el error en la variable global errorGeneralJandulaBase
-     errorGeneralJandulaBase = "ERROR: No se pudo abrir el fichero de configuración: " + rutaFicheroConfiguracion;
+  File ficheroConfiguracionLittleFS = LittleFS.open(RUTA_FICHERO_CONFIGURACION, "r");
 
-     // Mostramos un mensaje de error
-     Serial.println(errorGeneralJandulaBase);
-   }  
-   else
-   {
-     // Leemos el fichero de configuración línea por línea
-     while (ficheroConfiguracion.available())
-     {
-      // Leemos la línea del fichero de configuración
-      String linea = ficheroConfiguracion.readStringUntil('\n');
+  // Leemos el fichero de configuración línea por línea
+  while (ficheroConfiguracionLittleFS.available())
+  {
+  // Leemos la línea del fichero de configuración
+  String linea = ficheroConfiguracionLittleFS.readStringUntil('\n');
 
-      // Eliminamos los espacios en blanco al principio y al final de la línea
-      linea.trim();
- 
-      if (linea.startsWith(PROPIEDAD_WIFI_SSID))
-      {
-        wifiSSID = linea.substring(PROPIEDAD_WIFI_SSID_LENGTH + 1);
-        wifiSSID.trim();
-      }
-      else if (linea.startsWith(PROPIEDAD_WIFI_PASSWORD))
-      {
-        wifiPassword = linea.substring(PROPIEDAD_WIFI_PASSWORD_LENGTH + 1);
-        wifiPassword.trim();
-      }
-      else if (linea.startsWith(PROPIEDAD_URL_FIREBASE))
-      {
-        urlFirebase = linea.substring(PROPIEDAD_URL_FIREBASE_LENGTH + 1);
-        urlFirebase.trim();
-      }
-      else if (linea.startsWith(PROPIEDAD_CLIENT_ID))
-      {
-        clientId = linea.substring(PROPIEDAD_CLIENT_ID_LENGTH + 1);
-        clientId.trim();
-      }
-    }
+  // Eliminamos los espacios en blanco al principio y al final de la línea
+  linea.trim();
 
-    // Cerramos el fichero de configuración
-    ficheroConfiguracion.close();
+  if (linea.startsWith(PROPIEDAD_WIFI_SSID))
+  {
+    wifiSSID = linea.substring(PROPIEDAD_WIFI_SSID_LENGTH + 1);
+    wifiSSID.trim();
   }
+  else if (linea.startsWith(PROPIEDAD_WIFI_PASSWORD))
+  {
+    wifiPassword = linea.substring(PROPIEDAD_WIFI_PASSWORD_LENGTH + 1);
+    wifiPassword.trim();
+  }
+  else if (linea.startsWith(PROPIEDAD_URL_FIREBASE))
+  {
+    urlFirebase = linea.substring(PROPIEDAD_URL_FIREBASE_LENGTH + 1);
+    urlFirebase.trim();
+  }
+  else if (linea.startsWith(PROPIEDAD_CLIENT_ID))
+  {
+    clientId = linea.substring(PROPIEDAD_CLIENT_ID_LENGTH + 1);
+    clientId.trim();
+  }
+}
 
-  // Si no hay un error general, validamos si todos los campos están rellenos
-  if (errorGeneralJandulaBase == "")
+  // Cerramos el fichero de configuración en el sistema de archivos LittleFS
+  ficheroConfiguracionLittleFS.close();
+
+  // Si no hay un error general, validamos si todos los campos del fichero de configuración en el sistema de archivos LittleFS están rellenos
+  if (errorGeneral.length() == 0)
   {
     parseaFicheroConfiguracionJandulaBaseValidarCamposRellenos();
   }
 }
 
 /**
- * Valida si todos los campos del fichero de configuración están rellenos
+ * Valida si todos los campos del fichero de configuración en el sistema de archivos LittleFS están rellenos
  * 
  * @return void
  */
@@ -578,34 +600,34 @@ void parseaFicheroConfiguracionJandulaBaseValidarCamposRellenos()
   // Validamos si el SSID está relleno
   if (wifiSSID.length() == 0)
   {
-    // Almacenamos el error en la variable global errorGeneralJandulaBase
-    errorGeneralJandulaBase = "ERROR: SSID vacío (no se cargó la configuración de la red WiFi)";
+    // Almacenamos el error en la variable global errorGeneral
+    errorGeneral = "SSID vacío";
   }
   else if (wifiPassword.length() == 0)
   {
-    // Almacenamos el error en la variable global errorGeneralJandulaBase
-    errorGeneralJandulaBase = "ERROR: PASSWORD vacío (no se cargó la configuración de la red WiFi)";
+    // Almacenamos el error en la variable global errorGeneral
+    errorGeneral = "Contraseña vacía";
   }
   else if (urlFirebase.length() == 0)
   {
-    // Almacenamos el error en la variable global errorGeneralJandulaBase
-    errorGeneralJandulaBase = "ERROR: URL de Firebase vacía (no se cargó la configuración de la red WiFi)";
+    // Almacenamos el error en la variable global errorGeneral
+    errorGeneral = "URL de Firebase vacía";
   }
   else if (clientId.length() == 0)
   {
-    // Almacenamos el error en la variable global errorGeneralJandulaBase
-    errorGeneralJandulaBase = "ERROR: ID del cliente vacío (no se cargó la configuración de la red WiFi)";
+    // Almacenamos el error en la variable global errorGeneral
+    errorGeneral = "ID del cliente vacío";
   }
 
-  if (errorGeneralJandulaBase != "")
+  if (errorGeneral.length() != 0)
   {
     // Mostramos un mensaje de error
-    Serial.println(errorGeneralJandulaBase);
+    registrarLog("FATAL", errorGeneral);
   }
   else
   {
     // Mostramos un mensaje de información
-    Serial.println("INFO: Todos los campos del fichero de configuración están rellenos");
+    registrarLog("INFO", "Todos los campos del fichero de configuración en el sistema de archivos LittleFS están rellenos");
   }
 }
 
@@ -620,61 +642,43 @@ void parseaFicheroConfiguracionJandulaBaseValidarCamposRellenos()
   */
 void conectarWiFi()
 {
-  // Si el SSID o la contraseña no están configurados, se muestra un mensaje de error
-  if (wifiSSID.length() == 0 || wifiPassword.length() == 0)
+  // Mostramos un mensaje de inicio de conexión
+  registrarLog("INFO", "Iniciando conexión a la red WiFi SSID: " + wifiSSID);
+  registrarLog("INFO", "Contraseña: " + wifiPassword);
+
+  // Conectamos a la red WiFi
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(wifiSSID.c_str(), wifiPassword.c_str());
+
+  // Inicializamos el contador de intentos
+  int intentos = 0;
+
+  // Intentamos conectar a la red WiFi
+  while (WiFi.status() != WL_CONNECTED && intentos < 30)
+  {
+    // Mostramos un punto de espera
+    registrarLog("INFO", ".");
+
+    // Incrementamos el contador de intentos
+    intentos++;
+
+    // Esperamos el tiempo de delay antes de reintentar
+    delay(INTENTOS_DELAY);
+  }
+
+  // Si no se conecta a la red WiFi, se muestra un mensaje de error
+  if (WiFi.status() != WL_CONNECTED)
   {
     // Mostramos un mensaje de error
-    errorGeneralJandulaBase = "ERROR: SSID/PASSWORD vacíos (no se cargó la configuración de la red WiFi)";
-
-    // Mostramos un mensaje de error
-    Serial.println(errorGeneralJandulaBase);
+    registrarLog("FATAL", "No se pudo conectar a la red WiFi");
   }
   else
   {
-    // Mostramos un mensaje de inicio de conexión
-    Serial.print("INFO: Iniciando conexión a la red WiFi SSID: ");
-    Serial.print(wifiSSID.c_str());
-    Serial.print(" Contraseña: ");
-    Serial.print(wifiPassword.c_str());
+    // Mostramos un mensaje de conexión correcta
+    registrarLog("INFO", "Conectado a la red WiFi");
 
-    // Conectamos a la red WiFi
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(wifiSSID.c_str(), wifiPassword.c_str());
-
-    // Inicializamos el contador de intentos
-    int intentos = 0;
-
-    // Intentamos conectar a la red WiFi
-    while (WiFi.status() != WL_CONNECTED && intentos < 30)
-    {
-      // Mostramos un punto de espera
-      Serial.print(".");
-
-      // Incrementamos el contador de intentos
-      intentos++;
-
-      // Esperamos el tiempo de delay antes de reintentar
-      delay(INTENTOS_DELAY);
-    }
-
-    // Si no se conecta a la red WiFi, se muestra un mensaje de error
-    if (WiFi.status() != WL_CONNECTED)
-    {
-      // Mostramos un mensaje de error
-      errorGeneralJandulaBase = "ERROR: No se pudo conectar a la red WiFi";
-
-      // Mostramos un mensaje de error
-      Serial.println(errorGeneralJandulaBase);
-    }
-    else
-    {
-      // Mostramos un mensaje de conexión correcta
-      Serial.println("INFO: Conectado a la red WiFi");
-
-      // Mostramos la IP de la red WiFi
-      Serial.print("IP: ");
-      Serial.println(WiFi.localIP());
-    }
+    // Mostramos la IP de la red WiFi
+    registrarLog("INFO", "IP de la red WiFi: " + WiFi.localIP().toString());
   }
 }
 
@@ -695,7 +699,7 @@ void sincronizarHoraConServidorNTP()
   bool sincronizacionRealizada = false;
 
   // Mostramos un mensaje de inicio de sincronización
-  Serial.println("INFO: Iniciando sincronización de la hora con el servidor NTP");
+  registrarLog("INFO", "Iniciando sincronización de la hora con el servidor NTP");
 
   // Iniciamos la sincronización de la hora con el servidor NTP
   configTzTime(TZ_INFO, "pool.ntp.org", "time.nist.gov", "time.google.com");
@@ -716,7 +720,7 @@ void sincronizarHoraConServidorNTP()
     if (!sincronizacionRealizada)
     {
       // Mostramos un mensaje de error y se incrementa el contador de intentos
-      Serial.print(".");
+      registrarLog("INFO", ".");
 
       // Incrementamos el contador de intentos
       intentos++;
@@ -739,7 +743,7 @@ void sincronizarHoraConServidorNTP()
       strftime(formattedDate, sizeof(formattedDate), "%Y-%m-%d %H:%M:%S", &timeinfo);
 
       // Mostramos el mensaje de sincronización correcta
-      Serial.println("INFO: Fecha y hora sincronizada correctamente: " + String(formattedDate));
+      registrarLog("INFO", "Fecha y hora sincronizada correctamente: " + String(formattedDate));
     }
   }
 
@@ -747,11 +751,8 @@ void sincronizarHoraConServidorNTP()
   // se muestra un mensaje de error
   if (!sincronizacionRealizada)
   {
-    // Mostramos un mensaje de error
-    errorGeneralJandulaBase = "ERROR: No se ha podido obtener la fecha y hora del servidor NTP después de varios intentos.";
-
-    // Mostramos un mensaje de error
-    Serial.println(errorGeneralJandulaBase);
+    // Gestionamos el mensaje de error
+    registrarLog("FATAL", "No se ha podido obtener la fecha y hora del servidor NTP después de varios intentos.");
   }
 }
 
@@ -761,9 +762,6 @@ void sincronizarHoraConServidorNTP()
 
 /**
  * Obtiene el token JWT válido de Firebase.
- * 
- * @param urlFirebase URL de Firebase.
- * @param xClientId ID del cliente.
  * 
  * @return void
  * 
@@ -778,7 +776,7 @@ void obtenerTokenJWT()
   if (tokenJWT == "" || tokenJWTExpirado())
   {
     // Mostramos un mensaje de advertencia
-    Serial.println("WARNING: JWT inexistente o expirado. Solicitando nuevo token...");
+    registrarLog("WARNING", "JWT inexistente o expirado. Solicitando nuevo token...");
 
     // Obtenemos el token de Firebase
     obtenerTokenJWTInternal();
@@ -808,10 +806,9 @@ bool tokenJWTExpirado()
   time_t now;
   time(&now);
 
-  Serial.print("NOW: ");
-  Serial.print(now);
-  Serial.print(" expiración: ");
-  Serial.println(expiracionTokenJWT);
+  // Mostramos el valor de la fecha y hora actual y la expiración del token
+  String valor = "NOW: " + String(now) + " expiración: " + String(expiracionTokenJWT);
+  registrarLog("INFO", valor);
 
   // Se valida si el token ha expirado
   expirado = (expiracionTokenJWT == 0) || (now >= expiracionTokenJWT);
@@ -819,7 +816,7 @@ bool tokenJWTExpirado()
   // Si el token ha expirado, se muestra un mensaje de advertencia
   if (expirado)
   {
-    Serial.println("WARNING: El token JWT ha expirado");
+    registrarLog("WARNING", "El token JWT ha expirado");
   }
 
   // Devolvemos true si el token ha expirado, false en caso contrario
@@ -839,7 +836,7 @@ void obtenerTokenJWTInternal()
   tokenJWT = "";
 
   // Mostramos un mensaje de inicio de obtención del token de Firebase
-  Serial.println("INFO: Iniciando obtención del token de Firebase...");
+  registrarLog("INFO", "Iniciando obtención del token de Firebase...");
 
   // Iniciamos la conexión HTTP
   HTTPClient httpJwt;
@@ -849,11 +846,9 @@ void obtenerTokenJWTInternal()
   String httpResponseData = "";
 
   // Mostramos los detalles de la petición
-  Serial.println("INFO: Detalles de la petición para obtener el token JWT: ");
-  Serial.print("-- Dirección del servidor: ");
-  Serial.println(urlFirebase);
-  Serial.print("-- X-CLIENT-ID: ");
-  Serial.println(clientId);
+  registrarLog("INFO", "Detalles de la petición para obtener el token JWT: ");
+  registrarLog("INFO", "-- Dirección del servidor: " + urlFirebase);
+  registrarLog("INFO", "-- X-CLIENT-ID: " + clientId);
 
   // Si se puede iniciar la conexión HTTP, se obtiene el token
   if (iniciarConexionHTTPConReintentos(httpJwt, urlFirebase))
@@ -867,11 +862,8 @@ void obtenerTokenJWTInternal()
     // Si la respuesta no está en el rango del 200 al 299, es incorrecta
     if (httpResponseCode < 200 || httpResponseCode >= 300)
     {
-      // Almacenamos el error en la variable global errorGeneralJandulaBase
-      errorGeneralJandulaBase = "ERROR: La petición HTTP para obtener el token JWT ha fallado. Código: " + String(httpResponseCode) ;
-
-      // Mostramos un mensaje de error
-      Serial.println(errorGeneralJandulaBase);
+      // Gestionamos el mensaje de error
+      registrarLog("ERROR", "La petición HTTP para obtener el token JWT de Firebase ha fallado. Código: " + String(httpResponseCode));
     }
     else
     {
@@ -881,11 +873,8 @@ void obtenerTokenJWTInternal()
       // Si el token es vacío, se muestra un mensaje de advertencia
       if (httpResponseData.length() == 0)
       {
-        // Almacenamos el error en la variable global errorGeneralJandulaBase
-        errorGeneralJandulaBase = "ERROR: Se ha recibido una respuesta vacía del servidor para obtener el token JWT";
-
-        // Mostramos un mensaje de error
-        Serial.println(errorGeneralJandulaBase);
+        // Gestionamos el mensaje de error
+        registrarLog("ERROR", "Se ha recibido una respuesta vacía del servidor para obtener el token JWT de Firebase");
       }
       else
       {
@@ -893,8 +882,7 @@ void obtenerTokenJWTInternal()
         tokenJWT = httpResponseData;
 
         // Mostramos el token JWT obtenido
-        Serial.println("INFO: El token JWT obtenido es:");
-        Serial.println(String(tokenJWT));
+        registrarLog("INFO", "El token JWT de Firebase obtenido es: " + tokenJWT);
       }
     }
   }
@@ -928,7 +916,7 @@ bool iniciarConexionHTTPConReintentos(HTTPClient& http, const String& url)
     if (!conexionEstablecida)
     {
       // Si la conexión no se establece correctamente, se muestra un punto de espera que indica un intento fallido
-      Serial.print(".");
+      registrarLog("INFO", ".");
       
       // Incrementamos el contador de intentos
       intentos++;
@@ -940,11 +928,8 @@ bool iniciarConexionHTTPConReintentos(HTTPClient& http, const String& url)
 
   if (!conexionEstablecida)
   {
-    // Mostramos un mensaje de error
-    errorGeneralJandulaBase = "ERROR: No se pudo establecer conexión HTTP para obtener el token JWT después de varios intentos";
-
-    // Mostramos un mensaje de error
-    Serial.println(errorGeneralJandulaBase);
+    // Gestionamos el mensaje de error
+    registrarLog("ERROR", "No se pudo establecer conexión HTTP para obtener el token JWT después de varios intentos");
   }
 
   // Devolvemos true si la conexión se establece correctamente
@@ -965,7 +950,7 @@ void obtenerExpiracionJWT()
   expiracionTokenJWT = 0;
 
   // Mostramos un mensaje de inicio de obtención de la expiración del token
-  Serial.println("INFO: Iniciando obtención de la expiración del token...");
+  registrarLog("INFO", "Iniciando obtención de la expiración del token...");
 
   // Obtenemos el payload del token por lo que tenemos que obtener el primer y segundo punto
   int firstDot = tokenJWT.indexOf('.');
@@ -974,11 +959,8 @@ void obtenerExpiracionJWT()
   // Si el token no es válido, se devuelve 0
   if (firstDot < 0 || secondDot < 0)
   {
-    // Almacenamos el error en la variable global errorGeneralJandulaBase
-    errorGeneralJandulaBase = "ERROR: En la obtención de la expiración del token JWT, el token no es válido";
-
-    // Mostramos un mensaje de error
-    Serial.println(errorGeneralJandulaBase);
+    // Gestionamos el mensaje de error
+    registrarLog("ERROR", "En la obtención de la expiración del token JWT, el token no es válido");
   }
   else
   {
@@ -1018,7 +1000,6 @@ void obtenerExpiracionJWT()
     expiracionTokenJWT = doc["exp"];
 
     // Mostramos la expiración del token JWT
-    Serial.println("INFO: El token JWT expira en:");
-    Serial.println(obtenerFechaYHoraDesdeTimestamp(expiracionTokenJWT));
+    registrarLog("INFO", "El token JWT expira en: " + obtenerFechaYHoraDesdeTimestamp(expiracionTokenJWT));
   }
 }

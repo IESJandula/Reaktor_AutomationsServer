@@ -74,10 +74,9 @@ extern String urlAvisoServidorAccionEstado;
 /**
  * Carga la configuración desde el fichero de configuración de la biblioteca Jandula Actuador Puerta y la valida
  * 
- * @param rutaFicheroConfiguracion: Ruta del fichero de configuración
  * @return void
  */
-void parseaFicheroConfiguracionJandulaActuadorPuerta(String rutaFicheroConfiguracion);
+void parseaFicheroConfiguracionJandulaActuadorPuerta();
 
 /**
  * Valida si todos los campos del fichero de configuración de la biblioteca Jandula Actuador Puerta están rellenos

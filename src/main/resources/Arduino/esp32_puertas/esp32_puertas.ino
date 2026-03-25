@@ -42,12 +42,10 @@ void testReles()
 void loop()
 {
   // Si hay ningún error general se hace un delay de 60 segundos
-  if (errorGeneralJandulaBase != "")
+  if (errorGeneral.length() != 0)
   {
-    // Pintamos el error por pantalla
-    Serial.print("Error general: ");
-    Serial.print(errorGeneralJandulaBase);
-    Serial.println(" . Esperamos 60 segundos antes de volver a hacer setup");
+    // Gestionamos el mensaje de error
+    registrarLog("ERROR", "Error general: " + errorGeneral + " . Esperamos 60 segundos antes de volver a hacer setup");
 
     // Esperamos 60 segundos
     delay(60000);
@@ -76,6 +74,9 @@ void setupSistema()
   // Inicializamos la biblioteca Jandula Base
   setupJandulaBase();
 
-  // Inicializamos la biblioteca Jandula Actuador Puerta
-  setupJandulaActuadorPuerta();
+  if (errorGeneral.length() != 0)
+  {
+    // Inicializamos la biblioteca Jandula Actuador Puerta
+    setupJandulaActuadorPuerta();
+  }
 }
