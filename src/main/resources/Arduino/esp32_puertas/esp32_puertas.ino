@@ -74,7 +74,8 @@ void setupSistema()
   // Inicializamos la biblioteca Jandula Base
   setupJandulaBase();
 
-  if (errorGeneral.length() != 0)
+  // Si no hay ningún error general ...
+  if (errorGeneral.length() == 0)
   {
     // Inicializamos la biblioteca Jandula Actuador Puerta
     setupJandulaActuadorPuerta();

@@ -80,17 +80,28 @@ void setupJandulaActuadorPuerta()
   */
 void parseaFicheroConfiguracionJandulaActuadorPuertaValidarCamposRellenos()
 {
-   // Validamos si la URL de validación de acción pendiente está rellena
+   // Si la URL de validación de acción pendiente no está rellena ...
    if (urlValidacionAccionPendiente.length() == 0)
    {
-     // Almacenamos el error en la variable global errorGeneral
+     // ... almacenamos el error en la variable global errorGeneral
      errorGeneral = "URL de validación de acción pendiente vacía";
    }
-   // Validamos si la URL de aviso al servidor de la acción establecida está rellena
-   else if (urlAvisoServidorAccionEstado.length() == 0)
+   else
    {
-     // Almacenamos el error en la variable global errorGeneral
+    // Mostramos la URL de validación de acción pendiente
+    registrarLog("INFO", "URL de validación de acción pendiente: " + urlValidacionAccionPendiente);
+   }
+
+   // Si la URL de aviso al servidor de la acción establecida no está rellena ...
+   if (urlAvisoServidorAccionEstado.length() == 0)
+   {
+     // ... almacenamos el error en la variable global errorGeneral
      errorGeneral = "URL de aviso al servidor del estado de la acción vacía";
+   }
+   else
+   {
+    // Gestionamos el mensaje de información
+    registrarLog("INFO", "URL de aviso al servidor de la acción establecida: " + urlAvisoServidorAccionEstado);
    }
  
    if (errorGeneral.length() != 0)
@@ -101,7 +112,7 @@ void parseaFicheroConfiguracionJandulaActuadorPuertaValidarCamposRellenos()
    else
    {
      // Gestionamos el mensaje de información
-     registrarLog("INFO", "Todos los campos del fichero de configuración del actuador de la puerta están rellenos");
+     registrarLog("INFO", "Todos los campos del fichero de configuración (ACTUADOR PUERTA) están rellenos");
    }
  }
 

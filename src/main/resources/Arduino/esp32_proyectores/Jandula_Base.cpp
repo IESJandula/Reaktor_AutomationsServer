@@ -597,28 +597,55 @@ void parseaFicheroConfiguracionJandulaBase()
  */
 void parseaFicheroConfiguracionJandulaBaseValidarCamposRellenos()
 {
-  // Validamos si el SSID está relleno
+  // Si el SSID no está relleno ...
   if (wifiSSID.length() == 0)
   {
-    // Almacenamos el error en la variable global errorGeneral
+    // ... almacenamos el error en la variable global errorGeneral
     errorGeneral = "SSID vacío";
   }
-  else if (wifiPassword.length() == 0)
+  else
   {
-    // Almacenamos el error en la variable global errorGeneral
+    // Mostramos la SSID
+    registrarLog("INFO", "SSID: " + wifiSSID);
+  }
+  
+  // Si la contraseña no está rellena ...
+  if (wifiPassword.length() == 0)
+  {
+    // ... almacenamos el error en la variable global errorGeneral
     errorGeneral = "Contraseña vacía";
   }
-  else if (urlFirebase.length() == 0)
+  else
   {
-    // Almacenamos el error en la variable global errorGeneral
-    errorGeneral = "URL de Firebase vacía";
-  }
-  else if (clientId.length() == 0)
-  {
-    // Almacenamos el error en la variable global errorGeneral
-    errorGeneral = "ID del cliente vacío";
+    // Mostramos la contraseña
+    registrarLog("INFO", "Contraseña: " + wifiPassword);
   }
 
+  // Si la URL de Firebase no está rellena ...
+  if (urlFirebase.length() == 0)
+  {
+    // ... almacenamos el error en la variable global errorGeneral
+    errorGeneral = "URL de Firebase vacía";
+  }
+  else
+  {
+    // Mostramos la URL de Firebase
+    registrarLog("INFO", "URL de Firebase: " + urlFirebase);
+  }
+
+  // Si el ID del cliente no está relleno ...
+  if (clientId.length() == 0)
+  {
+    // ... almacenamos el error en la variable global errorGeneral
+    errorGeneral = "ID del cliente vacío";
+  }
+  else
+  {
+    // Mostramos el ID del cliente
+    registrarLog("INFO", "ID del cliente: " + clientId);
+  }
+
+  // Si hay un error general ...
   if (errorGeneral.length() != 0)
   {
     // Mostramos un mensaje de error
@@ -627,7 +654,7 @@ void parseaFicheroConfiguracionJandulaBaseValidarCamposRellenos()
   else
   {
     // Mostramos un mensaje de información
-    registrarLog("INFO", "Todos los campos del fichero de configuración en el sistema de archivos LittleFS están rellenos");
+    registrarLog("INFO", "Todos los campos del fichero de configuración (BASE) están rellenos");
   }
 }
 
@@ -929,7 +956,7 @@ bool iniciarConexionHTTPConReintentos(HTTPClient& http, const String& url)
   if (!conexionEstablecida)
   {
     // Gestionamos el mensaje de error
-    registrarLog("ERROR", "No se pudo establecer conexión HTTP para obtener el token JWT después de varios intentos");
+    registrarLog("ERROR", "No se pudo establecer conexión HTTP para acceder a la web: " + url);
   }
 
   // Devolvemos true si la conexión se establece correctamente
