@@ -80,6 +80,9 @@
 // Máximo de ficheros de log en la tarjeta SD
 #define MAXIMO_FICHEROS_ROLLOVER 10
 
+// Intervalo de tiempo entre intentos de reconexión en milisegundos (10 segundos)
+#define INTERVALO_REINTENTO 10000
+
 /************************************/
 /**** Pines para la tarjeta SD ******/
 /************************************/
@@ -158,8 +161,17 @@ extern unsigned long expiracionTokenJWT;
 // macAddress: sirve para almacenar la dirección MAC del ESP32
 extern String macAddress;
 
+// ficheroLog: sirve para almacenar el fichero de log
+extern File ficheroLog;
+
+// tamanhoFicheroLog: sirve para almacenar el tamaño del fichero de log
+extern size_t tamanhoFicheroLog;
+
 // errorGeneral: sirve para almacenar el error general
 extern String errorGeneral;
+
+// ultimoIntento: sirve para almacenar el tiempo del último intento de reconexión
+extern unsigned long ultimoIntento;
 
 /************************************************/
 /**************** Funciones *********************/
@@ -201,11 +213,11 @@ void escribirLogEnSD(const String& lineaLog);
 void asegurarDirectorioLogs();
  
  /**
-  * Aplica el rollover de logs si procede
+  * Aplica el rollover de logs
   * 
   * @return void
   */
-void aplicarRolloverLogsSiProcede();
+void aplicarRolloverLogs();
 
 /***************************************************************************/
 /*** Funciones relacionadas con la inicialización de los componentes base **/
@@ -217,6 +229,13 @@ void aplicarRolloverLogsSiProcede();
  * @return void
  */
 void setupJandulaBase();
+
+/**
+ * Realiza el mantenimiento de la tarjeta SD en caso de que se quite y ponga
+ * 
+ * @return void
+ */
+void mantenimientoSD();
 
 /**
  * Valida si la tarjeta SD es accesible junto con un fichero de configuración accesible

@@ -30,11 +30,20 @@ String tokenJWT = "";
 // expiracionTokenJWT: sirve para almacenar la fecha de expiración del token JWT
 unsigned long expiracionTokenJWT = 0;
 
+// macAddress: sirve para almacenar la dirección MAC de la tarjeta WiFi
+String macAddress = "";
+
+// ficheroLog: sirve para almacenar el fichero de log
+File ficheroLog;
+
+// tamanhoFicheroLog: sirve para almacenar el tamaño del fichero de log
+size_t tamanhoFicheroLog = 0;
+
 // errorGeneral: sirve para almacenar el error general
 String errorGeneral = "";
 
-// macAddress: sirve para almacenar la dirección MAC de la tarjeta WiFi
-String macAddress = "";
+// ultimoIntento: sirve para almacenar el tiempo del último intento de reconexión
+unsigned long ultimoIntento = 0;
 
 /*****************************************************/
 /******* Funciones relacionadas con el logging *******/
@@ -104,19 +113,24 @@ String obtenerMarcaTemporalLog()
  */
 void escribirLogEnSD(const String& lineaLog)
  {
-  // Validamos en caliente por si la SD se ha retirado tras el arranque
-  validarSiSDCardYFicheroConfiguracionAccesible();
-
+  // Esto tiene un problema y es que si la tarjeta inicialmente está conectada y luego la quito
+  // entonces fallará más adelante intentando escribir los logs en la tarjeta SD ya que el flag
+  // sdYFicheroConfiguracionAccesible seguirá a true aunque la tarjeta SD esté desconectada.
+  // Esto implica que la primera vez que se arranque el sistema sin configuración, se pondrá la tarjeta
+  // SD, y justo después de configurar el sistema, se tendrá que parar la placa para arrancarla sin la 
+  // tarjeta SD conectada
   if (sdYFicheroConfiguracionAccesible)
   {
-    // Aseguramos el directorio de logs
-    asegurarDirectorioLogs();
+    // Si el tamaño del fichero de log actual es mayor o igual que el tamaño máximo permitido,
+    // procedemos a aplicar el rollover ...
+    if (tamanhoFicheroLog >= TAMANIO_MAXIMO_FICHERO_LOG)
+    {
+      // Aplicamos el rollover de logs
+      aplicarRolloverLogs();
 
-    // Aplicamos el rollover de logs si procede
-    aplicarRolloverLogsSiProcede();
-  
-    // Abrimos el fichero de log actual en modo append
-    File ficheroLog = SD.open(RUTA_FICHERO_LOG_ACTUAL, FILE_APPEND);
+      // Reiniciamos el tamaño del fichero de log
+      tamanhoFicheroLog = 0;
+    }
 
     // Si el fichero de log es accesible ...
     if (ficheroLog)
@@ -124,8 +138,23 @@ void escribirLogEnSD(const String& lineaLog)
       // ... entonces escribimos la línea de log en el fichero de log
       ficheroLog.println(lineaLog);
 
-      // ... y cerramos el fichero de log
-      ficheroLog.close();
+      // ... y flusheamos el fichero de log
+      ficheroLog.flush();
+
+      // ... y actualizamos el tamaño actual del fichero de log actual
+      // +1 para el salto de línea
+      tamanhoFicheroLog = tamanhoFicheroLog + lineaLog.length() + 1;
+    }
+    else
+    {
+      // Si no se puede abrir el fichero de log actual, entonces ponemos a false el flag de la tarjeta SD y su fichero de configuración
+      sdYFicheroConfiguracionAccesible = false;
+
+      // ... entonces almacenamos el error en la variable global errorGeneral
+      errorGeneral = "FATAL: No se ha podido abrir el fichero de log actual";
+
+      // Mostramos un mensaje de error
+      Serial.println(errorGeneral);
     }
   }
 }
@@ -149,69 +178,71 @@ void asegurarDirectorioLogs()
 }
 
 /**
- * Aplica el rollover de logs si procede
+ * Aplica el rollover de logs
  * 
  * @return void
  */
-void aplicarRolloverLogsSiProcede()
+void aplicarRolloverLogs()
 {
-  // Abrimos el fichero de log actual en modo lectura
-  File ficheroActual = SD.open(RUTA_FICHERO_LOG_ACTUAL, FILE_READ);
+  // Creamos la ruta del fichero de log más antiguo
+  String rutaMasAntigua = String(PREFIJO_FICHEROS_LOG) + String(MAXIMO_FICHEROS_ROLLOVER) + SUFIJO_FICHEROS_LOG;
 
-  // Si el fichero de log actual es accesible ...
-  if (ficheroActual)
+  // Validamos si existe un fichero de log más antiguo
+  if (SD.exists(rutaMasAntigua))
   {
-    // ... obtenemos su tamaño
-    size_t tamanioActual = ficheroActual.size();
+    // Si existe uno más antiguo, entonces lo eliminamos
+    SD.remove(rutaMasAntigua);
+  }
 
-    // ... y cerramos el fichero
-    ficheroActual.close();
+  // Recorremos los ficheros de log históricos
+  for (int indice = MAXIMO_FICHEROS_ROLLOVER - 1; indice >= 1; --indice)
+  {
+    // ... creamos la ruta del fichero de log origen  
+    String rutaOrigen = String(PREFIJO_FICHEROS_LOG) + String(indice) + SUFIJO_FICHEROS_LOG;
 
-    // Si el tamaño del fichero de log actual es mayor o igual que el tamaño máximo permitido,
-    // procedemos a aplicar el rollover ...
-    if (tamanioActual >= TAMANIO_MAXIMO_FICHERO_LOG)
+    // ... creamos la ruta del fichero de log destino
+    String rutaDestino = String(PREFIJO_FICHEROS_LOG) + String(indice + 1) + SUFIJO_FICHEROS_LOG;
+
+    // ... validamos si existe un fichero de log origen
+    if (SD.exists(rutaOrigen))
     {
-      // ... creamos la ruta del fichero de log más antiguo
-      String rutaMasAntigua = String(PREFIJO_FICHEROS_LOG) + String(MAXIMO_FICHEROS_ROLLOVER) + SUFIJO_FICHEROS_LOG;
-
-      // Validamos si existe un fichero de log más antiguo
-      if (SD.exists(rutaMasAntigua))
-      {
-        // Si existe uno más antiguo, entonces lo eliminamos
-        SD.remove(rutaMasAntigua);
-      }
-
-      // Recorremos los ficheros de log históricos
-      for (int indice = MAXIMO_FICHEROS_ROLLOVER - 1; indice >= 1; --indice)
-      {
-        // ... creamos la ruta del fichero de log origen  
-        String rutaOrigen = String(PREFIJO_FICHEROS_LOG) + String(indice) + SUFIJO_FICHEROS_LOG;
-
-        // ... creamos la ruta del fichero de log destino
-        String rutaDestino = String(PREFIJO_FICHEROS_LOG) + String(indice + 1) + SUFIJO_FICHEROS_LOG;
-
-        // ... validamos si existe un fichero de log origen
-        if (SD.exists(rutaOrigen))
-        {
-          // Si existe, entonces lo renombramos al fichero de log destino
-          SD.rename(rutaOrigen, rutaDestino);
-        }
-      }
-    }
-
-    // Creamos la ruta del fichero de log más antiguo
-    String primerHistorico = String(PREFIJO_FICHEROS_LOG) + "1" + SUFIJO_FICHEROS_LOG;
-
-    // Si existe el fichero de log actual
-    if (SD.exists(RUTA_FICHERO_LOG_ACTUAL))
-    {
-      // ... entonces lo renombramos al fichero de log más antiguo
-      SD.rename(RUTA_FICHERO_LOG_ACTUAL, primerHistorico);
+      // Si existe, entonces lo renombramos al fichero de log destino
+      SD.rename(rutaOrigen, rutaDestino);
     }
   }
 
-  // ... y cerramos el fichero
-  ficheroActual.close();
+  // Creamos la ruta del fichero de log más antiguo
+  String primerHistorico = String(PREFIJO_FICHEROS_LOG) + "1" + SUFIJO_FICHEROS_LOG;
+
+  // Si existe el fichero de log actual
+  if (SD.exists(RUTA_FICHERO_LOG_ACTUAL))
+  {
+    // Llegados a este punto, tenemos que flushear y cerrar el fichero de log actual
+    // ya que ahora es el fichero de logs que termina en 1 y ...
+    ficheroLog.flush();
+  
+    // ... y cerramos el fichero de log actual
+    ficheroLog.close();
+
+    // ... entonces lo renombramos al fichero de log más antiguo
+    SD.rename(RUTA_FICHERO_LOG_ACTUAL, primerHistorico);
+  
+    // ... y abrimos el fichero de log actual nuevamente
+    ficheroLog = SD.open(RUTA_FICHERO_LOG_ACTUAL, FILE_APPEND);
+
+    // Si no se puede abrir el fichero de log actual, entonces ...
+    if (!ficheroLog)
+    {
+      // ... ponemos a false el flag de la tarjeta SD y su fichero de configuración
+      sdYFicheroConfiguracionAccesible = false;
+
+      // ... almacenamos el error en la variable global errorGeneral
+      errorGeneral = "FATAL: No se ha podido abrir el fichero de log actual";
+
+      // Mostramos un mensaje de error
+      Serial.println(errorGeneral);
+    }
+  }
 }
 
 /***************************************************************************/
@@ -233,13 +264,25 @@ void setupJandulaBase()
   {
     // Validamos si la tarjeta SD es accesible junto con un fichero de configuración accesible
     validarSiSDCardYFicheroConfiguracionAccesible() ;
+
+    if (sdYFicheroConfiguracionAccesible)
+    {
+      // Aseguramos el directorio de logs
+      asegurarDirectorioLogs();
+
+      // Abrimos el fichero de log actual en modo append
+      ficheroLog = SD.open(RUTA_FICHERO_LOG_ACTUAL, FILE_APPEND);
+      
+      // Asignamos el tamaño del fichero de log actual al tamaño del fichero de log
+      tamanhoFicheroLog = ficheroLog.size();
+    }
   }
 
   // Si no hay ningún error general mientras se validó la tarjeta SD
   if (errorGeneral.length() == 0)
   {
     // Si la tarjeta SD y su fichero de configuración son accesibles ...
-    if (sdYFicheroConfiguracionAccesible)
+    if (sdYFicheroConfiguracionAccesible && ficheroLog)
     {
       // ... procedemos a la comparación y copia de los archivos
       compararYCopiarFicherosSDyLittleFS();
@@ -278,6 +321,66 @@ void setupJandulaBase()
 
     // Obtenemos el token de Firebase
     obtenerTokenJWT();
+  }
+}
+
+/**
+ * Realiza el mantenimiento de la tarjeta SD en caso de que se quite y ponga
+ * 
+ * @return void
+ */
+void mantenimientoSD()
+{
+  // Si la SD no es accesible y el tiempo transcurrido desde el último intento de reconexión es >= que el intervalo de tiempo entre intentos de reconexión, entonces ...
+  if (!sdYFicheroConfiguracionAccesible && (millis() - ultimoIntento >= INTERVALO_REINTENTO))
+  {
+    // Actualizamos el tiempo del último intento de reconexión
+    ultimoIntento = millis();
+
+    // Mostramos un mensaje de información
+    Serial.println("INFO: Intentando reconectar SD...");
+
+    // Finalizamos la SPI
+    SPI.end();
+
+    // Esperamos 50 milisegundos
+    delay(50);
+
+    // Inicializamos la SPI
+    SPI.begin(sdCardClock, sdCardMISO, sdCardMOSI, sdCardChipSelect);
+
+    // Validamos si la tarjeta SD es accesible
+    if (SD.begin(sdCardChipSelect))
+    {
+      // Aseguramos el directorio de logs
+      asegurarDirectorioLogs();
+
+      // Abrimos el fichero de log actual en modo append
+      ficheroLog = SD.open(RUTA_FICHERO_LOG_ACTUAL, FILE_APPEND);
+
+      // Si el fichero de log es accesible y el fichero de configuración existe ...
+      if (ficheroLog && SD.exists(RUTA_FICHERO_CONFIGURACION))
+      {
+        // ... entonces ponemos a true el flag de la tarjeta SD y su fichero de configuración
+        sdYFicheroConfiguracionAccesible = true;
+
+        // Asignamos el tamaño del fichero de log actual al tamaño del fichero de log
+        tamanhoFicheroLog = ficheroLog.size();
+
+        // Mostramos un mensaje de información
+        registrarLog("INFO", "SD recuperada correctamente");
+      }
+      else
+      {
+        // Mostramos un mensaje de advertencia
+        Serial.println("WARNING: SD montada pero no se pudo abrir log");
+      }
+    }
+    else
+    {
+      // Mostramos un mensaje de advertencia
+      Serial.println("WARNING: SD sigue sin responder");
+    }
   }
 }
 
@@ -323,7 +426,7 @@ void validarSiConexionLittleFSEsAccesible()
   * @return void
   */
  void validarSiSDCardYFicheroConfiguracionAccesible()
- {  
+ {
   // Inicializamos la SPI que es la interfaz de comunicación con la tarjeta SD para validar si es accesible
   // sdCardClock: pin para el reloj de la tarjeta SD
   // sdCardMISO: pin para la entrada de datos de la tarjeta SD
