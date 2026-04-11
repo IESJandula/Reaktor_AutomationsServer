@@ -40,4 +40,7 @@ public class ComandoActuador {
     
     @OneToMany(mappedBy = "comandoActuador")
     private List<Comando> listaComandos;
+    
+    @OneToMany(mappedBy = "comandoActuador")
+    private List<ComandoActuadorPuerta> listaComandosPuerta;
 }

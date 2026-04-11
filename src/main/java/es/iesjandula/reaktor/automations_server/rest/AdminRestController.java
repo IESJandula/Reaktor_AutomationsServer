@@ -17,8 +17,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import es.iesjandula.reaktor.automations_server.dtos.ActuadorProyectorRequestDto;
+import es.iesjandula.reaktor.automations_server.dtos.ActuadorPuertaRequestDto;
 import es.iesjandula.reaktor.automations_server.dtos.ActuadorRequestDto;
 import es.iesjandula.reaktor.automations_server.dtos.ActuadorResponseDto;
+import es.iesjandula.reaktor.automations_server.dtos.ComandoActuadorPuertaRequestDto;
 import es.iesjandula.reaktor.automations_server.dtos.ComandoActuadorRequestDto;
 import es.iesjandula.reaktor.automations_server.dtos.ComandoRequestDto;
 import es.iesjandula.reaktor.automations_server.dtos.ComandoResponseDto;
@@ -27,15 +30,22 @@ import es.iesjandula.reaktor.automations_server.dtos.SensorBooleanoResponseDto;
 import es.iesjandula.reaktor.automations_server.dtos.SensorNumericoRequestDto;
 import es.iesjandula.reaktor.automations_server.dtos.SensorNumericoResponseDto;
 import es.iesjandula.reaktor.automations_server.models.Actuador;
+import es.iesjandula.reaktor.automations_server.models.ActuadorProyector;
+import es.iesjandula.reaktor.automations_server.models.ActuadorPuerta;
 import es.iesjandula.reaktor.automations_server.models.Comando;
 import es.iesjandula.reaktor.automations_server.models.ComandoActuador;
+import es.iesjandula.reaktor.automations_server.models.ComandoActuadorPuerta;
 import es.iesjandula.reaktor.automations_server.models.Orden;
 import es.iesjandula.reaktor.automations_server.models.SensorBooleano;
 import es.iesjandula.reaktor.automations_server.models.SensorNumerico;
 import es.iesjandula.reaktor.automations_server.models.ids.ComandoActuadorId;
+import es.iesjandula.reaktor.automations_server.models.ids.ComandoActuadorPuertaId;
 import es.iesjandula.reaktor.automations_server.models.ids.ComandoId;
 import es.iesjandula.reaktor.automations_server.repository.IAccionRepository;
+import es.iesjandula.reaktor.automations_server.repository.IActuadorProyectorRepository;
+import es.iesjandula.reaktor.automations_server.repository.IActuadorPuertaRepository;
 import es.iesjandula.reaktor.automations_server.repository.IActuadorRepository;
+import es.iesjandula.reaktor.automations_server.repository.IComandoActuadorPuertaRepository;
 import es.iesjandula.reaktor.automations_server.repository.IComandoActuadorRepository;
 import es.iesjandula.reaktor.automations_server.repository.IComandoRepository;
 import es.iesjandula.reaktor.automations_server.repository.IOrdenRepository;
@@ -57,6 +67,15 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminRestController
 {
 
+	@Autowired
+	private IActuadorPuertaRepository actuadorPuertaRepository;
+
+	@Autowired
+	private IActuadorProyectorRepository actuadorProyectorRepository;
+
+	@Autowired
+	private IComandoActuadorPuertaRepository comandoActuadorPuertaRepository;
+	
 	@Autowired
 	private ISensorBooleanoRepository sensorBooleanoRepo;
 
@@ -89,21 +108,18 @@ public class AdminRestController
 	 * @return ResponseEntity con código 200 (OK) o 400 (Bad Request) si falla la
 	 *         validación.
 	 */
-	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')") // Restringe el acceso solo a usuarios con rol
-																			// ADMINISTRADOR
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
 	@PostMapping(value = "/sensor/booleano", consumes = "application/json")
 	public ResponseEntity<?> crearSensorBooleano(@RequestBody SensorBooleanoRequestDto sensorBooleanoDto)
 	{
 		try
 		{
-			// Validación: MAC no nula o vacía
 			if (sensorBooleanoDto.getMac() == null || sensorBooleanoDto.getMac().isEmpty())
 			{
 				log.error(Constants.ERR_SENSOR_NULO_VACIO);
 				throw new AutomationsServerException(Constants.ERR_SENSOR_NULO_VACIO, Constants.ERR_SENSOR_CODE);
 			}
 
-			// Si el dispositivo existe lo modificamos
 			if (sensorBooleanoRepo.existsById(sensorBooleanoDto.getMac()))
 			{
 
@@ -113,23 +129,19 @@ public class AdminRestController
 				sensor.setUmbralMinimo(sensorBooleanoDto.getUmbralMinimo());
 				sensor.setTipo(sensorBooleanoDto.getTipo());
 				sensor.setNombreUbicacion(sensorBooleanoDto.getNombreUbicacion());
-				;
 			}
 
 			String mac = sensorBooleanoDto.getMac();
 
-			// Si existe como actuador → borra
 			if (actuadorRepository.existsById(mac))
 			{
 				actuadorRepository.deleteById(mac);
 			}
-			// Si existe como sensor numérico → borra
 			if (sensorNumericoRepo.existsById(mac))
 			{
 				sensorNumericoRepo.deleteById(mac);
 			}
 
-			// Validación: Nombre de Ubicación no nulo o vacío
 			if (sensorBooleanoDto.getNombreUbicacion() == null || sensorBooleanoDto.getNombreUbicacion().isEmpty())
 			{
 				log.error(Constants.ERR_UBICACION_NULO_VACIO);
@@ -137,7 +149,6 @@ public class AdminRestController
 						Constants.ERR_UBICACION_CODE);
 			}
 
-			// Mapeo del DTO a la entidad SensorBooleano
 			SensorBooleano sensor = new SensorBooleano();
 			sensor.setMac(sensorBooleanoDto.getMac());
 			sensor.setEstado(sensorBooleanoDto.getEstado());
@@ -146,21 +157,18 @@ public class AdminRestController
 			sensor.setTipo(sensorBooleanoDto.getTipo());
 			sensor.setNombreUbicacion(sensorBooleanoDto.getNombreUbicacion());
 
-			// Guardar el nuevo sensor en la base de datos
 			sensorBooleanoRepo.saveAndFlush(sensor);
 
 			log.info(Constants.ELEMENTO_AGREGADO);
 
-			return ResponseEntity.ok().build(); // Devuelve 200 OK
+			return ResponseEntity.ok().build();
 		}
 		catch (AutomationsServerException AutomationsServerException)
 		{
-			// Manejo de errores controlados
-			return ResponseEntity.badRequest().body(AutomationsServerException); // Devuelve 400 Bad Request
+			return ResponseEntity.badRequest().body(AutomationsServerException);
 		}
 		catch (Exception exception)
 		{
-			// Manejo de errores inesperados del sistema
 			AutomationsServerException AutomationsServerException =
 					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
@@ -208,14 +216,12 @@ public class AdminRestController
 	{
 		try
 		{
-			// Validación: El sensor debe existir
 			if (!sensorBooleanoRepo.existsById(mac))
 			{
 				log.error(Constants.ERR_SENSOR_NO_EXISTE);
 				throw new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_SENSOR_NO_EXISTE);
 			}
 
-			// Eliminación del sensor
 			sensorBooleanoRepo.deleteById(mac);
 			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
@@ -251,14 +257,12 @@ public class AdminRestController
 	{
 		try
 		{
-			// Validaciones (MAC, Existencia, Ubicación)
 			if (sensorNumericoDto.getMac() == null || sensorNumericoDto.getMac().isEmpty())
 			{
 				log.error(Constants.ERR_SENSOR_NULO_VACIO);
 				throw new AutomationsServerException(Constants.ERR_SENSOR_NULO_VACIO, Constants.ERR_SENSOR_CODE);
 			}
 
-			// Si el dispositivo existe lo modificamos
 			if (sensorNumericoRepo.existsById(sensorNumericoDto.getMac()))
 			{
 
@@ -268,17 +272,14 @@ public class AdminRestController
 				sensor.setUmbralMinimo(sensorNumericoDto.getUmbralMinimo());
 				sensor.setTipo(sensorNumericoDto.getTipo());
 				sensor.setNombreUbicacion(sensorNumericoDto.getNombreUbicacion());
-				;
 			}
 
 			String mac = sensorNumericoDto.getMac();
 
-			// Si existe como actuador → borra
 			if (actuadorRepository.existsById(mac))
 			{
 				actuadorRepository.deleteById(mac);
 			}
-			// Si existe como sensor booleano → borra
 			if (sensorBooleanoRepo.existsById(mac))
 			{
 				sensorBooleanoRepo.deleteById(mac);
@@ -291,7 +292,6 @@ public class AdminRestController
 						Constants.ERR_UBICACION_CODE);
 			}
 
-			// Mapeo del DTO a la entidad SensorNumerico
 			SensorNumerico sensor = new SensorNumerico();
 			sensor.setMac(sensorNumericoDto.getMac());
 			sensor.setEstado(sensorNumericoDto.getEstado());
@@ -299,7 +299,6 @@ public class AdminRestController
 			sensor.setUmbralMaximo(sensorNumericoDto.getUmbralMaximo());
 			sensor.setTipo(sensorNumericoDto.getTipo());
 			sensor.setNombreUbicacion(sensorNumericoDto.getNombreUbicacion());
-			;
 
 			sensorNumericoRepo.saveAndFlush(sensor);
 			log.info(Constants.ELEMENTO_AGREGADO);
@@ -356,14 +355,12 @@ public class AdminRestController
 	{
 		try
 		{
-			// Validación: El sensor debe existir
 			if (!sensorNumericoRepo.existsById(mac))
 			{
 				log.error(Constants.ERR_SENSOR_NO_EXISTE);
 				throw new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_SENSOR_NO_EXISTE);
 			}
 
-			// Eliminación del sensor
 			sensorNumericoRepo.deleteById(mac);
 			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
@@ -398,7 +395,6 @@ public class AdminRestController
 	{
 		try
 		{
-			// Validaciones (MAC y Existencia)
 			if (actuadorRequestDto.getMac() == null || actuadorRequestDto.getMac().isEmpty())
 			{
 				log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
@@ -406,7 +402,6 @@ public class AdminRestController
 						Constants.ERR_ACTUADOR_CODE);
 			}
 
-			// Si el dispositivo existe lo modificamos
 			if (actuadorRepository.existsById(actuadorRequestDto.getMac()))
 			{
 
@@ -418,19 +413,16 @@ public class AdminRestController
 
 			String mac = actuadorRequestDto.getMac();
 
-			// Si existe como sensor booleano → borra
 			if (sensorBooleanoRepo.existsById(mac))
 			{
 				sensorBooleanoRepo.deleteById(mac);
 			}
 
-			// Si existe como sensor numérico → borra
 			if (sensorNumericoRepo.existsById(mac))
 			{
 				sensorNumericoRepo.deleteById(mac);
 			}
 
-			// Mapeo y guardado
 			Actuador actuador = new Actuador();
 			actuador.setMac(actuadorRequestDto.getMac());
 			actuador.setEstado(actuadorRequestDto.getEstado());
@@ -465,20 +457,16 @@ public class AdminRestController
 	{
 		try
 		{
-			// Llama al repositorio para obtener la lista de actuadores (DTOs)
 			List<ActuadorResponseDto> actuadores = this.actuadorRepository.buscarActuadores();
 
-			// Validación de campos críticos de cada actuador
 			for (ActuadorResponseDto a : actuadores)
 			{
-				// MAC no puede ser nula o vacía
 				if (a.getMac() == null || a.getMac().isEmpty())
 				{
 					log.error("Existe un actuador sin dirección MAC");
 					throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE,
 							"Existe un actuador sin dirección MAC");
 				}
-				// Ubicación no puede ser nula o vacía
 				if (a.getNombreUbicacion() == null || a.getNombreUbicacion().isEmpty())
 				{
 					log.error("Existe un actuador sin ubicación asignada");
@@ -487,18 +475,15 @@ public class AdminRestController
 				}
 			}
 
-			// Devuelve la lista de actuadores en la respuesta HTTP 200 OK
 			return ResponseEntity.ok(actuadores);
 
 		}
 		catch (AutomationsServerException AutomationsServerException)
 		{
-			// Captura las excepciones controladas y devuelve HTTP 400 con el detalle
 			return ResponseEntity.badRequest().body(AutomationsServerException.getBodyExceptionMessage());
 		}
 		catch (Exception exception)
 		{
-			// Captura excepciones inesperadas y devuelve HTTP 500 con detalle
 			AutomationsServerException AutomationsServerException =
 					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
@@ -518,14 +503,12 @@ public class AdminRestController
 	{
 		try
 		{
-			// Validación: El actuador debe existir
 			if (!this.actuadorRepository.existsById(mac))
 			{
 				log.error(Constants.ERR_ACTUADOR_NO_EXISTE);
 				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE,
 						Constants.ERR_ACTUADOR_NO_EXISTE);
 			}
-			// Eliminación
 			this.actuadorRepository.deleteById(mac);
 			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
@@ -969,5 +952,375 @@ public class AdminRestController
 	        log.error("Excepción genérica al obtener sensores numéricos", automationsException);
 	        return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 	    }
+	}
+	
+	// ----------------------------------------------------------------------------------
+	// --- ENDPOINTS PARA ACTUADOR PUERTA ---
+	// ----------------------------------------------------------------------------------
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@PostMapping(value = "/actuador/puerta", consumes = "application/json")
+	public ResponseEntity<?> crearActuadorPuerta(@RequestBody(required = true) ActuadorPuertaRequestDto actuadorPuertaRequestDto)
+	{
+		try
+		{
+			if (actuadorPuertaRequestDto.getMac() == null || actuadorPuertaRequestDto.getMac().isEmpty())
+			{
+				log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_NULO_VACIO, Constants.ERR_ACTUADOR_CODE);
+			}
+
+			String mac = actuadorPuertaRequestDto.getMac();
+			ActuadorPuerta actuadorPuerta = null;
+
+			if (this.actuadorPuertaRepository.existsById(mac))
+			{
+				actuadorPuerta = this.actuadorPuertaRepository.findById(mac).get();
+			}
+			else
+			{
+				if (sensorBooleanoRepo.existsById(mac))
+				{
+					sensorBooleanoRepo.deleteById(mac);
+				}
+
+				if (sensorNumericoRepo.existsById(mac))
+				{
+					sensorNumericoRepo.deleteById(mac);
+				}
+
+				if (actuadorProyectorRepository.existsById(mac))
+				{
+					actuadorProyectorRepository.deleteById(mac);
+				}
+
+				if (actuadorRepository.existsById(mac))
+				{
+					actuadorRepository.deleteById(mac);
+				}
+
+				actuadorPuerta = new ActuadorPuerta();
+				actuadorPuerta.setMac(mac);
+			}
+
+			actuadorPuerta.setEstado(actuadorPuertaRequestDto.getEstado());
+			actuadorPuerta.setTipo(actuadorPuertaRequestDto.getTipo());
+			actuadorPuerta.setNombreUbicacion(actuadorPuertaRequestDto.getNombreUbicacion());
+			actuadorPuerta.setNumeroReles(actuadorPuertaRequestDto.getNumeroReles());
+
+			this.actuadorPuertaRepository.saveAndFlush(actuadorPuerta);
+
+			log.info(Constants.ELEMENTO_AGREGADO);
+			return ResponseEntity.ok().build();
+		}
+		catch (AutomationsServerException automationsException)
+		{
+			return ResponseEntity.badRequest().body(automationsException);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException automationsException =
+					new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear actuador puerta", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+		}
+	}
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/actuador/puerta")
+	public ResponseEntity<?> obtenerActuadoresPuerta()
+	{
+		try
+		{
+			return ResponseEntity.ok(this.actuadorPuertaRepository.findAll());
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException automationsException =
+					new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al obtener actuadores puerta", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+		}
+	}
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@DeleteMapping(value = "/actuador/puerta")
+	public ResponseEntity<?> eliminarActuadorPuerta(@RequestHeader("mac") String mac)
+	{
+		try
+		{
+			if (!this.actuadorPuertaRepository.existsById(mac))
+			{
+				log.error(Constants.ERR_ACTUADOR_NO_EXISTE);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NO_EXISTE);
+			}
+
+			this.actuadorPuertaRepository.deleteById(mac);
+			log.info(Constants.ELEMENTO_ELIMINADO);
+			return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
+		}
+		catch (AutomationsServerException automationsException)
+		{
+			return ResponseEntity.badRequest().body(automationsException);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException automationsException =
+					new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al eliminar actuador puerta", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+		}
+	}
+
+	// ----------------------------------------------------------------------------------
+	// --- ENDPOINTS PARA ACTUADOR PROYECTOR ---
+	// ----------------------------------------------------------------------------------
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@PostMapping(value = "/actuador/proyector", consumes = "application/json")
+	public ResponseEntity<?> crearActuadorProyector(@RequestBody(required = true) ActuadorProyectorRequestDto actuadorProyectorRequestDto)
+	{
+		try
+		{
+			if (actuadorProyectorRequestDto.getMac() == null || actuadorProyectorRequestDto.getMac().isEmpty())
+			{
+				log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_NULO_VACIO, Constants.ERR_ACTUADOR_CODE);
+			}
+
+			String mac = actuadorProyectorRequestDto.getMac();
+			ActuadorProyector actuadorProyector = null;
+
+			if (this.actuadorProyectorRepository.existsById(mac))
+			{
+				actuadorProyector = this.actuadorProyectorRepository.findById(mac).get();
+			}
+			else
+			{
+				if (sensorBooleanoRepo.existsById(mac))
+				{
+					sensorBooleanoRepo.deleteById(mac);
+				}
+
+				if (sensorNumericoRepo.existsById(mac))
+				{
+					sensorNumericoRepo.deleteById(mac);
+				}
+
+				if (actuadorPuertaRepository.existsById(mac))
+				{
+					actuadorPuertaRepository.deleteById(mac);
+				}
+
+				if (actuadorRepository.existsById(mac))
+				{
+					actuadorRepository.deleteById(mac);
+				}
+
+				actuadorProyector = new ActuadorProyector();
+				actuadorProyector.setMac(mac);
+			}
+
+			actuadorProyector.setEstado(actuadorProyectorRequestDto.getEstado());
+			actuadorProyector.setTipo(actuadorProyectorRequestDto.getTipo());
+			actuadorProyector.setNombreUbicacion(actuadorProyectorRequestDto.getNombreUbicacion());
+			actuadorProyector.setComandoEstado(actuadorProyectorRequestDto.getComandoEstado());
+
+			this.actuadorProyectorRepository.saveAndFlush(actuadorProyector);
+
+			log.info(Constants.ELEMENTO_AGREGADO);
+			return ResponseEntity.ok().build();
+		}
+		catch (AutomationsServerException automationsException)
+		{
+			return ResponseEntity.badRequest().body(automationsException);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException automationsException =
+					new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear actuador proyector", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+		}
+	}
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/actuador/proyector")
+	public ResponseEntity<?> obtenerActuadoresProyector()
+	{
+		try
+		{
+			return ResponseEntity.ok(this.actuadorProyectorRepository.findAll());
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException automationsException =
+					new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al obtener actuadores proyector", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+		}
+	}
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@DeleteMapping(value = "/actuador/proyector")
+	public ResponseEntity<?> eliminarActuadorProyector(@RequestHeader("mac") String mac)
+	{
+		try
+		{
+			if (!this.actuadorProyectorRepository.existsById(mac))
+			{
+				log.error(Constants.ERR_ACTUADOR_NO_EXISTE);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NO_EXISTE);
+			}
+
+			this.actuadorProyectorRepository.deleteById(mac);
+			log.info(Constants.ELEMENTO_ELIMINADO);
+			return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
+		}
+		catch (AutomationsServerException automationsException)
+		{
+			return ResponseEntity.badRequest().body(automationsException);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException automationsException =
+					new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al eliminar actuador proyector", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+		}
+	}
+
+	// ----------------------------------------------------------------------------------
+	// --- ENDPOINTS PARA COMANDO_ACTUADOR_PUERTA ---
+	// ----------------------------------------------------------------------------------
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@PostMapping(value = "/comando/actuador/puerta", consumes = "application/json")
+	public ResponseEntity<?> crearComandoActuadorPuerta(@RequestBody ComandoActuadorPuertaRequestDto comandoActuadorPuertaRequestDto)
+	{
+		try
+		{
+			if (comandoActuadorPuertaRequestDto.getMac() == null || comandoActuadorPuertaRequestDto.getMac().isEmpty())
+			{
+				log.error("MAC vacía o nula");
+				throw new AutomationsServerException("MAC vacía o nula", "ERR_COMANDO_ACTUADOR_PUERTA");
+			}
+
+			if (comandoActuadorPuertaRequestDto.getKeyword() == null || comandoActuadorPuertaRequestDto.getKeyword().isEmpty())
+			{
+				log.error("Keyword vacía o nula");
+				throw new AutomationsServerException("Keyword vacía o nula", "ERR_COMANDO_ACTUADOR_PUERTA");
+			}
+
+			if (comandoActuadorPuertaRequestDto.getIndiceRele() == null)
+			{
+				log.error("Índice de relé nulo");
+				throw new AutomationsServerException("Índice de relé nulo", "ERR_COMANDO_ACTUADOR_PUERTA");
+			}
+
+			ComandoActuadorId comandoActuadorId =
+					new ComandoActuadorId(comandoActuadorPuertaRequestDto.getMac(), comandoActuadorPuertaRequestDto.getKeyword());
+
+			if (!this.comandoActuadorRepository.existsById(comandoActuadorId))
+			{
+				log.error("No existe comando_actuador con esa clave");
+				throw new AutomationsServerException("No existe comando_actuador con esa clave", "ERR_COMANDO_ACTUADOR_PUERTA");
+			}
+
+			if (!this.actuadorPuertaRepository.existsById(comandoActuadorPuertaRequestDto.getMac()))
+			{
+				log.error("No existe actuador_puerta con esa MAC");
+				throw new AutomationsServerException("No existe actuador_puerta con esa MAC", "ERR_COMANDO_ACTUADOR_PUERTA");
+			}
+
+			ComandoActuador comandoActuador = this.comandoActuadorRepository.findById(comandoActuadorId).get();
+			ActuadorPuerta actuadorPuerta = this.actuadorPuertaRepository.findById(comandoActuadorPuertaRequestDto.getMac()).get();
+
+			ComandoActuadorPuertaId comandoActuadorPuertaId = new ComandoActuadorPuertaId();
+			comandoActuadorPuertaId.setComandoActuadorMac(comandoActuadorPuertaRequestDto.getMac());
+			comandoActuadorPuertaId.setComandoActuadorKeyword(comandoActuadorPuertaRequestDto.getKeyword());
+			comandoActuadorPuertaId.setIndiceRele(comandoActuadorPuertaRequestDto.getIndiceRele());
+
+			ComandoActuadorPuerta comandoActuadorPuerta = new ComandoActuadorPuerta();
+			comandoActuadorPuerta.setComandoActuadorPuertaId(comandoActuadorPuertaId);
+			comandoActuadorPuerta.setComandoActuador(comandoActuador);
+			comandoActuadorPuerta.setActuadorPuerta(actuadorPuerta);
+
+			this.comandoActuadorPuertaRepository.saveAndFlush(comandoActuadorPuerta);
+			log.info(Constants.ELEMENTO_AGREGADO);
+
+			return ResponseEntity.ok().build();
+		}
+		catch (AutomationsServerException automationsException)
+		{
+			return ResponseEntity.badRequest().body(automationsException);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException automationsException =
+					new AutomationsServerException("ERR_COMANDO_ACTUADOR_PUERTA", Constants.ERR_CODE);
+			log.error("Excepción genérica al crear comando_actuador_puerta", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+		}
+	}
+
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/comando/actuador/puerta")
+	public ResponseEntity<?> obtenerComandosActuadorPuerta()
+	{
+		try
+		{
+			return ResponseEntity.ok(this.comandoActuadorPuertaRepository.buscarComandosActuadorPuerta());
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException automationsException =
+					new AutomationsServerException("ERR_COMANDO_ACTUADOR_PUERTA", Constants.ERR_CODE);
+			log.error("Excepción genérica al obtener comandos_actuador_puerta", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+		}
+	}
+	
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@DeleteMapping(value = "/comando/actuador/puerta")
+	public ResponseEntity<?> eliminarComandoActuadorPuerta(@RequestHeader("mac") String mac,
+			@RequestHeader("keyword") String keyword,
+			@RequestHeader("indiceRele") Integer indiceRele)
+	{
+		try
+		{
+			if (mac == null || mac.isEmpty() || keyword == null || keyword.isEmpty() || indiceRele == null)
+			{
+				log.error("Parámetros inválidos");
+				throw new AutomationsServerException("Parámetros inválidos", "ERR_COMANDO_ACTUADOR_PUERTA");
+			}
+
+			ComandoActuadorPuertaId comandoActuadorPuertaId = new ComandoActuadorPuertaId();
+			comandoActuadorPuertaId.setComandoActuadorMac(mac);
+			comandoActuadorPuertaId.setComandoActuadorKeyword(keyword);
+			comandoActuadorPuertaId.setIndiceRele(indiceRele);
+
+			if (!this.comandoActuadorPuertaRepository.existsById(comandoActuadorPuertaId))
+			{
+				log.error("No existe comando_actuador_puerta con esa clave");
+				throw new AutomationsServerException("No existe comando_actuador_puerta con esa clave", "ERR_COMANDO_ACTUADOR_PUERTA");
+			}
+
+			this.comandoActuadorPuertaRepository.deleteById(comandoActuadorPuertaId);
+			log.info(Constants.ELEMENTO_ELIMINADO);
+
+			return ResponseEntity.ok(Constants.ELEMENTO_ELIMINADO);
+		}
+		catch (AutomationsServerException automationsException)
+		{
+			return ResponseEntity.badRequest().body(automationsException);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException automationsException =
+					new AutomationsServerException("ERR_COMANDO_ACTUADOR_PUERTA", Constants.ERR_CODE);
+			log.error("Excepción genérica al eliminar comando_actuador_puerta", automationsException);
+			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
+		}
 	}
 }
