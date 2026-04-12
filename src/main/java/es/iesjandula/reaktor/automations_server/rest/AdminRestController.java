@@ -401,8 +401,8 @@ public class AdminRestController
 			// Validaciones (MAC y Existencia)
 			if (actuadorRequestDto.getMac() == null || actuadorRequestDto.getMac().isEmpty())
 			{
-				log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
-				throw new AutomationsServerException(Constants.ERR_ACTUADOR_NULO_VACIO,
+				log.error(Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_MAC_NULO_VACIO,
 						Constants.ERR_ACTUADOR_CODE);
 			}
 
