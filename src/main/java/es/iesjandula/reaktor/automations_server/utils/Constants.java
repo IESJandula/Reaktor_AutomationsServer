@@ -12,7 +12,8 @@ public class Constants
     public static final String ERR_CODE = "Error de servidor";
 	
 	public static final String ERR_ACTUADOR_CODE = "ACTUADOR_ERROR";
-	public static final String ERR_ACTUADOR_NULO_VACIO = "El nombre del actuador no puede ser nulo ni vacío.";
+	public static final String ERR_ACTUADOR_MAC_NULO_VACIO = "La MAC del actuador no puede ser nula ni vacía.";
+    public static final String ERR_ACTUADOR_IP_NULO_VACIO = "La IP del actuador no puede ser nula ni vacía.";
     public static final String ERR_ACTUADOR_EXISTE = "El actuador ya existe en el sistema.";
     public static final String ERR_ACTUADOR_NO_EXISTE = "El actuador no existe en el sistema.";
     

@@ -162,19 +162,20 @@ public class ActualizacionesDispositivosRestController
 
 	/**
 	 * Endpoint para actualizar el estado del actuador y devolver la acción pendiente a realizar
-	 * @param mac MAC del actuador
+	 * @param macAddress MAC del actuador
+	 * @param ipAddress IP del sensor en su área local
 	 * @return ResponseEntity 200 (OK) o 400 (Bad Request) si la mac es nula o vacía o el actuador no existe
 	 */
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_APLICACION_ACTUADOR + "')")
 	@PostMapping("/actuador/estado")
-	public ResponseEntity<?> actuadorEstado(@RequestHeader("mac") String mac)
+	public ResponseEntity<?> actuadorEstado(@RequestHeader("macAddress") String macAddress, @RequestHeader("ipAddress") String ipAddress)
 	{
 		try
 		{
 			ActuadorAccionesPendientesResponse actuadorAccionesPendientesResponse = new ActuadorAccionesPendientesResponse();
 
 			// Validamos las validaciones previas
-			Actuador actuador = this.actuadorEstadoValidarYActualizar(mac) ;
+			Actuador actuador = this.actuadorEstadoValidarYActualizar(macAddress, ipAddress) ;
 
 			// Validar últimas acciones pendientes y devolver como mucho una a realizar
 			Accion accion = this.actuadorEstadoValidarUltimasAccionesPendientesYDevolverUna(actuador);
@@ -218,21 +219,29 @@ public class ActualizacionesDispositivosRestController
 
 	/**
 	 * Validar y actualizar el estado del actuador para el endpoint /actuador/estado
-	 * @param mac MAC del actuador
+	 * @param macAddress MAC del actuador
+	 * @param ipAddress IP del actuador
 	 * @return Actuador
 	 * @throws AutomationsServerException si la mac es nula o vacía o el actuador no existe
 	 */
-	private Actuador actuadorEstadoValidarYActualizar(String mac) throws AutomationsServerException
+	private Actuador actuadorEstadoValidarYActualizar(String macAddress, String ipAddress) throws AutomationsServerException
 	{
-		// Validamos si la mac viene vacía o nula
-		if (mac == null || mac.isEmpty())
+		// Validamos si la MAC viene vacía o nula
+		if (macAddress == null || macAddress.isEmpty())
 		{
-			log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
-			throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NULO_VACIO);
+			log.error(Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
+			throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
+		}
+
+		// Validamos si la IP viene vacía o nula
+		if (ipAddress == null || ipAddress.isEmpty())
+		{
+			log.error(Constants.ERR_ACTUADOR_IP_NULO_VACIO);
+			throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_IP_NULO_VACIO);
 		}
 
 		// Validamos si el actuador existe
-		Optional<Actuador> optionalActuador = this.actuadorRepository.findById(mac);
+		Optional<Actuador> optionalActuador = this.actuadorRepository.findById(macAddress);
 		if (optionalActuador.isEmpty())
 		{
 			log.error(Constants.ERR_ACTUADOR_NO_EXISTE);
@@ -244,6 +253,7 @@ public class ActualizacionesDispositivosRestController
 
 		// Actualizamos el estado del actuador
 		actuador.setEstado(Constants.ESTADO_ACTUADOR_ON);
+		actuador.setIpAddress(ipAddress);
 		actuador.setUltimaActualizacion(new Date());
 
 		// Guardamos el actuador actualizado

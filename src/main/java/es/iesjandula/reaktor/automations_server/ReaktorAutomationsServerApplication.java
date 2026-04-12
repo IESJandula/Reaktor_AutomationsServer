@@ -11,10 +11,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 { "es.iesjandula" })
 public class ReaktorAutomationsServerApplication 
 {
-
 	public static void main(String[] args) 
 	{
 		SpringApplication.run(ReaktorAutomationsServerApplication.class, args);
 	}
-
 }

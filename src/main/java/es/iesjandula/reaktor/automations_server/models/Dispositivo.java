@@ -30,6 +30,11 @@ public class Dispositivo
     @Id
     @Column
     private String mac;
+
+    /** Indica la IP del dispositivo en la red local */
+    @Column
+    private String ipAddress ;
+
     /** Indica el tipo del dispositivo*/
     @Column
     private String tipo;
@@ -45,5 +50,4 @@ public class Dispositivo
     /**Ultima actualizacion del dispositivo */
     @Column
     private Date ultimaActualizacion;
-    
 }
