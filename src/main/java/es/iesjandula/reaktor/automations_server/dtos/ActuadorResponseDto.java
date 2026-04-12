@@ -25,6 +25,9 @@ public class ActuadorResponseDto
     
 	// aplicabilidad del dispositivo
 	private String tipo;
+	
+	// numero de reles que tiene el dispositivo
+	private Integer numeroReles;
 }
 
 
