@@ -1,12 +1,14 @@
 package es.iesjandula.reaktor.automations_server.rest;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,7 +20,6 @@ import es.iesjandula.reaktor.automations_server.repository.IValidacionRepository
 import es.iesjandula.reaktor.automations_server.utils.AutomationsServerException;
 import es.iesjandula.reaktor.automations_server.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
-import java.util.Optional;
 
 @Slf4j
 @RequestMapping("/automations/validacion")
@@ -56,10 +57,17 @@ public class ValidacionRestController
 			log.info(Constants.ELEMENTO_AGREGADO);
 			return ResponseEntity.ok().body(nuevaValidacion);
 		} 
-		catch (AutomationsServerException exception)
+		catch (AutomationsServerException automationsServerException)
 		{
-			log.error(exception.getMessage());
-			return ResponseEntity.badRequest().body(exception);
+		    log.error(automationsServerException.getMessage());
+		    return ResponseEntity.badRequest().body(automationsServerException.getBodyExceptionMessage());
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_CODE);
+
+		    log.error("Error inesperado", automationsServerException);
+		    return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
 		}
 	}
 	@GetMapping(value = "/")
@@ -67,8 +75,8 @@ public class ValidacionRestController
 	{
 		return ResponseEntity.ok(this.validacionRepository.buscarValidaciones());
 	}
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> eliminarValidacion(@PathVariable Long id)
+	@DeleteMapping(value = "/")
+	public ResponseEntity<?> eliminarValidacion(@RequestHeader("id") Long id)
 	{
 		try
 		{
@@ -81,11 +89,17 @@ public class ValidacionRestController
 			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
 		} 
-		catch (AutomationsServerException exception)
+		catch (AutomationsServerException automationsServerException)
 		{
-			log.error(exception.getMessage());
-
-			return ResponseEntity.badRequest().body(exception);
+		    log.error(automationsServerException.getMessage());
+		    return ResponseEntity.badRequest().body(automationsServerException.getBodyExceptionMessage());
+		}
+		catch (Exception exception)
+		{
+			 AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_CODE);
+			 
+			 log.error("Error inesperado", automationsServerException);
+			 return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
 		}
 	}
 }
