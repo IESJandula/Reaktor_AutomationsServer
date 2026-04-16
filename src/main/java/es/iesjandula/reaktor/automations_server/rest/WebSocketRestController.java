@@ -1,5 +1,7 @@
 package es.iesjandula.reaktor.automations_server.rest;
 
+import java.security.Principal;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -26,9 +28,9 @@ public class WebSocketRestController
 	 */
 	@MessageMapping("/automations")
 	@SendTo("/topic/respuestas")
-	public WebSocketResponseDto procesar(WebSocketRequestDto request)
+	public WebSocketResponseDto procesar(WebSocketRequestDto request, Principal principal)
 	{
-		// Delega la lógica al repository
+		log.info("Usuario autenticado: " + principal.getName());
 		return webSocketRepository.procesar(request);
 	}
 }
