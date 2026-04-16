@@ -32,5 +32,6 @@ public class Sensor extends Dispositivo
     /** Valor máximo permitido o configurado para la alerta del sensor. */
     @Column
     private Double umbralMaximo;
+     
     
 }
