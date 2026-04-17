@@ -398,8 +398,7 @@ public class AdminRestController
 			if (actuadorRequestDto.getMac() == null || actuadorRequestDto.getMac().isEmpty())
 			{
 				log.error(Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
-				throw new AutomationsServerException(Constants.ERR_ACTUADOR_MAC_NULO_VACIO,
-						Constants.ERR_ACTUADOR_CODE);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
 			}
 
 			if (actuadorRepository.existsById(actuadorRequestDto.getMac()))
@@ -966,8 +965,8 @@ public class AdminRestController
 		{
 			if (actuadorPuertaRequestDto.getMac() == null || actuadorPuertaRequestDto.getMac().isEmpty())
 			{
-				log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
-				throw new AutomationsServerException(Constants.ERR_ACTUADOR_NULO_VACIO, Constants.ERR_ACTUADOR_CODE);
+				log.error(Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
 			}
 
 			String mac = actuadorPuertaRequestDto.getMac();
@@ -1084,8 +1083,8 @@ public class AdminRestController
 		{
 			if (actuadorProyectorRequestDto.getMac() == null || actuadorProyectorRequestDto.getMac().isEmpty())
 			{
-				log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
-				throw new AutomationsServerException(Constants.ERR_ACTUADOR_NULO_VACIO, Constants.ERR_ACTUADOR_CODE);
+				log.error(Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
 			}
 
 			String mac = actuadorProyectorRequestDto.getMac();
