@@ -3,7 +3,7 @@ spring:
     name: reaktor-automationsserver
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create
   rabbitmq:
     host: localhost
     port: 5672
