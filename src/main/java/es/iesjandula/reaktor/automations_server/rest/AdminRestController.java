@@ -513,12 +513,28 @@ public class AdminRestController
 	 * @return ResponseEntity con la lista de aplicabilidades de los dispositivos
 	 */
 	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
-	@GetMapping(value = "/tipo")
-	public ResponseEntity<?> obtenerTipos()
+	@GetMapping(value = "/tipo/actuador")
+	public ResponseEntity<?> obtenerTiposActuador()
 	{
 		try
 		{
-			return ResponseEntity.ok(Constants.APLICABILIDAD);
+			return ResponseEntity.ok(Constants.APLICABILIDAD_ACTUADOR);
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException AutomationsServerException =
+					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
+			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
+		}
+	}
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@GetMapping(value = "/tipo/sensor")
+	public ResponseEntity<?> obtenerTiposSensor()
+	{
+		try
+		{
+			return ResponseEntity.ok(Constants.APLICABILIDAD_SENSOR);
 		}
 		catch (Exception exception)
 		{

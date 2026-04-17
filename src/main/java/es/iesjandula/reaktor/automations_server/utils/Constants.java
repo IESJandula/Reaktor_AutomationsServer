@@ -54,7 +54,8 @@ public class Constants
     public static final String ERR_ORDEN_NO_EXISTE = "La orden no existe en el sistema.";
     
     /** Aplicabilidad para los tipos de dispositivos */
-    public static final List<String> APLICABILIDAD = Arrays.asList(new String[] {"Puerta", "Proyector"});  
+    public static final List<String> APLICABILIDAD_ACTUADOR = Arrays.asList(new String[] {"Puerta", "Proyector"}); 
+    public static final List<String> APLICABILIDAD_SENSOR = Arrays.asList(new String[] {"Humedad", "CO2", "Movimiento"}); 
     
     /*************************************************/
     /***************** ESTADOS ACCION  ***************/
