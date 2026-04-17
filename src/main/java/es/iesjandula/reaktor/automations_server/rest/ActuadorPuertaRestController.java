@@ -69,8 +69,8 @@ public class ActuadorPuertaRestController
 		{
 			if (actuadorPuertaRequestDto.getMac() == null || actuadorPuertaRequestDto.getMac().isEmpty())
 			{
-				log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
-				throw new AutomationsServerException(Constants.ERR_ACTUADOR_NULO_VACIO, Constants.ERR_ACTUADOR_CODE);
+				log.error(Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NULO_VACIO);
 			}
 
 			String mac = actuadorPuertaRequestDto.getMac();
