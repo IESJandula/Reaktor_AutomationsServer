@@ -53,9 +53,6 @@ public class ProcesadorOrdenService
 	@Autowired
 	private IActuadorRepository actuadorRepository;
 
-	@Autowired
-	private SimpMessagingTemplate messagingTemplate;
-
 	/**
 	 * Variable que define el porcentaje mínimo de coincidencia para aceptar una
 	 * orden.
@@ -165,9 +162,5 @@ public class ProcesadorOrdenService
 
 		// Persistimos en base de datos
 		validacionRepository.save(validacion);
-
-		// Enviamos la respuesta al frontend por websocket
-		WebSocketResponseDto respuesta = new WebSocketResponseDto(orden.getFrase(), textoRespuesta, resultado);
-		messagingTemplate.convertAndSend("/topic/respuestas", respuesta);
 	}
 }
