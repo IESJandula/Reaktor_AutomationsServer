@@ -27,10 +27,10 @@ public class WebSocketRestController
 	 * /topic/respuestas
 	 */
 	@MessageMapping("/automations")
-	@SendTo("/topic/respuestas")
+	@SendTo("/topic/automations/respuestas")
 	public WebSocketResponseDto procesar(WebSocketRequestDto request, Principal principal)
 	{
-		log.info("Usuario autenticado: " + principal.getName());
-		return webSocketRepository.procesar(request);
+	    log.info("Usuario autenticado: " + principal.getName());
+	    return webSocketRepository.procesar(request);
 	}
 }
