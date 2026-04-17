@@ -19,12 +19,14 @@ import es.iesjandula.reaktor.automations_server.dtos.AccionEstadoRequestDto;
 import es.iesjandula.reaktor.automations_server.dtos.ActuadorAccionesPendientesResponse;
 import es.iesjandula.reaktor.automations_server.models.Accion;
 import es.iesjandula.reaktor.automations_server.models.Actuador;
+import es.iesjandula.reaktor.automations_server.models.ActuadorProyector;
 import es.iesjandula.reaktor.automations_server.models.Comando;
 import es.iesjandula.reaktor.automations_server.models.ComandoActuador;
 import es.iesjandula.reaktor.automations_server.models.ComandoActuadorPuerta;
 import es.iesjandula.reaktor.automations_server.models.SensorBooleano;
 import es.iesjandula.reaktor.automations_server.models.SensorNumerico;
 import es.iesjandula.reaktor.automations_server.repository.IAccionRepository;
+import es.iesjandula.reaktor.automations_server.repository.IActuadorProyectorRepository;
 import es.iesjandula.reaktor.automations_server.repository.IActuadorRepository;
 import es.iesjandula.reaktor.automations_server.repository.ISensorBooleanoRepository;
 import es.iesjandula.reaktor.automations_server.repository.ISensorNumericoRpository;
@@ -42,6 +44,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/automations/admin/actualizacion")
 public class ActualizacionesDispositivosRestController
 {
+	@Autowired
+	private IActuadorProyectorRepository actuadorProyectorRepository;
+	
 	@Autowired
 	private IActuadorRepository actuadorRepository;
 
@@ -245,6 +250,55 @@ public class ActualizacionesDispositivosRestController
 			return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
 		}
 	}
+	
+	/**
+	 * Endpoint para que el ESP32 asociado a un proyector solicite el comando de estado
+	 * enviando su MAC.
+	 * 
+	 * @param mac MAC del actuador proyector
+	 * @return ResponseEntity 200 (OK) con el comando de estado o 400 (Bad Request)
+	 *         si la mac es nula, vacía o el proyector no existe
+	 */
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_APLICACION_ACTUADOR + "')")
+	@PostMapping("/actuador/proyector/comando-estado")
+	public ResponseEntity<?> obtenerComandoEstadoProyector(@RequestHeader("mac") String mac)
+	{
+		try
+		{
+			if (mac == null || mac.isEmpty())
+			{
+				log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NULO_VACIO);
+			}
+
+			Optional<ActuadorProyector> optionalActuadorProyector = this.actuadorProyectorRepository.findById(mac);
+
+			if (optionalActuadorProyector.isEmpty())
+			{
+				log.error(Constants.ERR_ACTUADOR_NO_EXISTE);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NO_EXISTE);
+			}
+
+			ActuadorProyector actuadorProyector = optionalActuadorProyector.get();
+
+			java.util.Map<String, Object> response = new java.util.HashMap<String, Object>();
+			response.put("mac", actuadorProyector.getMac());
+			response.put("comandoEstado", actuadorProyector.getComandoEstado());
+
+			return ResponseEntity.ok(response);
+		}
+		catch (AutomationsServerException automationsServerException)
+		{
+			return ResponseEntity.badRequest().body(automationsServerException.getBodyExceptionMessage());
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException automationsServerException =
+					new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al obtener comando de estado del proyector", exception);
+			return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
+		}
+	}
 
 	/**
 	 * Validar y actualizar el estado del actuador para el endpoint /actuador/estado
@@ -437,4 +491,5 @@ public class ActualizacionesDispositivosRestController
 		// Devolvemos la acción
 		return optionalAccion.get();
 	}
+	
 }
