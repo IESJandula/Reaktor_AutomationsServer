@@ -53,7 +53,7 @@ public class Constants
     public static final String ERR_ORDEN_EXISTE = "La orden ya existe en el sistema.";
     public static final String ERR_ORDEN_NO_EXISTE = "La orden no existe en el sistema.";
     
-    /** Aplicabilidad para los dispositivos */
+    /** Aplicabilidad para los tipos de dispositivos */
     public static final List<String> APLICABILIDAD = Arrays.asList(new String[] {"Puerta", "Proyector"});  
     
     /*************************************************/

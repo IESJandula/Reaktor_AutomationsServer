@@ -16,6 +16,7 @@ import lombok.Setter;
 @Table(name="actuador_proyector")
 public class ActuadorProyector extends Actuador
 {
+	
     @Column
     private String comandoEstado;
 }
