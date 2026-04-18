@@ -31,6 +31,9 @@ public class ActuadorResponseDto
 	
     // Comando de estado, usado en proyectores
     private String comandoEstado;
+    
+    // Estado del proyector
+    private String estadoProyector;
 	
 	
 }
