@@ -5,6 +5,7 @@ import java.security.Principal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import es.iesjandula.reaktor.automations_server.repository.IWebSocketRepository;
@@ -22,15 +23,20 @@ public class WebSocketRestController
 	@Autowired
 	private IWebSocketRepository webSocketRepository;
 
+	@Autowired
+	private SimpMessagingTemplate messagingTemplate;
+
 	/**
 	 * Recibe mensajes desde el frontend en /app/automations y responde en
 	 * /topic/respuestas
 	 */
 	@MessageMapping("/automations")
-	@SendTo("/topic/automations/respuestas")
-	public WebSocketResponseDto procesar(WebSocketRequestDto request, Principal principal)
+	public void procesar(WebSocketRequestDto request, Principal principal)
 	{
-	    log.info("Usuario autenticado: " + principal.getName());
-	    return webSocketRepository.procesar(request);
+		log.info("Usuario autenticado: " + principal.getName());
+
+		WebSocketResponseDto response = webSocketRepository.procesar(request);
+
+		messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/automations/respuestas", response);
 	}
 }
