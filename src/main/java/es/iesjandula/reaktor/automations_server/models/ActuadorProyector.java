@@ -19,4 +19,7 @@ public class ActuadorProyector extends Actuador
 	
     @Column
     private String comandoEstado;
+    
+    @Column
+    private String estadoProyector;
 }

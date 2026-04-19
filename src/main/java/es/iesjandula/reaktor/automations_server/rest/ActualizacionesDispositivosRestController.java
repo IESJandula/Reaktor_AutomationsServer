@@ -17,14 +17,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import es.iesjandula.reaktor.automations_server.dtos.AccionEstadoRequestDto;
 import es.iesjandula.reaktor.automations_server.dtos.ActuadorAccionesPendientesResponse;
+import es.iesjandula.reaktor.automations_server.dtos.ActuadorProyectorEstadoRequestDto;
 import es.iesjandula.reaktor.automations_server.models.Accion;
 import es.iesjandula.reaktor.automations_server.models.Actuador;
+import es.iesjandula.reaktor.automations_server.models.ActuadorProyector;
 import es.iesjandula.reaktor.automations_server.models.Comando;
 import es.iesjandula.reaktor.automations_server.models.ComandoActuador;
 import es.iesjandula.reaktor.automations_server.models.ComandoActuadorPuerta;
 import es.iesjandula.reaktor.automations_server.models.SensorBooleano;
 import es.iesjandula.reaktor.automations_server.models.SensorNumerico;
 import es.iesjandula.reaktor.automations_server.repository.IAccionRepository;
+import es.iesjandula.reaktor.automations_server.repository.IActuadorProyectorRepository;
 import es.iesjandula.reaktor.automations_server.repository.IActuadorRepository;
 import es.iesjandula.reaktor.automations_server.repository.ISensorBooleanoRepository;
 import es.iesjandula.reaktor.automations_server.repository.ISensorNumericoRpository;
@@ -42,6 +45,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/automations/admin/actualizacion")
 public class ActualizacionesDispositivosRestController
 {
+	@Autowired
+	private IActuadorProyectorRepository actuadorProyectorRepository;
+	
 	@Autowired
 	private IActuadorRepository actuadorRepository;
 
@@ -69,7 +75,7 @@ public class ActualizacionesDispositivosRestController
 	 * @param mac         MAC del sensor a actualizar.
 	 * @return ResponseEntity 200 (OK) o 400 (Bad Request) si el sensor no existe.
 	 */
-	@PreAuthorize("hasRole('" + BaseConstants.ROLE_APLICACION_SENSOR + "')") // Solo usuarios con rol SENSOR pueden actualizar
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_APLICACION_SENSOR + "')")
 	@PostMapping(value = "/sensor/booleano")
 	public ResponseEntity<?> actualizarSensorBooleano(
 			@RequestHeader(value = "valorActual") Boolean valorActual,
@@ -119,7 +125,7 @@ public class ActualizacionesDispositivosRestController
 	 * @param mac         MAC del sensor a actualizar.
 	 * @return ResponseEntity 200 (OK) o 400/500 en caso de error.
 	 */
-	@PreAuthorize("hasRole('" + BaseConstants.ROLE_APLICACION_SENSOR + "')") // Solo usuarios con rol SENSOR pueden actualizar
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_APLICACION_SENSOR + "')")
 	@PostMapping(value = "/sensor/numerico")
 	public ResponseEntity<?> actualizarSensorNumerico(
 			@RequestHeader(value = "valorActual") Double valorActual,
@@ -182,21 +188,15 @@ public class ActualizacionesDispositivosRestController
 			// Validar últimas acciones pendientes y devolver como mucho una a realizar
 			Accion accion = this.actuadorEstadoValidarUltimasAccionesPendientesYDevolverUna(actuador);
 
-			// Si la acción no es nula ...
 			if (accion != null)
 			{
-				// ... seteo el estado de la acción a en ejecución
 				accion.setEstado(Constants.ESTADO_ACCION_EN_EJECUCION);
-
-				// ... guardo la acción actualizada
 				this.accionRepository.saveAndFlush(accion);
 
-				// Recorremos todos los comandos asociados a la orden
 				for (Comando comando : accion.getOrden().getComandos())
 				{
 					ComandoActuador comandoActuador = comando.getComandoActuador();
 
-					// Si no tiene relés asociados, añadimos un único elemento a la lista
 					if (comandoActuador.getListaComandosPuerta() == null ||
 						comandoActuador.getListaComandosPuerta().isEmpty())
 					{
@@ -213,7 +213,6 @@ public class ActualizacionesDispositivosRestController
 					}
 					else
 					{
-						// Si tiene varios relés asociados, añadimos un elemento por cada relé
 						for (ComandoActuadorPuerta comandoActuadorPuerta : comandoActuador.getListaComandosPuerta())
 						{
 							ActuadorAccionesPendientesResponse actuadorAccionesPendientesResponse =
@@ -246,6 +245,106 @@ public class ActualizacionesDispositivosRestController
 			return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
 		}
 	}
+	
+	/**
+	 * Endpoint para que el ESP32 asociado a un proyector solicite el comando de estado
+	 * enviando su MAC.
+	 * 
+	 * @param mac MAC del actuador proyector
+	 * @return ResponseEntity 200 (OK) con el comando de estado o 400 (Bad Request)
+	 *         si la mac es nula, vacía o el proyector no existe
+	 */
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_APLICACION_ACTUADOR + "')")
+	@PostMapping("/actuador/proyector/comando-estado")
+	public ResponseEntity<?> obtenerComandoEstadoProyector(@RequestHeader("mac") String mac)
+	{
+		try
+		{
+			if (mac == null || mac.isEmpty())
+			{
+				log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NULO_VACIO);
+			}
+
+			Optional<ActuadorProyector> optionalActuadorProyector = this.actuadorProyectorRepository.findById(mac);
+
+			if (optionalActuadorProyector.isEmpty())
+			{
+				log.error(Constants.ERR_ACTUADOR_NO_EXISTE);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NO_EXISTE);
+			}
+
+			ActuadorProyector actuadorProyector = optionalActuadorProyector.get();
+
+			java.util.Map<String, Object> response = new java.util.HashMap<String, Object>();
+			response.put("mac", actuadorProyector.getMac());
+			response.put("comandoEstado", actuadorProyector.getComandoEstado());
+
+			return ResponseEntity.ok(response);
+		}
+		catch (AutomationsServerException automationsServerException)
+		{
+			return ResponseEntity.badRequest().body(automationsServerException.getBodyExceptionMessage());
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException automationsServerException =
+					new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al obtener comando de estado del proyector", exception);
+			return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
+		}
+	}
+
+	/**
+	 * Endpoint para que el ESP32 asociado a un proyector envíe periódicamente
+	 * que está vivo junto con el estado real del proyector y reciba, si existe,
+	 * una acción pendiente a realizar.
+	 * 
+	 * @param requestDto DTO con la MAC del proyector y su estado actual
+	 * @return ResponseEntity 200 (OK) con una única acción pendiente o vacía si no existe
+	 */
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_APLICACION_ACTUADOR + "')")
+	@PostMapping(value = "/actuador/proyector/estado", consumes = "application/json")
+	public ResponseEntity<?> actualizarEstadoProyectorYObtenerAccion(@RequestBody ActuadorProyectorEstadoRequestDto requestDto)
+	{
+		try
+		{
+			ActuadorAccionesPendientesResponse actuadorAccionesPendientesResponse =
+					new ActuadorAccionesPendientesResponse();
+
+			Actuador actuador = this.proyectorEstadoValidarYActualizar(requestDto);
+
+			Accion accion = this.actuadorEstadoValidarUltimasAccionesPendientesYDevolverUna(actuador);
+
+			if (accion != null)
+			{
+				accion.setEstado(Constants.ESTADO_ACCION_EN_EJECUCION);
+				this.accionRepository.saveAndFlush(accion);
+
+				Comando comando = accion.getOrden().getComandos().get(0);
+				ComandoActuador comandoActuador = comando.getComandoActuador();
+
+				actuadorAccionesPendientesResponse.setAccionId(accion.getId());
+				actuadorAccionesPendientesResponse.setOrden(comandoActuador.getComandos());
+				actuadorAccionesPendientesResponse.setKeyword(
+						comandoActuador.getComandoActuadorId().getKeyword());
+				actuadorAccionesPendientesResponse.setIndiceRele(null);
+			}
+
+			return ResponseEntity.ok(actuadorAccionesPendientesResponse);
+		}
+		catch (AutomationsServerException automationsServerException)
+		{
+			return ResponseEntity.badRequest().body(automationsServerException.getBodyExceptionMessage());
+		}
+		catch (Exception exception)
+		{
+			AutomationsServerException automationsServerException =
+					new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
+			log.error("Excepción genérica al actualizar estado del proyector", exception);
+			return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
+		}
+	}
 
 	/**
 	 * Validar y actualizar el estado del actuador para el endpoint /actuador/estado
@@ -272,24 +371,62 @@ public class ActualizacionesDispositivosRestController
 
 		// Validamos si el actuador existe
 		Optional<Actuador> optionalActuador = this.actuadorRepository.findById(macAddress);
+
 		if (optionalActuador.isEmpty())
 		{
 			log.error(Constants.ERR_ACTUADOR_NO_EXISTE);
 			throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NO_EXISTE);
 		}
 
-		// Obtenemos el actuador
 		Actuador actuador = optionalActuador.get();
 
-		// Actualizamos el estado del actuador
 		actuador.setEstado(Constants.ESTADO_ACTUADOR_ON);
 		actuador.setIpAddress(ipAddress);
 		actuador.setUltimaActualizacion(new Date());
 
-		// Guardamos el actuador actualizado
 		this.actuadorRepository.saveAndFlush(actuador);
 
 		return actuador;
+	}
+
+	/**
+	 * Validar y actualizar el estado del proyector
+	 * @param requestDto DTO con la MAC y el estado real del proyector
+	 * @return Actuador
+	 * @throws AutomationsServerException si la mac o el estado son nulos o el proyector no existe
+	 */
+	private Actuador proyectorEstadoValidarYActualizar(ActuadorProyectorEstadoRequestDto requestDto) throws AutomationsServerException
+	{
+		if (requestDto.getMac() == null || requestDto.getMac().isEmpty())
+		{
+			log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
+			throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NULO_VACIO);
+		}
+
+		if (requestDto.getEstadoProyector() == null || requestDto.getEstadoProyector().isEmpty())
+		{
+			log.error("El estado del proyector es nulo o vacío");
+			throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, "El estado del proyector es nulo o vacío");
+		}
+
+		Optional<ActuadorProyector> optionalActuadorProyector =
+				this.actuadorProyectorRepository.findById(requestDto.getMac());
+
+		if (optionalActuadorProyector.isEmpty())
+		{
+			log.error(Constants.ERR_ACTUADOR_NO_EXISTE);
+			throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NO_EXISTE);
+		}
+
+		ActuadorProyector actuadorProyector = optionalActuadorProyector.get();
+
+		actuadorProyector.setEstado(Constants.ESTADO_ACTUADOR_ON);
+		actuadorProyector.setEstadoProyector(requestDto.getEstadoProyector());
+		actuadorProyector.setUltimaActualizacion(new Date());
+
+		this.actuadorProyectorRepository.saveAndFlush(actuadorProyector);
+
+		return actuadorProyector;
 	}
 
 	/**
@@ -299,62 +436,39 @@ public class ActualizacionesDispositivosRestController
 	 */
 	private Accion actuadorEstadoValidarUltimasAccionesPendientesYDevolverUna(Actuador actuador)
 	{
-		// Inicializo la acción a devolver
 		Accion outcome = null;
-
-		// Inicializo la lista de acciones posibles a realizar
 		List<Accion> accionesPosibles = new ArrayList<Accion>();
-
-		// Buscamos las últimas acciones pendientes a realizar
 		Optional<List<Accion>> optionalAccion = this.accionRepository.buscarUltimasAccionesPendientes(actuador);
 
-		// Si hay acciones pendientes ...
 		if (!optionalAccion.isEmpty())
 		{
-			// ... Obtenemos las acciones pendientes ...
 			List<Accion> acciones = optionalAccion.get();
 
-			// ... itero sobre cada una de ellas para quedarme con la última
-			// siempre que no haya pasado mucho tiempo
 			for (Accion accion : acciones)
 			{
-				// Obtengo la fecha cuando envió la orden
 				Date fechaEnvioOrden = accion.getOrden().getFecha();
 
-				// Si ha pasado más del tiempo de expiración ...
 				if (fechaEnvioOrden.getTime() < System.currentTimeMillis() - tiempoExpiracion)
 				{
-					// ... cambio el estado de la acción a en ejecución
 					accion.setEstado(Constants.ESTADO_ACCION_EXPIRADA);
-
-					// ... guardo la acción actualizada
 					this.accionRepository.saveAndFlush(accion);
 				}
 				else
 				{
-					// ... si llego hasta aquí, la acción no ha expirado
-					// ... la añado a la lista de acciones posibles
 					accionesPosibles.add(accion);
 				}
 			}
 		}
 
-		// Si hay acciones posibles ...
 		if (!accionesPosibles.isEmpty())
 		{
-			// ... me quedo con la primera eliminándola de la lista
 			outcome = accionesPosibles.remove(0);
 
-			// Si sigue habiendo acciones posibles ...
 			if (!accionesPosibles.isEmpty())
 			{
-				// ... itero sobre ellas y las pongo como duplicadas
 				for (Accion accionDuplicada : accionesPosibles)
 				{
-					// Seteo el estado de la acción duplicada a duplicada
 					accionDuplicada.setEstado(Constants.ESTADO_ACCION_DUPLICADA);
-
-					// Guardo la acción actualizada
 					this.accionRepository.saveAndFlush(accionDuplicada);
 				}
 			}
@@ -369,25 +483,17 @@ public class ActualizacionesDispositivosRestController
 	{
 		try
 	    {
-			// Validamos los datos de entrada
 			this.actualizarEstadoAccionValidarDatosEntrada(requestDto);
-
-			// Obtenemos la acción
 			Accion accion = this.actualizarEstadoAccionObtenerAccion(requestDto);
 
-			// Seteamos el estado de la acción
 	        accion.setEstado(requestDto.getEstado());
 
-			// Si el resultado de la acción no es nulo, seteamos el resultado de la acción
 	        if (requestDto.getResultado() != null)
 	        {
 	            accion.setResultado(requestDto.getResultado());
 	        }
 
-			// Guardamos la acción actualizada
 	        this.accionRepository.saveAndFlush(accion);
-
-			// Devolvemos una respuesta correcta
 	        return ResponseEntity.ok().build();
 	    }
 	    catch (AutomationsServerException automationsServerException)
@@ -410,14 +516,12 @@ public class ActualizacionesDispositivosRestController
 	 */
 	private void actualizarEstadoAccionValidarDatosEntrada(AccionEstadoRequestDto requestDto) throws AutomationsServerException
 	{
-		// Validamos si el identificador de la acción es nulo o vacío
 		if (requestDto.getAccionId() == null)
 		{
 			log.error(Constants.ERR_ACTUADOR_ACCION_ID_NULO_VACIO);
 			throw new AutomationsServerException(Constants.ERR_ACCION_CODE, Constants.ERR_ACTUADOR_ACCION_ID_NULO_VACIO);
 		}
 
-		// Validamos si el estado de la acción es nulo o vacío
 		if (requestDto.getEstado() == null || requestDto.getEstado().isEmpty())
 		{
 			log.error(Constants.ERR_ACTUADOR_ACCION_ESTADO_NULO_VACIO);
@@ -433,18 +537,14 @@ public class ActualizacionesDispositivosRestController
 	 */
 	private Accion actualizarEstadoAccionObtenerAccion(AccionEstadoRequestDto requestDto) throws AutomationsServerException
 	{
-		// Busco la acción en la base de datos
 		Optional<Accion> optionalAccion = this.accionRepository.findById(requestDto.getAccionId());
 
-		// Si la acción no existe ...
 		if (optionalAccion.isEmpty())
 		{
-			// ... logueamos y lanzamos una excepción
 			log.error(Constants.ERR_ACCION_NO_EXISTE);
 			throw new AutomationsServerException(Constants.ERR_ACCION_CODE, Constants.ERR_ACCION_NO_EXISTE);
 		}
 
-		// Devolvemos la acción
 		return optionalAccion.get();
 	}
 }

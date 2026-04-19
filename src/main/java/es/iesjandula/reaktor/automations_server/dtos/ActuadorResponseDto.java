@@ -28,6 +28,14 @@ public class ActuadorResponseDto
 	
 	// numero de reles que tiene el dispositivo
 	private Integer numeroReles;
+	
+    // Comando de estado, usado en proyectores
+    private String comandoEstado;
+    
+    // Estado del proyector
+    private String estadoProyector;
+	
+	
 }
 
 
