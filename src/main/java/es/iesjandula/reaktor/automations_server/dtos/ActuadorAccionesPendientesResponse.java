@@ -5,9 +5,15 @@ import lombok.Data;
 @Data
 public class ActuadorAccionesPendientesResponse
 {
-    /** Atributo - ID de la acción */
+    /** ID de la acción */
     private Long accionId;
   
-    /** Atributo - Orden de la acción */
+    /** Orden de la acción */
     private String orden;
+    
+    /** Keyword asociada al comando */
+    private String keyword;
+
+    /** Índice de relé, si aplica */
+    private Integer indiceRele;
 }

@@ -1,7 +1,7 @@
 package es.iesjandula.reaktor.automations_server.rest;
 
-import java.util.Date;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +21,7 @@ import es.iesjandula.reaktor.automations_server.models.Accion;
 import es.iesjandula.reaktor.automations_server.models.Actuador;
 import es.iesjandula.reaktor.automations_server.models.Comando;
 import es.iesjandula.reaktor.automations_server.models.ComandoActuador;
+import es.iesjandula.reaktor.automations_server.models.ComandoActuadorPuerta;
 import es.iesjandula.reaktor.automations_server.models.SensorBooleano;
 import es.iesjandula.reaktor.automations_server.models.SensorNumerico;
 import es.iesjandula.reaktor.automations_server.repository.IAccionRepository;
@@ -172,7 +173,8 @@ public class ActualizacionesDispositivosRestController
 	{
 		try
 		{
-			ActuadorAccionesPendientesResponse actuadorAccionesPendientesResponse = new ActuadorAccionesPendientesResponse();
+			List<ActuadorAccionesPendientesResponse> actuadorAccionesPendientesResponseList =
+					new ArrayList<ActuadorAccionesPendientesResponse>();
 
 			// Validamos las validaciones previas
 			Actuador actuador = this.actuadorEstadoValidarYActualizar(macAddress, ipAddress) ;
@@ -189,20 +191,48 @@ public class ActualizacionesDispositivosRestController
 				// ... guardo la acción actualizada
 				this.accionRepository.saveAndFlush(accion);
 
-				// Asociado el identificador de la acción pendiente de realizar
-				actuadorAccionesPendientesResponse.setAccionId(accion.getId());
+				// Recorremos todos los comandos asociados a la orden
+				for (Comando comando : accion.getOrden().getComandos())
+				{
+					ComandoActuador comandoActuador = comando.getComandoActuador();
 
-				// Obtengo el comando de la orden
-				Comando comando = accion.getOrden().getComandos().get(0);
+					// Si no tiene relés asociados, añadimos un único elemento a la lista
+					if (comandoActuador.getListaComandosPuerta() == null ||
+						comandoActuador.getListaComandosPuerta().isEmpty())
+					{
+						ActuadorAccionesPendientesResponse actuadorAccionesPendientesResponse =
+								new ActuadorAccionesPendientesResponse();
 
-				// Obtengo el comando del comando actuador
-				ComandoActuador comandoActuador = comando.getComandoActuador();
+						actuadorAccionesPendientesResponse.setAccionId(accion.getId());
+						actuadorAccionesPendientesResponse.setOrden(comandoActuador.getComandos());
+						actuadorAccionesPendientesResponse.setKeyword(
+								comandoActuador.getComandoActuadorId().getKeyword());
+						actuadorAccionesPendientesResponse.setIndiceRele(null);
 
-				// Asociado el comando de la orden
-				actuadorAccionesPendientesResponse.setOrden(comandoActuador.getComandos());
+						actuadorAccionesPendientesResponseList.add(actuadorAccionesPendientesResponse);
+					}
+					else
+					{
+						// Si tiene varios relés asociados, añadimos un elemento por cada relé
+						for (ComandoActuadorPuerta comandoActuadorPuerta : comandoActuador.getListaComandosPuerta())
+						{
+							ActuadorAccionesPendientesResponse actuadorAccionesPendientesResponse =
+									new ActuadorAccionesPendientesResponse();
+
+							actuadorAccionesPendientesResponse.setAccionId(accion.getId());
+							actuadorAccionesPendientesResponse.setOrden(comandoActuador.getComandos());
+							actuadorAccionesPendientesResponse.setKeyword(
+									comandoActuador.getComandoActuadorId().getKeyword());
+							actuadorAccionesPendientesResponse.setIndiceRele(
+									comandoActuadorPuerta.getComandoActuadorPuertaId().getIndiceRele());
+
+							actuadorAccionesPendientesResponseList.add(actuadorAccionesPendientesResponse);
+						}
+					}
+				}
 			}
 
-			return ResponseEntity.ok(actuadorAccionesPendientesResponse);
+			return ResponseEntity.ok(actuadorAccionesPendientesResponseList);
 		}
 		catch (AutomationsServerException automationsServerException)
 		{
