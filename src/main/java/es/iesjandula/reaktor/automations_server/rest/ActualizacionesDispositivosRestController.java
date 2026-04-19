@@ -262,8 +262,8 @@ public class ActualizacionesDispositivosRestController
 		{
 			if (mac == null || mac.isEmpty())
 			{
-				log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
-				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NULO_VACIO);
+				log.error(Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
 			}
 
 			Optional<ActuadorProyector> optionalActuadorProyector = this.actuadorProyectorRepository.findById(mac);
@@ -399,8 +399,8 @@ public class ActualizacionesDispositivosRestController
 	{
 		if (requestDto.getMac() == null || requestDto.getMac().isEmpty())
 		{
-			log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
-			throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NULO_VACIO);
+			log.error(Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
+			throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_MAC_NULO_VACIO);
 		}
 
 		if (requestDto.getEstadoProyector() == null || requestDto.getEstadoProyector().isEmpty())
