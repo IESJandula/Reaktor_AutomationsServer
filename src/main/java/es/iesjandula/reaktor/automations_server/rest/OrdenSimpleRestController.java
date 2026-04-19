@@ -86,7 +86,6 @@ public class OrdenSimpleRestController
 		} 
 		catch (AutomationsServerException automationsServerException)
 		{
-		    log.error(automationsServerException.getMessage());
 		    return ResponseEntity.badRequest().body(automationsServerException.getBodyExceptionMessage());
 		}
 		catch (Exception exception)
@@ -134,7 +133,7 @@ public class OrdenSimpleRestController
 	    }
 	    catch (Exception exception)
 	    {
-	        AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_CODE);
+	    	AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_CODE);
 
 	        log.error("Error inesperado", automationsServerException);
 	        return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
@@ -160,10 +159,9 @@ public class OrdenSimpleRestController
 			this.ordenSimpleRepository.deleteById(id);
 			log.info(Constants.ELEMENTO_ELIMINADO);
 			return ResponseEntity.ok().body(Constants.ELEMENTO_ELIMINADO);
-		}
+		} 
 		catch (AutomationsServerException automationsServerException)
 		{
-		    log.error(automationsServerException.getMessage());
 		    return ResponseEntity.badRequest().body(automationsServerException.getBodyExceptionMessage());
 		}
 		catch (Exception exception)

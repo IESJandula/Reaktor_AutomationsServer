@@ -64,7 +64,7 @@ public class ValidacionRestController
 		}
 		catch (Exception exception)
 		{
-		    AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_CODE);
+			AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_CODE);
 
 		    log.error("Error inesperado", automationsServerException);
 		    return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
@@ -96,10 +96,10 @@ public class ValidacionRestController
 		}
 		catch (Exception exception)
 		{
-		    AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_CODE);
-
-		    log.error("Error inesperado", automationsServerException);
-		    return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
+			 AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_CODE);
+			 
+			 log.error("Error inesperado", automationsServerException);
+			 return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
 		}
 	}
 }
