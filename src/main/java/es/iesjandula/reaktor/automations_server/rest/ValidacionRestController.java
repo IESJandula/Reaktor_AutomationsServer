@@ -39,14 +39,14 @@ public class ValidacionRestController
 			if (validacionRequestDto.getResultado() == null || validacionRequestDto.getResultado().isEmpty())
 			{
 				log.error(Constants.ERR_VALIDACION_NULO_VACIO);
-				throw new AutomationsServerException(Constants.ERR_VALIDACION_NULO_VACIO, Constants.ERR_VALIDACION_CODE);
+				throw new AutomationsServerException(Constants.ERR_VALIDACION_CODE, Constants.ERR_VALIDACION_NULO_VACIO);
 			}
 			Long ordenId = validacionRequestDto.getOrdenId();
 			Optional<Orden> ordenOpt = ordenRepository.findById(ordenId);
 			if (ordenOpt.isEmpty())
 			{
 				log.error(Constants.ERR_ORDEN_NO_EXISTE);
-				throw new AutomationsServerException(Constants.ERR_ORDEN_NO_EXISTE, Constants.ERR_ORDEN_CODE);
+				throw new AutomationsServerException(Constants.ERR_ORDEN_CODE, Constants.ERR_ORDEN_NO_EXISTE);
 			}
 			Validacion validacion = new Validacion();
 			validacion.setScore(validacionRequestDto.getScore());

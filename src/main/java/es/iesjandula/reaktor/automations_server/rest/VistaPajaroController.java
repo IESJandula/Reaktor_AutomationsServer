@@ -119,10 +119,9 @@ public class VistaPajaroController
 		} 
 		catch (Exception exception)
 		{
-			AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_CODE,Constants.ERR_CODE);
+			AutomationsServerException automationsServerException = new AutomationsServerException(Constants.ERR_MAP_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al crear la incidencia", exception);
 			return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
 		}
 	}
 }
-

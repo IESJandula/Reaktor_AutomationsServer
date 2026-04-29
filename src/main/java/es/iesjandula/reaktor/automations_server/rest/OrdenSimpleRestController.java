@@ -52,7 +52,7 @@ public class OrdenSimpleRestController
 
 			if (frase == null || frase.isBlank())
 			{
-				throw new AutomationsServerException(Constants.ERR_SIMPLE_NULO_VACIO, Constants.ERR_SIMPLE_CODE);
+				throw new AutomationsServerException(Constants.ERR_SIMPLE_CODE, Constants.ERR_SIMPLE_NULO_VACIO);
 			}
 
 			OrdenSimple ordenSimple = new OrdenSimple();
@@ -109,7 +109,7 @@ public class OrdenSimpleRestController
 	        // Comprobación básica para evitar procesar audios vacíos
 	        if (file == null || file.isEmpty())
 	        {
-	            throw new AutomationsServerException("Audio vacío", "AUDIO_EMPTY");
+	            throw new AutomationsServerException(Constants.ERR_AUDIO_CODE, Constants.ERR_AUDIO_VACIO);
 	        }
 	        
 	        log.info("Archivo recibido: " + file.getOriginalFilename());

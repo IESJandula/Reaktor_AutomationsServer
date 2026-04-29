@@ -70,7 +70,7 @@ public class ActuadorPuertaRestController
 			if (actuadorPuertaRequestDto.getMac() == null || actuadorPuertaRequestDto.getMac().isEmpty())
 			{
 				log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
-				throw new AutomationsServerException(Constants.ERR_ACTUADOR_NULO_VACIO, Constants.ERR_ACTUADOR_CODE);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NULO_VACIO);
 			}
 
 			String mac = actuadorPuertaRequestDto.getMac();
@@ -187,20 +187,20 @@ public class ActuadorPuertaRestController
 		{
 			if (comandoActuadorPuertaRequestDto.getMac() == null || comandoActuadorPuertaRequestDto.getMac().isEmpty())
 			{
-				log.error("MAC vacía o nula");
-				throw new AutomationsServerException("MAC vacía o nula", "ERR_COMANDO_ACTUADOR_PUERTA");
+				log.error(Constants.ERR_COMANDO_ACTUADOR_PUERTA_MAC_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_PUERTA_CODE, Constants.ERR_COMANDO_ACTUADOR_PUERTA_MAC_NULO_VACIO);
 			}
 
 			if (comandoActuadorPuertaRequestDto.getKeyword() == null || comandoActuadorPuertaRequestDto.getKeyword().isEmpty())
 			{
-				log.error("Keyword vacía o nula");
-				throw new AutomationsServerException("Keyword vacía o nula", "ERR_COMANDO_ACTUADOR_PUERTA");
+				log.error(Constants.ERR_COMANDO_ACTUADOR_PUERTA_KEYWORD_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_PUERTA_CODE, Constants.ERR_COMANDO_ACTUADOR_PUERTA_KEYWORD_NULO_VACIO);
 			}
 
 			if (comandoActuadorPuertaRequestDto.getIndiceRele() == null)
 			{
-				log.error("Índice de relé nulo");
-				throw new AutomationsServerException("Índice de relé nulo", "ERR_COMANDO_ACTUADOR_PUERTA");
+				log.error(Constants.ERR_COMANDO_ACTUADOR_PUERTA_INDICE_RELE_NULO);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_PUERTA_CODE, Constants.ERR_COMANDO_ACTUADOR_PUERTA_INDICE_RELE_NULO);
 			}
 
 			ComandoActuadorId comandoActuadorId =
@@ -208,14 +208,14 @@ public class ActuadorPuertaRestController
 
 			if (!this.comandoActuadorRepository.existsById(comandoActuadorId))
 			{
-				log.error("No existe comando_actuador con esa clave");
-				throw new AutomationsServerException("No existe comando_actuador con esa clave", "ERR_COMANDO_ACTUADOR_PUERTA");
+				log.error(Constants.ERR_COMANDO_ACTUADOR_PUERTA_COMANDO_ACTUADOR_NO_EXISTE);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_PUERTA_CODE, Constants.ERR_COMANDO_ACTUADOR_PUERTA_COMANDO_ACTUADOR_NO_EXISTE);
 			}
 
 			if (!this.actuadorPuertaRepository.existsById(comandoActuadorPuertaRequestDto.getMac()))
 			{
-				log.error("No existe actuador_puerta con esa MAC");
-				throw new AutomationsServerException("No existe actuador_puerta con esa MAC", "ERR_COMANDO_ACTUADOR_PUERTA");
+				log.error(Constants.ERR_COMANDO_ACTUADOR_PUERTA_ACTUADOR_PUERTA_NO_EXISTE);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_PUERTA_CODE, Constants.ERR_COMANDO_ACTUADOR_PUERTA_ACTUADOR_PUERTA_NO_EXISTE);
 			}
 
 			ComandoActuador comandoActuador = this.comandoActuadorRepository.findById(comandoActuadorId).get();
@@ -243,7 +243,7 @@ public class ActuadorPuertaRestController
 		catch (Exception exception)
 		{
 			AutomationsServerException automationsException =
-					new AutomationsServerException("ERR_COMANDO_ACTUADOR_PUERTA", Constants.ERR_CODE);
+					new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_PUERTA_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al crear comando_actuador_puerta", automationsException);
 			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
@@ -260,7 +260,7 @@ public class ActuadorPuertaRestController
 		catch (Exception exception)
 		{
 			AutomationsServerException automationsException =
-					new AutomationsServerException("ERR_COMANDO_ACTUADOR_PUERTA", Constants.ERR_CODE);
+					new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_PUERTA_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al obtener comandos_actuador_puerta", automationsException);
 			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
@@ -276,8 +276,8 @@ public class ActuadorPuertaRestController
 		{
 			if (mac == null || mac.isEmpty() || keyword == null || keyword.isEmpty() || indiceRele == null)
 			{
-				log.error("Parámetros inválidos");
-				throw new AutomationsServerException("Parámetros inválidos", "ERR_COMANDO_ACTUADOR_PUERTA");
+				log.error(Constants.ERR_COMANDO_ACTUADOR_PUERTA_PARAMETROS_INVALIDOS);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_PUERTA_CODE, Constants.ERR_COMANDO_ACTUADOR_PUERTA_PARAMETROS_INVALIDOS);
 			}
 
 			ComandoActuadorPuertaId comandoActuadorPuertaId = new ComandoActuadorPuertaId();
@@ -287,8 +287,8 @@ public class ActuadorPuertaRestController
 
 			if (!this.comandoActuadorPuertaRepository.existsById(comandoActuadorPuertaId))
 			{
-				log.error("No existe comando_actuador_puerta con esa clave");
-				throw new AutomationsServerException("No existe comando_actuador_puerta con esa clave", "ERR_COMANDO_ACTUADOR_PUERTA");
+				log.error(Constants.ERR_COMANDO_ACTUADOR_PUERTA_NO_EXISTE_CLAVE);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_PUERTA_CODE, Constants.ERR_COMANDO_ACTUADOR_PUERTA_NO_EXISTE_CLAVE);
 			}
 
 			this.comandoActuadorPuertaRepository.deleteById(comandoActuadorPuertaId);
@@ -303,7 +303,7 @@ public class ActuadorPuertaRestController
 		catch (Exception exception)
 		{
 			AutomationsServerException automationsException =
-					new AutomationsServerException("ERR_COMANDO_ACTUADOR_PUERTA", Constants.ERR_CODE);
+					new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_PUERTA_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al eliminar comando_actuador_puerta", automationsException);
 			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}

@@ -389,8 +389,8 @@ public class ActualizacionesDispositivosRestController
 
 		if (requestDto.getEstadoProyector() == null || requestDto.getEstadoProyector().isEmpty())
 		{
-			log.error("El estado del proyector es nulo o vacío");
-			throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, "El estado del proyector es nulo o vacío");
+			log.error(Constants.ERR_PROYECTOR_ESTADO_NULO_VACIO);
+			throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_PROYECTOR_ESTADO_NULO_VACIO);
 		}
 
 		Optional<ActuadorProyector> optionalActuadorProyector =

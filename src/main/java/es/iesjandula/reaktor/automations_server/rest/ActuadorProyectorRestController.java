@@ -58,7 +58,7 @@ public class ActuadorProyectorRestController
 			if (actuadorProyectorRequestDto.getMac() == null || actuadorProyectorRequestDto.getMac().isEmpty())
 			{
 				log.error(Constants.ERR_ACTUADOR_NULO_VACIO);
-				throw new AutomationsServerException(Constants.ERR_ACTUADOR_NULO_VACIO, Constants.ERR_ACTUADOR_CODE);
+				throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_ACTUADOR_NULO_VACIO);
 			}
 
 			String mac = actuadorProyectorRequestDto.getMac();
