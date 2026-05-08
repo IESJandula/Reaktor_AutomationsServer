@@ -98,7 +98,7 @@ public class AdminRestController
 			if (sensorBooleanoDto.getMac() == null || sensorBooleanoDto.getMac().isEmpty())
 			{
 				log.error(Constants.ERR_SENSOR_NULO_VACIO);
-				throw new AutomationsServerException(Constants.ERR_SENSOR_NULO_VACIO, Constants.ERR_SENSOR_CODE);
+				throw new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_SENSOR_NULO_VACIO);
 			}
 
 			if (sensorBooleanoRepo.existsById(sensorBooleanoDto.getMac()))
@@ -126,8 +126,8 @@ public class AdminRestController
 			if (sensorBooleanoDto.getNombreUbicacion() == null || sensorBooleanoDto.getNombreUbicacion().isEmpty())
 			{
 				log.error(Constants.ERR_UBICACION_NULO_VACIO);
-				throw new AutomationsServerException(Constants.ERR_UBICACION_NULO_VACIO,
-						Constants.ERR_UBICACION_CODE);
+				throw new AutomationsServerException(Constants.ERR_UBICACION_CODE,
+						Constants.ERR_UBICACION_NULO_VACIO);
 			}
 
 			SensorBooleano sensor = new SensorBooleano();
@@ -241,7 +241,7 @@ public class AdminRestController
 			if (sensorNumericoDto.getMac() == null || sensorNumericoDto.getMac().isEmpty())
 			{
 				log.error(Constants.ERR_SENSOR_NULO_VACIO);
-				throw new AutomationsServerException(Constants.ERR_SENSOR_NULO_VACIO, Constants.ERR_SENSOR_CODE);
+				throw new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_SENSOR_NULO_VACIO);
 			}
 
 			if (sensorNumericoRepo.existsById(sensorNumericoDto.getMac()))
@@ -269,8 +269,8 @@ public class AdminRestController
 			if (sensorNumericoDto.getNombreUbicacion() == null || sensorNumericoDto.getNombreUbicacion().isEmpty())
 			{
 				log.error(Constants.ERR_UBICACION_NULO_VACIO);
-				throw new AutomationsServerException(Constants.ERR_UBICACION_NULO_VACIO,
-						Constants.ERR_UBICACION_CODE);
+				throw new AutomationsServerException(Constants.ERR_UBICACION_CODE,
+						Constants.ERR_UBICACION_NULO_VACIO);
 			}
 
 			SensorNumerico sensor = new SensorNumerico();
@@ -420,7 +420,7 @@ public class AdminRestController
 		catch (Exception exception)
 		{
 			AutomationsServerException AutomationsServerException =
-					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+					new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
 		}
@@ -443,15 +443,15 @@ public class AdminRestController
 			{
 				if (a.getMac() == null || a.getMac().isEmpty())
 				{
-					log.error("Existe un actuador sin dirección MAC");
+					log.error(Constants.ERR_ACTUADOR_SIN_MAC);
 					throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE,
-							"Existe un actuador sin dirección MAC");
+							Constants.ERR_ACTUADOR_SIN_MAC);
 				}
 				if (a.getNombreUbicacion() == null || a.getNombreUbicacion().isEmpty())
 				{
-					log.error("Existe un actuador sin ubicación asignada");
+					log.error(Constants.ERR_ACTUADOR_SIN_UBICACION);
 					throw new AutomationsServerException(Constants.ERR_ACTUADOR_CODE,
-							"Existe un actuador sin ubicación asignada");
+							Constants.ERR_ACTUADOR_SIN_UBICACION);
 				}
 			}
 
@@ -465,7 +465,7 @@ public class AdminRestController
 		catch (Exception exception)
 		{
 			AutomationsServerException AutomationsServerException =
-					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+					new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
 		}
@@ -501,7 +501,7 @@ public class AdminRestController
 		{
 			log.error("Internal Server Error");
 			AutomationsServerException AutomationsServerException =
-					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+					new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
 		}
@@ -523,7 +523,7 @@ public class AdminRestController
 		catch (Exception exception)
 		{
 			AutomationsServerException AutomationsServerException =
-					new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+					new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al crear la incidencia", AutomationsServerException);
 			return ResponseEntity.status(500).body(AutomationsServerException.getBodyExceptionMessage());
 		}
@@ -557,24 +557,24 @@ public class AdminRestController
 		{
 			if (comandoRequestdto.getKeyword() == null || comandoRequestdto.getKeyword().isEmpty())
 			{
-				log.error("Keyword vacía o nula");
-				throw new AutomationsServerException("Keyword vacía o nula", "ERR_COMANDO");
+				log.error(Constants.ERR_COMANDO_KEYWORD_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_COMANDO_KEYWORD_NULO_VACIO);
 			}
 			if (comandoRequestdto.getMac() == null || comandoRequestdto.getMac().isEmpty())
 			{
-				log.error("MAC vacía o nula");
-				throw new AutomationsServerException("MAC vacía o nula", "ERR_COMANDO");
+				log.error(Constants.ERR_COMANDO_MAC_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_COMANDO_MAC_NULO_VACIO);
 			}
 			if (comandoRequestdto.getOrdenId() == null)
 			{
-				log.error("OrdenId nulo");
-				throw new AutomationsServerException("OrdenId nulo", "ERR_COMANDO");
+				log.error(Constants.ERR_COMANDO_ORDEN_ID_NULO);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_COMANDO_ORDEN_ID_NULO);
 			}
 
 			Orden orden = this.ordenRepository.findById(comandoRequestdto.getOrdenId())
 					.orElseThrow(() -> {
-						log.error("No existe esa orden");
-						return new AutomationsServerException("No existe esa orden", "ERR_COMANDO");
+						log.error(Constants.ERR_COMANDO_ORDEN_NO_EXISTE);
+						return new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_COMANDO_ORDEN_NO_EXISTE);
 					});
 
 			Comando comando = new Comando();
@@ -601,7 +601,7 @@ public class AdminRestController
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al crear comando", automationsException);
 			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
@@ -617,8 +617,8 @@ public class AdminRestController
 
 			if (lista.isEmpty())
 			{
-				log.error("No se encontraron comandos");
-				throw new AutomationsServerException("ERR_COMANDO", "No se encontraron comandos");
+				log.error(Constants.ERR_COMANDO_NO_ENCONTRADOS);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_COMANDO_NO_ENCONTRADOS);
 			}
 
 			return ResponseEntity.ok(lista);
@@ -629,7 +629,7 @@ public class AdminRestController
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al obtener comandos", automationsException);
 			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
@@ -643,16 +643,16 @@ public class AdminRestController
 		{
 			if (ordenId == null)
 			{
-				log.error("OrdenId nulo");
-				throw new AutomationsServerException("OrdenId nulo", "ERR_COMANDO");
+				log.error(Constants.ERR_COMANDO_ORDEN_ID_NULO);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_COMANDO_ORDEN_ID_NULO);
 			}
 
 			List<ComandoResponseDto> lista = this.comandoRepository.buscarComandosPorOrden(ordenId);
 
 			if (lista.isEmpty())
 			{
-				log.error("No hay comandos para esa orden");
-				throw new AutomationsServerException("ERR_COMANDO", "No hay comandos para esa orden");
+				log.error(Constants.ERR_COMANDO_NO_HAY_PARA_ORDEN);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_COMANDO_NO_HAY_PARA_ORDEN);
 			}
 
 			return ResponseEntity.ok(lista);
@@ -663,7 +663,7 @@ public class AdminRestController
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al obtener comandos por orden", automationsException);
 			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
@@ -677,16 +677,16 @@ public class AdminRestController
 		{
 			if (mac == null || mac.isEmpty())
 			{
-				log.error("MAC vacía o nula");
-				throw new AutomationsServerException("MAC vacía o nula", "ERR_COMANDO");
+				log.error(Constants.ERR_COMANDO_MAC_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_COMANDO_MAC_NULO_VACIO);
 			}
 
 			List<ComandoResponseDto> lista = this.comandoRepository.buscarComandosPorMac(mac);
 
 			if (lista.isEmpty())
 			{
-				log.error("No hay comandos para esa MAC");
-				throw new AutomationsServerException("ERR_COMANDO", "No hay comandos para esa MAC");
+				log.error(Constants.ERR_COMANDO_NO_HAY_PARA_MAC);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_COMANDO_NO_HAY_PARA_MAC);
 			}
 
 			return ResponseEntity.ok(lista);
@@ -697,7 +697,7 @@ public class AdminRestController
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al obtener comandos por mac", automationsException);
 			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
@@ -711,8 +711,8 @@ public class AdminRestController
 		{
 			if (ordenId == null || mac == null || mac.isEmpty() || keyword == null || keyword.isEmpty())
 			{
-				log.error("Parámetros inválidos");
-				throw new AutomationsServerException("ERR_COMANDO", "Parámetros inválidos");
+				log.error(Constants.ERR_COMANDO_PARAMETROS_INVALIDOS);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_COMANDO_PARAMETROS_INVALIDOS);
 			}
 
 			ComandoActuadorId comandoActuadorId = new ComandoActuadorId(mac, keyword);
@@ -720,8 +720,8 @@ public class AdminRestController
 
 			if (!this.comandoRepository.existsById(comandoId))
 			{
-				log.error("No existe comando con esa clave");
-				throw new AutomationsServerException("ERR_COMANDO", "No existe comando con esa clave");
+				log.error(Constants.ERR_COMANDO_NO_EXISTE_CLAVE);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_COMANDO_NO_EXISTE_CLAVE);
 			}
 
 			this.comandoRepository.deleteById(comandoId);
@@ -734,7 +734,7 @@ public class AdminRestController
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO", Constants.ERR_CODE);
+			AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_COMANDO_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al eliminar comando", automationsException);
 			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
@@ -752,26 +752,26 @@ public class AdminRestController
 		{
 			if (comandoActuadorRequestDto.getKeyword() == null || comandoActuadorRequestDto.getKeyword().isEmpty())
 			{
-				log.error("Keyword vacía o nula");
-				throw new AutomationsServerException("Keyword vacía o nula", "ERR_COMANDO_ACTUADOR");
+				log.error(Constants.ERR_COMANDO_ACTUADOR_KEYWORD_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_CODE, Constants.ERR_COMANDO_ACTUADOR_KEYWORD_NULO_VACIO);
 			}
 
 			if (comandoActuadorRequestDto.getMac() == null || comandoActuadorRequestDto.getMac().isEmpty())
 			{
-				log.error("MAC vacía o nula");
-				throw new AutomationsServerException("MAC vacía o nula", "ERR_COMANDO_ACTUADOR");
+				log.error(Constants.ERR_COMANDO_ACTUADOR_MAC_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_CODE, Constants.ERR_COMANDO_ACTUADOR_MAC_NULO_VACIO);
 			}
 			
 			if (comandoActuadorRequestDto.getTextoOk() == null || comandoActuadorRequestDto.getTextoOk().isEmpty())
 			{
-				log.error("Información de respuesta correcta vacío o nulo");
-				throw new AutomationsServerException("Información de respuesta correcta vacío o nulo", "ERR_COMANDO_ACTUADOR");
+				log.error(Constants.ERR_COMANDO_ACTUADOR_TEXTO_OK_NULO_VACIO);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_CODE, Constants.ERR_COMANDO_ACTUADOR_TEXTO_OK_NULO_VACIO);
 			}
 
 			if (!this.actuadorRepository.existsById(comandoActuadorRequestDto.getMac()))
 			{
-				log.error("No existe actuador con esa MAC");
-				throw new AutomationsServerException("No existe actuador con esa MAC", "ERR_COMANDO_ACTUADOR");
+				log.error(Constants.ERR_COMANDO_ACTUADOR_NO_EXISTE_MAC);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_CODE, Constants.ERR_COMANDO_ACTUADOR_NO_EXISTE_MAC);
 			}
 
 			Actuador actuador = this.actuadorRepository.findById(comandoActuadorRequestDto.getMac()).get();
@@ -798,7 +798,7 @@ public class AdminRestController
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO_ACTUADOR", Constants.ERR_CODE);
+			AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al crear comando_actuador", automationsException);
 			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
@@ -816,7 +816,7 @@ public class AdminRestController
 	    }
 	    catch (Exception exception)
 	    {
-	        AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO_ACTUADOR", Constants.ERR_CODE);
+	        AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_CODE, Constants.ERR_CODE);
 	        log.error("Excepción genérica al obtener comandos_actuador", automationsException);
 	        return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 	    }
@@ -830,16 +830,16 @@ public class AdminRestController
 		{
 			if (mac == null || mac.isEmpty() || keyword == null || keyword.isEmpty())
 			{
-				log.error("Parámetros inválidos");
-				throw new AutomationsServerException("Parámetros inválidos", "ERR_COMANDO_ACTUADOR");
+				log.error(Constants.ERR_COMANDO_ACTUADOR_PARAMETROS_INVALIDOS);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_CODE, Constants.ERR_COMANDO_ACTUADOR_PARAMETROS_INVALIDOS);
 			}
 
 			ComandoActuadorId comandoActuadorId = new ComandoActuadorId(mac, keyword);
 
 			if (!this.comandoActuadorRepository.existsById(comandoActuadorId))
 			{
-				log.error("No existe comando_actuador con esa clave");
-				throw new AutomationsServerException("No existe comando_actuador con esa clave", "ERR_COMANDO_ACTUADOR");
+				log.error(Constants.ERR_COMANDO_ACTUADOR_NO_EXISTE_CLAVE);
+				throw new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_CODE, Constants.ERR_COMANDO_ACTUADOR_NO_EXISTE_CLAVE);
 			}
 
 			this.comandoActuadorRepository.deleteById(comandoActuadorId);
@@ -853,7 +853,7 @@ public class AdminRestController
 		}
 		catch (Exception exception)
 		{
-			AutomationsServerException automationsException = new AutomationsServerException("ERR_COMANDO_ACTUADOR", Constants.ERR_CODE);
+			AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_COMANDO_ACTUADOR_CODE, Constants.ERR_CODE);
 			log.error("Excepción genérica al eliminar comando_actuador", automationsException);
 			return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 		}
@@ -870,7 +870,7 @@ public class AdminRestController
 		}	
 	    catch (Exception exception)
 	    {
-	        AutomationsServerException automationsException = new AutomationsServerException("ERR_ACCION", Constants.ERR_CODE);
+	        AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_ACCION_CODE, Constants.ERR_CODE);
 	        log.error("Excepción genérica al obtener la accion", automationsException);
 	        return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 	    }
@@ -910,7 +910,7 @@ public class AdminRestController
 		}	
 	    catch (Exception exception)
 	    {
-	        AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_SENSOR_CODE, Constants.ERR_CODE);
+	        AutomationsServerException automationsException = new AutomationsServerException(Constants.ERR_ACTUADOR_CODE, Constants.ERR_CODE);
 	        log.error("Excepción genérica al obtener actuadores", automationsException);
 	        return ResponseEntity.status(500).body(automationsException.getBodyExceptionMessage());
 	    }
