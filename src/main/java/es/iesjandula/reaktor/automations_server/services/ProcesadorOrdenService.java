@@ -114,7 +114,7 @@ public class ProcesadorOrdenService
 					comandoRepository.save(comando);
 
 					Accion accion = new Accion();
-					accion.setResultado("PENDIENTE");
+					accion.setEstado(Constants.ESTADO_ACCION_PENDIENTE);
 					accion.setActuador(actuador);
 					accion.setOrden(orden);
 
