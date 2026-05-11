@@ -440,6 +440,12 @@ public class ActualizacionesDispositivosRestController
 		List<Accion> accionesPosibles = new ArrayList<Accion>();
 		Optional<List<Accion>> optionalAccion = this.accionRepository.buscarUltimasAccionesPendientes(actuador);
 
+		if (optionalAccion.isPresent())
+		{
+			log.info("Acciones pendientes numero de elementos: " + optionalAccion.get().size());
+			log.info("Acciones pendientes: " + optionalAccion.get());
+		}
+
 		if (!optionalAccion.isEmpty())
 		{
 			List<Accion> acciones = optionalAccion.get();
