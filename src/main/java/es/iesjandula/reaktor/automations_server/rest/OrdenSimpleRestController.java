@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,6 +27,7 @@ import es.iesjandula.reaktor.automations_server.services.SpeechService;
 import es.iesjandula.reaktor.automations_server.utils.AutomationsServerException;
 import es.iesjandula.reaktor.automations_server.utils.Constants;
 import es.iesjandula.reaktor.base.security.models.DtoUsuarioExtended;
+import es.iesjandula.reaktor.base.utils.BaseConstants;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -43,6 +45,7 @@ public class OrdenSimpleRestController
 	@Autowired
 	private ProcesadorOrdenService procesadorOrdenService;
 
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_PROFESOR + "')")
 	@PostMapping(value = "/texto", consumes = "application/json")
 	public ResponseEntity<?> crearOrdenSimpleTexto(@AuthenticationPrincipal DtoUsuarioExtended usuario, @RequestBody OrdenTextoRequest request)
 	{
@@ -100,6 +103,7 @@ public class OrdenSimpleRestController
 	// Endpoint que recibe un audio desde el frontend en formato multipart/form-data
 	// Este endpoint únicamente se encarga de transcribir el audio a texto.
 	// No guarda nada en base de datos ni ejecuta ninguna orden.
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_PROFESOR + "')")
 	@PostMapping(value = "/audio", consumes = "multipart/form-data")
 	public ResponseEntity<?> crearOrdenSimpleAudio(@AuthenticationPrincipal DtoUsuarioExtended usuario, @RequestParam("file") MultipartFile file)
 	{
@@ -140,12 +144,14 @@ public class OrdenSimpleRestController
 	    }
 	}
 
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
 	@GetMapping(value = "/")
 	public ResponseEntity<?> obtenerOrdenesSimples()
 	{
 		return ResponseEntity.ok(this.ordenSimpleRepository.buscarOrdenesSimples());
 	}
 
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
 	@DeleteMapping(value = "/")
 	public ResponseEntity<?> eliminarOrdenSimple(@RequestHeader("id") Long id)
 	{

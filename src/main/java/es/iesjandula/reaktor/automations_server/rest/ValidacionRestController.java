@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,7 @@ import es.iesjandula.reaktor.automations_server.repository.IOrdenRepository;
 import es.iesjandula.reaktor.automations_server.repository.IValidacionRepository;
 import es.iesjandula.reaktor.automations_server.utils.AutomationsServerException;
 import es.iesjandula.reaktor.automations_server.utils.Constants;
+import es.iesjandula.reaktor.base.utils.BaseConstants;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -31,6 +33,7 @@ public class ValidacionRestController
 	@Autowired
 	private IOrdenRepository ordenRepository;
 	
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
 	@PostMapping(value = "/", consumes = "application/json")
 	public ResponseEntity<?> crearValidacion(@RequestBody(required = true) ValidacionRequestDto validacionRequestDto)
 	{
@@ -70,11 +73,13 @@ public class ValidacionRestController
 		    return ResponseEntity.status(500).body(automationsServerException.getBodyExceptionMessage());
 		}
 	}
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
 	@GetMapping(value = "/")
 	public ResponseEntity<?> obtenerValidaciones()
 	{
 		return ResponseEntity.ok(this.validacionRepository.buscarValidaciones());
 	}
+	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
 	@DeleteMapping(value = "/")
 	public ResponseEntity<?> eliminarValidacion(@RequestHeader("id") Long id)
 	{
