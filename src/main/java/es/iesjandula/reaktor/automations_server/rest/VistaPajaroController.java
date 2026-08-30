@@ -39,7 +39,7 @@ public class VistaPajaroController
 	@Autowired
 	private ISensorBooleanoRepository sensorBooleanoRepo;
 
-	@PreAuthorize("hasRole('" + BaseConstants.ROLE_ADMINISTRADOR + "')")
+	@PreAuthorize("hasAnyRole('" + BaseConstants.ROLE_ADMINISTRADOR + "', '" + BaseConstants.ROLE_PROFESOR + "', '" + BaseConstants.ROLE_CONSERJERIA + "')")
 	@GetMapping(value = "/devices/")
 	public ResponseEntity<?> obtenerDispositivos()
 	{
